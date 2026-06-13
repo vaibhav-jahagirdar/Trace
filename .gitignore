@@ -1,0 +1,30 @@
+# Node
+node_modules/
+dist/
+build/
+
+# Env
+.env
+.env.*
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Next.js
+.next/
+out/
+
+# Python
+venv/
+__pycache__/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
