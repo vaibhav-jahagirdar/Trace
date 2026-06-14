@@ -3,6 +3,7 @@
   "compilerOptions": {
     "types": ["node"],
     "verbatimModuleSyntax": false,
-    "module": "commonjs"
+    "module": "commonjs",
+    "esModuleInterop": true
   }
 }

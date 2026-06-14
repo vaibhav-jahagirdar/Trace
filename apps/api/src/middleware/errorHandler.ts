@@ -8,27 +8,40 @@ export class AppError extends Error {
     public isOperational: boolean = true
   ) {
     super(message);
-    this.name = "AppError";
-    Error.captureStackTrace(this, this.constructor);
+
+    this.name = this.constructor.name;
+
+    Error.captureStackTrace?.(this, this.constructor);
   }
 }
 
-
 export class NotFoundError extends AppError {
   constructor(resource = "Resource") {
-    super(`${resource} not found`, 404, "NOT_FOUND");
+    super(
+      `${resource} not found`,
+      404,
+      "NOT_FOUND"
+    );
   }
 }
 
 export class UnauthorizedError extends AppError {
   constructor(message = "Unauthorized") {
-    super(message, 401, "UNAUTHORIZED");
+    super(
+      message,
+      401,
+      "UNAUTHORIZED"
+    );
   }
 }
 
 export class ValidationError extends AppError {
   constructor(message: string) {
-    super(message, 400, "VALIDATION_ERROR");
+    super(
+      message,
+      400,
+      "VALIDATION_ERROR"
+    );
   }
 }
 
@@ -36,31 +49,38 @@ export function errorHandler(
   err: unknown,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) {
+  const requestId =
+    req.headers["x-request-id"] ?? null;
 
-  if (err instanceof AppError && err.isOperational) {
+  if (
+    err instanceof AppError &&
+    err.isOperational
+  ) {
     return res.status(err.statusCode).json({
+      success: false,
       error: {
         code: err.code,
         message: err.message,
-        requestId: req.headers["x-request-id"] ?? null,
+        requestId,
       },
     });
   }
 
   console.error({
-    err,
-    requestId: req.headers["x-request-id"],
-    path: req.path,
+    error: err,
+    requestId,
     method: req.method,
+    path: req.originalUrl,
   });
 
   return res.status(500).json({
+    success: false,
     error: {
       code: "INTERNAL_ERROR",
       message: "Something went wrong",
-      requestId: req.headers["x-request-id"] ?? null,
+      requestId,
     },
   });
 }
