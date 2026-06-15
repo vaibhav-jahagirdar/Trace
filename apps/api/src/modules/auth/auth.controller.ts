@@ -7,7 +7,7 @@ import { UAParser } from "ua-parser-js";
 const REFRESH_TOKEN_EXPIRY_DAYS = Number(process.env.REFRESH_TOKEN_EXPIRY_DAYS) || 7;
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
-function extractSessionMeta(req: Request) {
+export function extractSessionMeta(req: Request) {
   const ua = UAParser(req.headers["user-agent"] ?? "");
   return {
     ip_address: req.ip ?? null,
@@ -18,7 +18,7 @@ function extractSessionMeta(req: Request) {
   };
 }
 
-function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
+export function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: IS_PRODUCTION,
