@@ -10,7 +10,7 @@ import {
   UnauthorizedError,
 } from "../../middleware/errorHandler";
 
-const JWT_SECRET = process.env.JWT_SECRET;
+export const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET is not set");
@@ -22,18 +22,44 @@ const REFRESH_TOKEN_EXPIRY_DAYS =
 
 if (!JWT_SECRET) throw new Error("JWT_SECRET is not set");
 
-export function generateTokens(userId: string) {
-  const accessToken = jwt.sign({ userId }, JWT_SECRET!, { expiresIn: "15m" });
-  const refreshToken = crypto.randomBytes(64).toString("hex");
-  return { accessToken, refreshToken };
+export function generateAccessToken(
+  userId: string,
+  sessionId: string
+) {
+  return jwt.sign(
+    {
+      userId,
+      sessionId,
+    },
+    JWT_SECRET!,
+    {
+      expiresIn: "15m",
+    }
+  );
 }
 
-export function hashRefreshToken(token: string) {
-  return crypto.createHash("sha256").update(token).digest("hex");
+export function generateRefreshToken() {
+  return crypto.randomBytes(64).toString("hex");
+}
+
+export function hashRefreshToken(
+  token: string
+) {
+  return crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
 }
 
 export function getRefreshTokenExpiry() {
-  return new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+  return new Date(
+    Date.now() +
+      REFRESH_TOKEN_EXPIRY_DAYS *
+        24 *
+        60 *
+        60 *
+        1000
+  );
 }
 
 function handlePgError(err: any): never {
@@ -100,12 +126,13 @@ export async function registerUser(
       [userId!, password_hash],
     );
 
-    const { accessToken, refreshToken } = generateTokens(userId!);
+    const refreshToken = generateRefreshToken()
     const refreshTokenHash = hashRefreshToken(refreshToken);
 
-    await client.query(
+    const sessionResult = await client.query(
       `INSERT INTO user_sessions (user_id, refresh_token_hash, user_agent, ip_address, device_name, platform, browser, expires_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id`,
       [
         userId!,
         refreshTokenHash,
@@ -117,7 +144,8 @@ export async function registerUser(
         getRefreshTokenExpiry(),
       ],
     );
-
+const sessionId = sessionResult.rows[0]?.id;
+const accessToken = generateAccessToken(userId!, sessionId);
     return { userId: userId!, tokens: { accessToken, refreshToken } };
   });
 }
@@ -173,12 +201,13 @@ AND u.suspended_at IS NULL`,
       [user.id],
     );
 
-    const { accessToken, refreshToken } = generateTokens(user.id);
+    const refreshToken = generateRefreshToken();
     const refreshTokenHash = hashRefreshToken(refreshToken);
 
-    await client.query(
+    const sessionResult = await client.query(
       `INSERT INTO user_sessions (user_id, refresh_token_hash, user_agent, ip_address, device_name, platform, browser, expires_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id`,
       [
         user.id,
         refreshTokenHash,
@@ -190,6 +219,8 @@ AND u.suspended_at IS NULL`,
         getRefreshTokenExpiry(),
       ],
     );
+    const sessionId = sessionResult.rows[0]?.id;
+    const accessToken = generateAccessToken(user.id, sessionId);
 
     return {
       userId: user.id,

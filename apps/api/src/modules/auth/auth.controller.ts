@@ -5,7 +5,7 @@ import { asyncHandler } from "../../middleware/asyncHandler";
 import { UAParser } from "ua-parser-js";
 
 const REFRESH_TOKEN_EXPIRY_DAYS = Number(process.env.REFRESH_TOKEN_EXPIRY_DAYS) || 7;
-const IS_PRODUCTION = process.env.NODE_ENV === "production";
+export const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 export function extractSessionMeta(req: Request) {
   const ua = UAParser(req.headers["user-agent"] ?? "");

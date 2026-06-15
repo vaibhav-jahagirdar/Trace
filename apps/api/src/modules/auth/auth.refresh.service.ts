@@ -1,7 +1,7 @@
 import type { AuthTokens, SessionMeta } from "./auth.types";
 import {
   getRefreshTokenExpiry,
-  generateTokens,
+  generateAccessToken, generateRefreshToken,
   hashRefreshToken,
 } from "./auth.service";
 
@@ -71,8 +71,8 @@ export async function refreshTokenRotation(
       );
     }
 
-    const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
-      generateTokens(userId);
+    const newRefreshToken = generateRefreshToken()
+  
 
     const newRefreshTokenHash = hashRefreshToken(newRefreshToken);
 
@@ -138,6 +138,7 @@ export async function refreshTokenRotation(
       `,
       [oldSessionId],
     );
+    const newAccessToken = generateAccessToken(userId,newSessionId)
 
     return {
       userId,
