@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { logger } from "../lib/logger";
 
 export class AppError extends Error {
   constructor(
@@ -44,6 +45,11 @@ export class ValidationError extends AppError {
     );
   }
 }
+export class ForbiddenError extends AppError {
+  constructor(message = "Forbidden") {
+    super(message, 403, "FORBIDDEN");
+  }
+}
 
 export function errorHandler(
   err: unknown,
@@ -51,13 +57,22 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ) {
-  const requestId =
-    req.headers["x-request-id"] ?? null;
+  const requestId = req.id ?? req.headers["x-request-id"] ?? null;
 
-  if (
-    err instanceof AppError &&
-    err.isOperational
-  ) {
+  if (err instanceof AppError && err.isOperational) {
+    logger.warn(
+      {
+        err,
+        code: err.code,
+        statusCode: err.statusCode,
+        requestId,
+        method: req.method,
+        path: req.originalUrl,
+        userId: req.user?.id,
+      },
+      err.message
+    );
+
     return res.status(err.statusCode).json({
       success: false,
       error: {
@@ -68,12 +83,16 @@ export function errorHandler(
     });
   }
 
-  console.error({
-    error: err,
-    requestId,
-    method: req.method,
-    path: req.originalUrl,
-  });
+  logger.error(
+    {
+      err,
+      requestId,
+      method: req.method,
+      path: req.originalUrl,
+      userId: req.user?.id,
+    },
+    "unhandled error"
+  );
 
   return res.status(500).json({
     success: false,
