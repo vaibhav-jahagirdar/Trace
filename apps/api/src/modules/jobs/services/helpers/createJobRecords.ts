@@ -42,7 +42,7 @@ export async function createJobRecord(
     VALUES (
       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'DRAFT'
     )
-    RETURNING id
+    RETURNING id, role_category_id
     `,
     [
       orgId,
@@ -61,8 +61,9 @@ export async function createJobRecord(
   );
 
   const jobId = result.rows[0]?.id;
+  const roleCategoryId = result.rows[0]?.role_category_id;
 
-  if (!jobId) {
+  if (!jobId || !roleCategoryId) {
     throw new AppError(
       "Failed to create job",
       500,

@@ -9,6 +9,10 @@ import { createJobEligibilityCriteriaRecord } from "./helpers/eligibilityCriteri
 import type { JobEligibilityCriteriaInput } from "../jobs.validator";
 import type { JobSubmissionRequirementsInput } from "../jobs.validator";
 import { createJobSubmissionRequirementsRecord } from "./helpers/submissionRequirements";
+import { createJobRequirementRecord } from "./helpers/jobRequirements";
+import { getRole } from "../logic/logic";
+import { processJobRequirements } from "../logic/logic";
+import type { JobRequirementsInput } from "../jobs.validator";
 
 export async function createJob(
   userId: string,
@@ -16,12 +20,13 @@ export async function createJob(
   jobData: CreateJobInput,
   eligibilityCriteriaData: JobEligibilityCriteriaInput,
   submissionRequirementsData: JobSubmissionRequirementsInput,
+  requirements: JobRequirementsInput,
 ) {
   return withTransaction(async (client) => {
     const membership = await getActiveMembership(userId, orgId, client);
     assertMinimumRole(membership.role, "RECRUITER");
 
-    const jobId = await createJobRecord(membership.id, orgId, jobData, client);
+    const {jobId, roleCategoryId} = await createJobRecord(membership.id, orgId, jobData, client);
     const eligibilityCriteriaId = await createJobEligibilityCriteriaRecord(
       eligibilityCriteriaData,
       jobId,
@@ -33,5 +38,12 @@ export async function createJob(
         jobId,
         client,
       );
+      const role = await getRole(roleCategoryId);
+      const weightedRequirements = processJobRequirements(role, requirements )
+      const jobRequirementsId = await createJobRequirementRecord(
+        weightedRequirements,
+        jobId,
+        client,
+      )
   });
 }
