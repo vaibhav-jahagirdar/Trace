@@ -128,67 +128,48 @@ export const submissionRequirementsSchema = z.object({
   zip_upload_allowed:
     z.boolean(),
 });
-const technologyRequirementSchema =
-  z.object({
-    requirement_type: z.literal(
-      "TECHNOLOGY"
-    ),
+const technologyRequirementSchema = z.object({
+  requirement_type: z.literal("TECHNOLOGY"),
 
-    technology_id: z.uuid(),
+  technology_id: z.uuid(),
 
-    priority_type: z.enum([
-      "MANDATORY",
-      "PREFERRED",
-      "BONUS",
-    ]),
+  priority_type: z.enum([
+    "MANDATORY",
+    "PREFERRED",
+    "BONUS",
+  ]),
+});
 
-    weight: z
-      .number()
-      .int()
-      .positive(),
-  });
+const conceptRequirementSchema = z.object({
+  requirement_type: z.literal("CONCEPT"),
 
-const conceptRequirementSchema =
-  z.object({
-    requirement_type: z.literal(
-      "CONCEPT"
-    ),
+  concept_id: z.uuid(),
 
-    concept_id: z.uuid(),
+  priority_type: z.enum([
+    "MANDATORY",
+    "PREFERRED",
+    "BONUS",
+  ]),
+});
 
-    priority_type: z.enum([
-      "MANDATORY",
-      "PREFERRED",
-      "BONUS",
-    ]),
+export const requirementSchema = z.discriminatedUnion(
+  "requirement_type",
+  [
+    technologyRequirementSchema,
+    conceptRequirementSchema,
+  ]
+);
 
-    weight: z
-      .number()
-      .int()
-      .positive(),
-  });
+export const requirementsSchema = z.array(
+  requirementSchema
+);
+export type JobRequirementInput = z.infer<
+  typeof requirementSchema
+>;
 
-export const requirementSchema =
-  z.discriminatedUnion(
-    "requirement_type",
-    [
-      technologyRequirementSchema,
-      conceptRequirementSchema,
-    ]
-  );
-
-export const requirementsSchema =
-  z.array(requirementSchema);
-
-export type JobRequirementInput =
-  z.infer<
-    typeof requirementSchema
-  >;
-
-export type JobRequirementsInput =
-  z.infer<
-    typeof requirementsSchema
-  >;
+export type JobRequirementsInput = z.infer<
+  typeof requirementsSchema
+>;
 export const createJobSchema = z.object({
   organization_id: z.uuid(),
 
