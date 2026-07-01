@@ -3,15 +3,8 @@ import { ValidationError, UnauthorizedError } from "./errorHandler";
 import { OrgRole } from "../modules/organizations/orgs.types";
 import { getDb } from "../config/db";
 import { ForbiddenError } from "./errorHandler";
+import { roleHierarchy } from "../helpers/membershipCheck";
 
-export const roleHierarchy = {
-  VIEWER: 0,
-  INTERVIEWER: 1,
-  HIRING_MANAGER: 2,
-  RECRUITER: 3,
-  RECRUITING_ADMIN: 4,
-  ORG_OWNER: 5,
-} as const;
 
 export type OrgRoleHierarchy = keyof typeof roleHierarchy;
 
