@@ -1,6 +1,6 @@
 import { PoolClient } from "pg";
 import { AppError } from "../../../../middleware/errorHandler";
-import type { WeightedJobRequirementInput } from "../../logic/logic";
+import type { WeightedJobRequirementInput } from "../../logic/requirements";
 
 export async function createJobRequirementRecord(
   requirements: WeightedJobRequirementInput[],

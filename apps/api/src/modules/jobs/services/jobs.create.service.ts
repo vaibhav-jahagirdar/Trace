@@ -10,9 +10,12 @@ import type { JobEligibilityCriteriaInput } from "../jobs.validator";
 import type { JobSubmissionRequirementsInput } from "../jobs.validator";
 import { createJobSubmissionRequirementsRecord } from "./helpers/submissionRequirements";
 import { createJobRequirementRecord } from "./helpers/jobRequirements";
-import { getRole } from "../logic/logic";
-import { processJobRequirements } from "../logic/logic";
+import { getRole } from "../logic/requirements";
+import { processJobRequirements } from "../logic/requirements";
 import type { JobRequirementsInput } from "../jobs.validator";
+import { JobEvaluationPrioritiesInput } from "../jobs.validator";
+import { processEvaluationPriorities } from "../logic/evaluation";
+import { createJobEvaluationPriorityRecords } from "./helpers/evaluation";
 
 export async function createJob(
   userId: string,
@@ -21,6 +24,8 @@ export async function createJob(
   eligibilityCriteriaData: JobEligibilityCriteriaInput,
   submissionRequirementsData: JobSubmissionRequirementsInput,
   requirements: JobRequirementsInput,
+  evaluationPriorities: JobEvaluationPrioritiesInput,
+
 ) {
   return withTransaction(async (client) => {
     const membership = await getActiveMembership(userId, orgId, client);
@@ -45,5 +50,7 @@ export async function createJob(
         jobId,
         client,
       )
+      const evaluationRequirements = processEvaluationPriorities(role, evaluationPriorities)
+      const evaluationPrioritiesId = await createJobEvaluationPriorityRecords(evaluationPriorities, jobId, client)
   });
 }
