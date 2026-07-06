@@ -106,6 +106,34 @@ export const eligibilitySchema = z
       });
     }
   });
+  export const evaluationPrioritySchema =
+  z.object({
+    evaluation_dimension_id: z.uuid(),
+
+    weight: z
+      .number()
+      .int()
+      .min(1)
+      .max(100),
+  });
+
+export const evaluationPrioritiesSchema =
+  z.array(evaluationPrioritySchema);
+
+export type JobEvaluationPriorityInput =
+  z.infer<typeof evaluationPrioritySchema>;
+
+export type JobEvaluationPrioritiesInput =
+  z.infer<typeof evaluationPrioritiesSchema>;
+
+
+export type JobSubmissionRequirementsInput =
+  z.infer<typeof submissionRequirementsSchema>;
+
+export type CreateJobInput =
+  z.infer<typeof createJobSchema>;
+
+  export type JobEligibilityCriteriaInput =  z.infer<typeof eligibilitySchema>
 export const submissionRequirementsSchema = z.object({
   resume_required: z.boolean(),
 
@@ -230,14 +258,6 @@ export const createJobSchema = z.object({
     .optional(),
 
   eligibility: eligibilitySchema,
-  submission_requirements: submissionRequirementsSchema
+  submission_requirements: submissionRequirementsSchema,
+  evaluation_priorities: evaluationPrioritiesSchema,
 });
-
-
-export type JobSubmissionRequirementsInput =
-  z.infer<typeof submissionRequirementsSchema>;
-
-export type CreateJobInput =
-  z.infer<typeof createJobSchema>;
-
-  export type JobEligibilityCriteriaInput =  z.infer<typeof eligibilitySchema>
