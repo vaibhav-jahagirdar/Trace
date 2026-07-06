@@ -150,6 +150,14 @@ export type JobSubmissionRequirementsInput =
 export type CreateJobInput =
   z.infer<typeof createJobSchema>;
 
+  export const successSignalSchema = z.object({
+    job_id: z.string().uuid(),
+    success_signal_id : z.string().uuid(),
+    weight : z.number().int().min(1).max(100),
+  })
+ export const successSignalsSchema = z.array(successSignalSchema)
+ export type JobSuccessSignalInput = z.infer<typeof successSignalSchema>
+ export type JobSuccessSignalsInput = z.infer<typeof successSignalsSchema>
   export type JobEligibilityCriteriaInput =  z.infer<typeof eligibilitySchema>
 export const submissionRequirementsSchema = z.object({
   resume_required: z.boolean(),

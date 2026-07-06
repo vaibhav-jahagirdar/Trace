@@ -4,7 +4,7 @@ import {
   getActiveMembership,
 } from "../../../helpers/membershipCheck";
 import { createJobRecord } from "./helpers/createJobRecords";
-import type { CreateJobInput } from "../jobs.validator";
+import type { CreateJobInput, JobSuccessSignalsInput } from "../jobs.validator";
 import { createJobEligibilityCriteriaRecord } from "./helpers/eligibilityCriteria";
 import type { JobEligibilityCriteriaInput } from "../jobs.validator";
 import type { JobSubmissionRequirementsInput } from "../jobs.validator";
@@ -19,6 +19,8 @@ import { createJobEvaluationPriorityRecords } from "./helpers/evaluationRecord";
 import { JobEvidencePrioritiesInput } from "../jobs.validator";
 import { processEvidencePriorities } from "../logic/evidence";
 import { createJobEvidencePriorityRecords } from "./helpers/evidenceRecord";
+import { processSuccessSignals } from "../logic/success";
+import { createSuccessSignalRecord } from "./helpers/successRecord";
 
 export async function createJob(
   userId: string,
@@ -29,6 +31,8 @@ export async function createJob(
   requirements: JobRequirementsInput,
   evaluationPriorities: JobEvaluationPrioritiesInput,
   evidencePriorities: JobEvidencePrioritiesInput,
+  successSignals : JobSuccessSignalsInput
+
 
 ) {
   return withTransaction(async (client) => {
@@ -58,6 +62,8 @@ export async function createJob(
       const evaluationPrioritiesId = await createJobEvaluationPriorityRecords(evaluationPriorities, jobId, client)
       const evidenceRequirements = processEvidencePriorities(role, evidencePriorities)
       const evidencePrioritiesId = await createJobEvidencePriorityRecords(evidencePriorities, jobId, client)
+      const successSignalRequirements = processSuccessSignals(role, successSignals)
+      const successSignalIds = await createSuccessSignalRecord(jobId, successSignals, client)
   });
 
 }
