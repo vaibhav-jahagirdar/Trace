@@ -15,7 +15,10 @@ import { processJobRequirements } from "../logic/requirements";
 import type { JobRequirementsInput } from "../jobs.validator";
 import { JobEvaluationPrioritiesInput } from "../jobs.validator";
 import { processEvaluationPriorities } from "../logic/evaluation";
-import { createJobEvaluationPriorityRecords } from "./helpers/evaluation";
+import { createJobEvaluationPriorityRecords } from "./helpers/evaluationRecord";
+import { JobEvidencePrioritiesInput } from "../jobs.validator";
+import { processEvidencePriorities } from "../logic/evidence";
+import { createJobEvidencePriorityRecords } from "./helpers/evidenceRecord";
 
 export async function createJob(
   userId: string,
@@ -25,6 +28,7 @@ export async function createJob(
   submissionRequirementsData: JobSubmissionRequirementsInput,
   requirements: JobRequirementsInput,
   evaluationPriorities: JobEvaluationPrioritiesInput,
+  evidencePriorities: JobEvidencePrioritiesInput,
 
 ) {
   return withTransaction(async (client) => {
@@ -52,5 +56,8 @@ export async function createJob(
       )
       const evaluationRequirements = processEvaluationPriorities(role, evaluationPriorities)
       const evaluationPrioritiesId = await createJobEvaluationPriorityRecords(evaluationPriorities, jobId, client)
+      const evidenceRequirements = processEvidencePriorities(role, evidencePriorities)
+      const evidencePrioritiesId = await createJobEvidencePriorityRecords(evidencePriorities, jobId, client)
   });
+
 }

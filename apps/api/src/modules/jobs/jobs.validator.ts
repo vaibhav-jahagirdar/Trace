@@ -116,6 +116,16 @@ export const eligibilitySchema = z
       .min(1)
       .max(100),
   });
+    export const evidencePrioritySchema =
+  z.object({
+    evidence_category_id: z.uuid(),
+
+    weight: z
+      .number()
+      .int()
+      .min(1)
+      .max(100),
+  });
 
 export const evaluationPrioritiesSchema =
   z.array(evaluationPrioritySchema);
@@ -125,7 +135,14 @@ export type JobEvaluationPriorityInput =
 
 export type JobEvaluationPrioritiesInput =
   z.infer<typeof evaluationPrioritiesSchema>;
+export const evidencePrioritiesSchema =
+  z.array(evidencePrioritySchema);
 
+export type JobEvidencePriorityInput =
+  z.infer<typeof evidencePrioritySchema>;
+
+export type JobEvidencePrioritiesInput =
+  z.infer<typeof evidencePrioritiesSchema>;
 
 export type JobSubmissionRequirementsInput =
   z.infer<typeof submissionRequirementsSchema>;
@@ -260,4 +277,5 @@ export const createJobSchema = z.object({
   eligibility: eligibilitySchema,
   submission_requirements: submissionRequirementsSchema,
   evaluation_priorities: evaluationPrioritiesSchema,
+  evidence_priorities: evidencePrioritiesSchema,
 });

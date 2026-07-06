@@ -7,7 +7,7 @@ export const PRIORITY_TYPES = {
 
 export type PriorityType = keyof typeof PRIORITY_TYPES;
 
-export const JOB_ROLE_EVALUATION_POLICY = {
+export const JOB_ROLE_POLICY = {
   INTERN: {
     minDimensions: 3,
     maxDimensions: 5,
@@ -50,5 +50,5 @@ export const EVALUATION_WEIGHT_POLICY = {
 } as const;
 
 export type EvaluationWeightPolicy = typeof EVALUATION_WEIGHT_POLICY;
-export type JobRoleEvaluationPolicy = typeof JOB_ROLE_EVALUATION_POLICY;
+export type JobRoleEvaluationPolicy = typeof JOB_ROLE_POLICY;
 

@@ -1,6 +1,6 @@
 import {
   EVALUATION_WEIGHT_POLICY,
-  JOB_ROLE_EVALUATION_POLICY,
+  JOB_ROLE_POLICY,
 } from "../constants/scoring";
 import { getDb } from "../../../config/db";
 import { ValidationError } from "../../../middleware/errorHandler";
@@ -19,7 +19,7 @@ export function processEvaluationPriorities(
       "At least one evaluation priority must be provided.",
     );
   }
-  const evaluationPolicy = JOB_ROLE_EVALUATION_POLICY[role];
+  const evaluationPolicy = JOB_ROLE_POLICY[role];
   const minDimensions = evaluationPolicy.minDimensions;
   const maxDimensions = evaluationPolicy.maxDimensions;
 
