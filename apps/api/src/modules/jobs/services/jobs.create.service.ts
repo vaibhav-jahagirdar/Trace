@@ -31,39 +31,56 @@ export async function createJob(
   requirements: JobRequirementsInput,
   evaluationPriorities: JobEvaluationPrioritiesInput,
   evidencePriorities: JobEvidencePrioritiesInput,
-  successSignals : JobSuccessSignalsInput
-
-
+  successSignals: JobSuccessSignalsInput,
 ) {
   return withTransaction(async (client) => {
     const membership = await getActiveMembership(userId, orgId, client);
+
     assertMinimumRole(membership.role, "RECRUITER");
 
-    const {jobId, roleCategoryId} = await createJobRecord(membership.id, orgId, jobData, client);
-    const eligibilityCriteriaId = await createJobEligibilityCriteriaRecord(
+    const { jobId, roleCategoryId } = await createJobRecord(
+      membership.id,
+      orgId,
+      jobData,
+      client,
+    );
+
+    await createJobEligibilityCriteriaRecord(
       eligibilityCriteriaData,
       jobId,
       client,
     );
-    const submissionRequirementsId =
-      await createJobSubmissionRequirementsRecord(
-        submissionRequirementsData,
-        jobId,
-        client,
-      );
-      const role = await getRole(roleCategoryId);
-      const weightedRequirements = processJobRequirements(role, requirements )
-      const jobRequirementsId = await createJobRequirementRecord(
-        weightedRequirements,
-        jobId,
-        client,
-      )
-      const evaluationRequirements = processEvaluationPriorities(role, evaluationPriorities)
-      const evaluationPrioritiesId = await createJobEvaluationPriorityRecords(evaluationPriorities, jobId, client)
-      const evidenceRequirements = processEvidencePriorities(role, evidencePriorities)
-      const evidencePrioritiesId = await createJobEvidencePriorityRecords(evidencePriorities, jobId, client)
-      const successSignalRequirements = processSuccessSignals(role, successSignals)
-      const successSignalIds = await createSuccessSignalRecord(jobId, successSignals, client)
-  });
 
+    await createJobSubmissionRequirementsRecord(
+      submissionRequirementsData,
+      jobId,
+      client,
+    );
+
+    const role = await getRole(roleCategoryId);
+
+    const weightedRequirements = processJobRequirements(role, requirements);
+
+    await createJobRequirementRecord(weightedRequirements, jobId, client);
+
+    processEvaluationPriorities(role, evaluationPriorities);
+
+    await createJobEvaluationPriorityRecords(
+      evaluationPriorities,
+      jobId,
+      client,
+    );
+
+    processEvidencePriorities(role, evidencePriorities);
+
+    await createJobEvidencePriorityRecords(evidencePriorities, jobId, client);
+
+    processSuccessSignals(role, successSignals);
+
+    await createSuccessSignalRecord(jobId, successSignals, client);
+
+    return {
+      jobId,
+    };
+  });
 }
