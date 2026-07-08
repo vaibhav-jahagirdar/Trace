@@ -25,6 +25,16 @@ export class NotFoundError extends AppError {
     );
   }
 }
+export class BadRequestError extends AppError {
+  constructor(message = "Bad Request") {
+    super(
+      message,
+      400,
+      "BAD_REQUEST"
+    );
+  }
+}
+
 
 export class UnauthorizedError extends AppError {
   constructor(message = "Unauthorized") {
