@@ -1,5 +1,5 @@
 
-import type { CreateJobInput } from "../../jobs.validator";
+import type { CreateJobInput } from "../../validators/create/jobs.validator";
 import { PoolClient } from "pg";
 import { AppError } from "../../../../middleware/errorHandler";
 

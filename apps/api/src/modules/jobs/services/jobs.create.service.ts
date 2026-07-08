@@ -4,19 +4,19 @@ import {
   getActiveMembership,
 } from "../../../helpers/membershipCheck";
 import { createJobRecord } from "./helpers/createJobRecords";
-import type { CreateJobInput, JobSuccessSignalsInput } from "../jobs.validator";
+import type { CreateJobInput, JobSuccessSignalsInput } from "../validators/create/jobs.validator";
 import { createJobEligibilityCriteriaRecord } from "./helpers/eligibilityCriteria";
-import type { JobEligibilityCriteriaInput } from "../jobs.validator";
-import type { JobSubmissionRequirementsInput } from "../jobs.validator";
+import type { JobEligibilityCriteriaInput } from "../validators/create/jobs.validator";
+import type { JobSubmissionRequirementsInput } from "../validators/create/jobs.validator";
 import { createJobSubmissionRequirementsRecord } from "./helpers/submissionRequirements";
 import { createJobRequirementRecord } from "./helpers/jobRequirements";
 import { getRole } from "../logic/requirements";
 import { processJobRequirements } from "../logic/requirements";
-import type { JobRequirementsInput } from "../jobs.validator";
-import { JobEvaluationPrioritiesInput } from "../jobs.validator";
+import type { JobRequirementsInput } from "../validators/create/jobs.validator";
+import { JobEvaluationPrioritiesInput } from "../validators/create/jobs.validator";
 import { processEvaluationPriorities } from "../logic/evaluation";
 import { createJobEvaluationPriorityRecords } from "./helpers/evaluationRecord";
-import { JobEvidencePrioritiesInput } from "../jobs.validator";
+import { JobEvidencePrioritiesInput } from "../validators/create/jobs.validator";
 import { processEvidencePriorities } from "../logic/evidence";
 import { createJobEvidencePriorityRecords } from "./helpers/evidenceRecord";
 import { processSuccessSignals } from "../logic/success";

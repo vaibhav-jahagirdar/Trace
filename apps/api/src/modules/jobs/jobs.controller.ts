@@ -6,7 +6,7 @@ import type {
 
 import { createJob } from "./services/jobs.create.service";
 import { publishJob } from "./services/[jobId]/jobs.publish.service";
-
+import { getJob } from "./services/[jobId]/job.get.service";
 export async function createJobController(
   req: Request,
   res: Response,
@@ -75,6 +75,25 @@ export async function publishJobController(
       orgId,
       userId,
     );
+
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+export async function getJobController(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const jobId = req.params.jobId;
+
+    if (typeof jobId !== "string") {
+      return res.status(400).json({ message: "Invalid jobId" });
+    }
+
+    const result = await getJob(jobId);
 
     return res.status(200).json(result);
   } catch (error) {

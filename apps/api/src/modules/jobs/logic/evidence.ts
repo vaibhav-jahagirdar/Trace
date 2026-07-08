@@ -2,7 +2,7 @@ import { EvaluationWeightPolicy } from "../constants/scoring";
 import { JobRole } from "../constants/jobPolicy";
 import { JOB_ROLE_POLICY } from "../constants/scoring";
 import { ValidationError } from "../../../middleware/errorHandler";
-import type { JobEvidencePrioritiesInput } from "../jobs.validator";
+import type { JobEvidencePrioritiesInput } from "../validators/create/jobs.validator";
 import { EVALUATION_WEIGHT_POLICY } from "../constants/scoring";
 
 

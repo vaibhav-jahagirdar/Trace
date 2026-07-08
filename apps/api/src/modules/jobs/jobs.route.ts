@@ -5,6 +5,7 @@ import { validateParams } from "../../middleware/validateParams";
 import {
   createJobController,
   publishJobController,
+  getJobController
 } from "./jobs.controller";
 
 const router = Router({ mergeParams: true });
@@ -24,5 +25,9 @@ router.post(
     validateParams,
   publishJobController,
 );
-
+router.get(
+  "/:jobId",
+  validateParams,
+  getJobController,
+)
 export default router;

@@ -1,5 +1,5 @@
 import { AppError, ValidationError } from "../../../../middleware/errorHandler";
-import type { JobEvidencePrioritiesInput } from "../../jobs.validator";
+import type { JobEvidencePrioritiesInput } from "../../validators/create/jobs.validator";
 import { PoolClient } from "pg";
 
 export async function createJobEvidencePriorityRecords(

@@ -3,7 +3,7 @@ import { PoolClient } from "pg";
 import type {
   JobEvaluationPrioritiesInput,
   JobEvaluationPriorityInput,
-} from "../../jobs.validator";
+} from "../../validators/create/jobs.validator";
 
 export async function createJobEvaluationPriorityRecords(
   evaluationPriorities: JobEvaluationPrioritiesInput,

@@ -4,7 +4,7 @@ import {
   JobRole,
 } from "../constants/jobPolicy";
 import { EVALUATION_WEIGHT_POLICY } from "../constants/scoring";
-import { JobSuccessSignalsInput } from "../jobs.validator";
+import { JobSuccessSignalsInput } from "../validators/create/jobs.validator";
 
 export function processSuccessSignals(
   role: JobRole,

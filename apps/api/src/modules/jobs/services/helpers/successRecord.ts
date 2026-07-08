@@ -1,5 +1,5 @@
 import { PoolClient } from "pg";
-import { JobSuccessSignalsInput } from "../../jobs.validator";
+import { JobSuccessSignalsInput } from "../../validators/create/jobs.validator";
 import { AppError } from "../../../../middleware/errorHandler";
 
 export async function createSuccessSignalRecord(

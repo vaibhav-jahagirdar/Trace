@@ -4,7 +4,7 @@ import { REQUIREMENT_BUCKETS } from "../constants/jobPolicy";
 import type {
   JobRequirementInput,
   JobRequirementsInput,
-} from "../jobs.validator";
+} from "../validators/create/jobs.validator";
 import {
   NotFoundError,
   ValidationError,

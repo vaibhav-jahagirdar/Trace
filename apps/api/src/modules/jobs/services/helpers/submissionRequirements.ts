@@ -1,4 +1,4 @@
-import type { JobSubmissionRequirementsInput } from "../../jobs.validator";
+import type { JobSubmissionRequirementsInput } from "../../validators/create/jobs.validator";
 import { AppError } from "../../../../middleware/errorHandler";
 import { PoolClient } from "pg";
 

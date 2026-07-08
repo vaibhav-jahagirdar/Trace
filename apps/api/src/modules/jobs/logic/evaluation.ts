@@ -4,7 +4,7 @@ import {
 } from "../constants/scoring";
 import { getDb } from "../../../config/db";
 import { ValidationError } from "../../../middleware/errorHandler";
-import type { JobEvaluationPrioritiesInput } from "../jobs.validator";
+import type { JobEvaluationPrioritiesInput } from "../validators/create/jobs.validator";
 import { JobRole } from "../constants/jobPolicy";
 
 export function processEvaluationPriorities(
