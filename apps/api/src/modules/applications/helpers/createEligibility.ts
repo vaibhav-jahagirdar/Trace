@@ -14,13 +14,17 @@ export async function createEligibilityRecord(
     willingToRelocate,
     requiresVisaSponsorship,
     workAuthorized,
+    currentCountry,
+    currentState,
+    currentCity
   } = eligibilityData;
   const eligibilityRecordResult = await client.query(
     `INSERT INTO application_eligibility
         (job_application_id, years_of_professional_experience,
-         highest_education_level, notice_period_days, willing_to_relocate, 
-        requires_visa_sponsorship, work_authorized)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         highest_education_level, notice_period_days, willing_to_relocate_for_this_job, 
+        requires_visa_sponsorship, work_authorized,
+        current_country, current_state, current_city)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING id`,
     [
       applicationId,
@@ -30,6 +34,9 @@ export async function createEligibilityRecord(
       willingToRelocate,
       requiresVisaSponsorship,
       workAuthorized,
+      currentCountry,
+      currentState,
+      currentCity
     ],
   );
   if (eligibilityRecordResult.rowCount === 0) {

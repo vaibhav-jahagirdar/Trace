@@ -36,22 +36,38 @@ export const applyJobBodySchema = z
 
     phone: z.string().trim().max(20).optional(),
 
-    eligibility: z
-      .object({
-        yearsOfProfessionalExperience: z.coerce.number().min(0).max(60),
+   eligibility: z
+  .object({
+    yearsOfProfessionalExperience: z.coerce.number().min(0).max(60),
 
-        highestEducationLevel: educationLevelSchema,
+    highestEducationLevel: educationLevelSchema,
 
-        noticePeriodDays: z.coerce.number().int().min(0).max(365),
+    noticePeriodDays: z.coerce.number().int().min(0).max(365),
 
-        willingToRelocate: z.coerce.boolean(),
+    willingToRelocate: z.coerce.boolean(),
 
-        requiresVisaSponsorship: z.coerce.boolean(),
+    requiresVisaSponsorship: z.coerce.boolean(),
 
-        workAuthorized: z.coerce.boolean(),
-      })
-      .strict(),
+    workAuthorized: z.coerce.boolean(),
 
+    currentCountry: z.string().trim().min(1).max(100),
+
+    currentState: z
+      .string()
+      .trim()
+      .min(1)
+      .max(100)
+      .optional(),
+
+    currentCity: z
+      .string()
+      .trim()
+      .min(1)
+      .max(100)
+      .optional(),
+  })
+  .strict(),
+  
     submission: z
       .object({
         githubUrl: z.url().trim().optional(),

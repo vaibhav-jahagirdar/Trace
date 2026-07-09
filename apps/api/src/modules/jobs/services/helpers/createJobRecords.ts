@@ -20,6 +20,7 @@ export async function createJobRecord(
     city,
     open_positions,
     description,
+    remote_scope
   } = jobData;
 
   const result = await client.query(
@@ -37,10 +38,12 @@ export async function createJobRecord(
       city,
       open_positions,
       description,
-      status
+      status,
+      remote_scope
+
     )
     VALUES (
-      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'DRAFT'
+      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'DRAFT',$13
     )
     RETURNING id, role_category_id
     `,
@@ -57,6 +60,7 @@ export async function createJobRecord(
       city ?? null,
       open_positions,
       description ?? null,
+      remote_scope
     ]
   );
 

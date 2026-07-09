@@ -38,7 +38,7 @@ export const eligibilitySchema = z
       .int()
       .min(0),
 
-    relocation_supported:
+    relocation_assistance:
       z.boolean(),
 
     visa_sponsorship:
@@ -251,6 +251,12 @@ export const createJobSchema = z.object({
     "ONSITE",
     "HYBRID",
     "REMOTE",
+  ]),
+  remote_scope: z.enum([
+    "NONE",
+    "GLOBAL",
+    "COUNTRY",
+    "REGIONAL"
   ]),
 
   country: z

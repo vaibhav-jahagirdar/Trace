@@ -27,7 +27,7 @@ export async function getPublishedJob(
         j_e.experience_min_years,
         j_e.experience_max_years,
         j_e.notice_period_max_days,
-        j_e.relocation_supported,
+        j_e.relocation_assistance,
         j_e.visa_sponsorship,
         j_e.work_authorization_required,
         j_e.minimum_education_level,

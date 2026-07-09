@@ -17,6 +17,7 @@ import {
   insertApplicationConcepts,
   insertApplicationTechnologies,
 } from "../../helpers/createTechAndConcepts";
+import { evaluateHardGate } from "../logic/evaluation";
 
 export async function applyJob(
   file: Express.Multer.File,
@@ -77,8 +78,66 @@ export async function applyJob(
       applicationData.technologies,
     );
 
-    return {
+    const hardGateResult = evaluateHardGate(jobResult, eligibilityData);
+
+if (!hardGateResult.passed) {
+  await client.query(
+    `UPDATE job_applications
+        SET status = 'REJECTED',
+            rejection_source = 'SYSTEM',
+            rejection_reason = $1,
+            rejected_at = NOW()
+      WHERE id = $2
+        AND job_id = $3
+        AND status <> 'REJECTED'`,
+    [
+      hardGateResult.primaryRejectionCode,
       applicationId,
-    };
+      jobId,
+    ],
+  );
+
+  return {
+    applicationId,
+    passed: false,
+    taskId: null,
+    taskType: null,
+  };
+}
+
+
+
+const taskId = randomUUID();
+const taskType = "RESUME_PARSE";
+
+await client.query(
+  `INSERT INTO application_tasks (
+      id,
+      job_application_id,
+      task_type
+    )
+    VALUES ($1, $2, $3)`,
+  [
+    taskId,
+    applicationId,
+    taskType,
+  ],
+);
+
+await client.query(
+  `UPDATE job_applications
+      SET status = 'QUEUED'
+    WHERE id = $1`,
+  [applicationId],
+);
+
+return {
+  applicationId,
+  passed: true,
+  taskId,
+  taskType,
+};
+    
+    
   });
 }
