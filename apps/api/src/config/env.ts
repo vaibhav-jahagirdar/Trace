@@ -25,6 +25,13 @@ export const env = {
   R2_BUCKET: process.env.R2_BUCKET ?? "",
   R2_ENDPOINT: process.env.R2_ENDPOINT ?? "",
   R2_REGION: process.env.R2_REGION ?? "auto",
+
+  REDIS_HOST: process.env.REDIS_HOST ?? "localhost",
+  REDIS_PORT: Number(process.env.REDIS_PORT ?? 6379),
+  REDIS_PASSWORD: process.env.REDIS_PASSWORD ?? "",
+  REDIS_DB: Number(process.env.REDIS_DB ?? 0),
+
+  BULLMQ_RESUME_QUEUE: process.env.BULLMQ_RESUME_QUEUE ?? "resume-analysis",
 };
 
 export default env;
