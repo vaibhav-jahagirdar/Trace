@@ -1,18 +1,21 @@
-
-
 from app.clients.r2 import download_resume
-from app.parsers.pdf import extract_text_from_pdf
+from app.cleaners.text import clean_text
+from app.parsers.pdf import parse_resume_pdf
 from app.schemas.resume import ResumeAnalysisRequest
 
 
-async def analyze_resume(request: ResumeAnalysisRequest) -> None:
-    print("Starting analysis...")
-
+async def analyze_resume(request: ResumeAnalysisRequest):
     pdf_bytes = download_resume(request.resumeObjectKey)
-    print("Downloaded bytes:", len(pdf_bytes))
 
-    raw_text = extract_text_from_pdf(pdf_bytes)
-    print("Extracted chars:", len(raw_text))
+    parsed = parse_resume_pdf(pdf_bytes)
 
-    print("Text preview:")
-    print(repr(raw_text[:500]))
+    cleaned_text = clean_text(parsed.text)
+
+    job = request.analysisContext.job
+    candidate = request.analysisContext.candidate
+
+    print(job)
+    print(candidate)
+    print(cleaned_text[:500])
+
+   
