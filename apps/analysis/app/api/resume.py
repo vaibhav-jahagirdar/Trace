@@ -1,23 +1,19 @@
 from fastapi import APIRouter
 
-from app.schemas.resume import (
-    ResumeAnalysisRequest,
-    ResumeAnalysisResponse,
-)
+from app.schemas.final_report import ResumeEvaluationReport
+from app.schemas.resume import ResumeAnalysisRequest
 from app.services.resume import analyze_resume
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/resume",
+    tags=["Resume Analysis"],
+)
 
 
 @router.post(
-    "/resume/analyze",
-    response_model=ResumeAnalysisResponse,
+    "/analyze",
 )
 async def analyze_resume_endpoint(
     request: ResumeAnalysisRequest,
-):
-    await analyze_resume(request)
-
-    return ResumeAnalysisResponse(
-        success=True,
-    )
+) -> ResumeEvaluationReport:
+    return await analyze_resume(request)
