@@ -5,12 +5,12 @@ from app.llm.client import client
 
 
 async def generate(prompt: str) -> str:
-    interaction = client.interactions.create(
+    response = await client.aio.models.generate_content(
         model=settings.GEMINI_MODEL,
-        input=prompt,
+        contents=prompt,
         config=types.GenerateContentConfig(
             temperature=0.2,
         ),
     )
 
-    return interaction.output_text
+    return response.text

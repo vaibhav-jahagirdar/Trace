@@ -1,0 +1,1318 @@
+                           Table "public.application_concepts"
+       Column       |           Type           | Collation | Nullable |      Default      
+--------------------+--------------------------+-----------+----------+-------------------
+ id                 | uuid                     |           | not null | gen_random_uuid()
+ job_application_id | uuid                     |           | not null | 
+ concept_id         | uuid                     |           | not null | 
+ created_at         | timestamp with time zone |           | not null | now()
+Indexes:
+    "application_concepts_pkey" PRIMARY KEY, btree (id)
+    "application_concepts_unique" UNIQUE CONSTRAINT, btree (job_application_id, concept_id)
+    "idx_application_concepts_application" btree (job_application_id)
+    "idx_application_concepts_concept" btree (concept_id)
+Foreign-key constraints:
+    "application_concepts_concept_fkey" FOREIGN KEY (concept_id) REFERENCES concepts(id) ON DELETE RESTRICT
+    "application_concepts_job_application_fkey" FOREIGN KEY (job_application_id) REFERENCES job_applications(id) ON DELETE CASCADE
+
+Index "public.application_concepts_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.application_concepts"
+
+      Index "public.application_concepts_unique"
+       Column       | Type | Key? |     Definition     
+--------------------+------+------+--------------------
+ job_application_id | uuid | yes  | job_application_id
+ concept_id         | uuid | yes  | concept_id
+unique, btree, for table "public.application_concepts"
+
+                                     Table "public.application_eligibility"
+              Column              |           Type           | Collation | Nullable |          Default          
+----------------------------------+--------------------------+-----------+----------+---------------------------
+ id                               | uuid                     |           | not null | gen_random_uuid()
+ job_application_id               | uuid                     |           | not null | 
+ years_of_professional_experience | numeric(4,1)             |           | not null | 
+ highest_education_level          | character varying(20)    |           | not null | 'NONE'::character varying
+ notice_period_days               | integer                  |           | not null | 
+ willing_to_relocate_for_this_job | boolean                  |           | not null | false
+ requires_visa_sponsorship        | boolean                  |           | not null | false
+ work_authorized                  | boolean                  |           | not null | true
+ created_at                       | timestamp with time zone |           | not null | now()
+ updated_at                       | timestamp with time zone |           | not null | now()
+ current_country                  | character varying(100)   |           | not null | 
+ current_state                    | character varying(100)   |           |          | 
+ current_city                     | character varying(100)   |           |          | 
+Indexes:
+    "application_eligibility_pkey" PRIMARY KEY, btree (id)
+    "application_eligibility_job_application_id_key" UNIQUE CONSTRAINT, btree (job_application_id)
+    "idx_application_eligibility_education" btree (highest_education_level)
+    "idx_application_eligibility_experience" btree (years_of_professional_experience)
+    "idx_application_eligibility_notice" btree (notice_period_days)
+Check constraints:
+    "application_eligibility_education_level_check" CHECK (highest_education_level::text = ANY (ARRAY['NONE'::character varying, 'HIGH_SCHOOL'::character varying, 'DIPLOMA'::character varying, 'UNDERGRADUATE'::character varying, 'POSTGRADUATE'::character varying]::text[]))
+    "application_eligibility_experience_check" CHECK (years_of_professional_experience >= 0::numeric)
+    "application_eligibility_notice_check" CHECK (notice_period_days >= 0)
+Foreign-key constraints:
+    "application_eligibility_job_application_fkey" FOREIGN KEY (job_application_id) REFERENCES job_applications(id) ON DELETE CASCADE
+
+Index "public.application_eligibility_job_application_id_key"
+       Column       | Type | Key? |     Definition     
+--------------------+------+------+--------------------
+ job_application_id | uuid | yes  | job_application_id
+unique, btree, for table "public.application_eligibility"
+
+Index "public.application_eligibility_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.application_eligibility"
+
+                              Table "public.application_submissions"
+           Column            |           Type           | Collation | Nullable |      Default      
+-----------------------------+--------------------------+-----------+----------+-------------------
+ id                          | uuid                     |           | not null | gen_random_uuid()
+ job_application_id          | uuid                     |           | not null | 
+ github_url                  | text                     |           |          | 
+ portfolio_url               | text                     |           |          | 
+ linkedin_url                | text                     |           |          | 
+ problem_solving_profile_url | text                     |           |          | 
+ featured_project_name       | character varying(255)   |           |          | 
+ featured_project_url        | text                     |           |          | 
+ project_description         | text                     |           |          | 
+ feature_description         | text                     |           |          | 
+ engineering_highlight       | text                     |           |          | 
+ best_evidence_note          | text                     |           |          | 
+ why_you_are_a_good_fit      | text                     |           |          | 
+ created_at                  | timestamp with time zone |           | not null | now()
+ updated_at                  | timestamp with time zone |           | not null | now()
+ resume_object_key           | text                     |           | not null | 
+ resume_file_name            | character varying(255)   |           | not null | 
+ resume_mime_type            | character varying(100)   |           | not null | 
+ resume_file_size            | integer                  |           | not null | 
+ resume_sha256               | character(64)            |           | not null | 
+Indexes:
+    "application_submissions_pkey" PRIMARY KEY, btree (id)
+    "application_submissions_job_application_id_key" UNIQUE CONSTRAINT, btree (job_application_id)
+    "idx_application_submissions_job_application" btree (job_application_id)
+Foreign-key constraints:
+    "application_submissions_job_application_fkey" FOREIGN KEY (job_application_id) REFERENCES job_applications(id) ON DELETE CASCADE
+
+Index "public.application_submissions_job_application_id_key"
+       Column       | Type | Key? |     Definition     
+--------------------+------+------+--------------------
+ job_application_id | uuid | yes  | job_application_id
+unique, btree, for table "public.application_submissions"
+
+Index "public.application_submissions_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.application_submissions"
+
+                                       Table "public.application_tasks"
+           Column            |           Type           | Collation | Nullable |           Default            
+-----------------------------+--------------------------+-----------+----------+------------------------------
+ id                          | uuid                     |           | not null | gen_random_uuid()
+ job_application_id          | uuid                     |           | not null | 
+ task_type                   | character varying(50)    |           | not null | 
+ status                      | character varying(20)    |           | not null | 'PENDING'::character varying
+ attempt_count               | integer                  |           | not null | 0
+ max_attempts                | integer                  |           | not null | 3
+ started_at                  | timestamp with time zone |           |          | 
+ completed_at                | timestamp with time zone |           |          | 
+ next_retry_at               | timestamp with time zone |           |          | 
+ last_error_code             | character varying(100)   |           |          | 
+ last_error_message          | text                     |           |          | 
+ created_at                  | timestamp with time zone |           | not null | now()
+ updated_at                  | timestamp with time zone |           | not null | now()
+ human_intervention_required | boolean                  |           | not null | false
+Indexes:
+    "application_tasks_pkey" PRIMARY KEY, btree (id)
+    "application_tasks_unique" UNIQUE CONSTRAINT, btree (job_application_id, task_type)
+    "idx_application_tasks_application" btree (job_application_id)
+    "idx_application_tasks_pending" btree (status, next_retry_at)
+    "idx_application_tasks_type" btree (task_type)
+Check constraints:
+    "application_tasks_attempt_check" CHECK (attempt_count >= 0 AND max_attempts > 0 AND attempt_count <= max_attempts)
+    "application_tasks_status_check" CHECK (status::text = ANY (ARRAY['PENDING'::character varying, 'RUNNING'::character varying, 'COMPLETED'::character varying, 'FAILED'::character varying, 'CANCELLED'::character varying]::text[]))
+Foreign-key constraints:
+    "application_tasks_job_application_fkey" FOREIGN KEY (job_application_id) REFERENCES job_applications(id) ON DELETE CASCADE
+
+Index "public.application_tasks_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.application_tasks"
+
+                Index "public.application_tasks_unique"
+       Column       |         Type          | Key? |     Definition     
+--------------------+-----------------------+------+--------------------
+ job_application_id | uuid                  | yes  | job_application_id
+ task_type          | character varying(50) | yes  | task_type
+unique, btree, for table "public.application_tasks"
+
+                         Table "public.application_technologies"
+       Column       |           Type           | Collation | Nullable |      Default      
+--------------------+--------------------------+-----------+----------+-------------------
+ id                 | uuid                     |           | not null | gen_random_uuid()
+ job_application_id | uuid                     |           | not null | 
+ technology_id      | uuid                     |           | not null | 
+ created_at         | timestamp with time zone |           | not null | now()
+Indexes:
+    "application_technologies_pkey" PRIMARY KEY, btree (id)
+    "application_technologies_unique" UNIQUE CONSTRAINT, btree (job_application_id, technology_id)
+    "idx_application_technologies_application" btree (job_application_id)
+    "idx_application_technologies_technology" btree (technology_id)
+Foreign-key constraints:
+    "application_technologies_job_application_fkey" FOREIGN KEY (job_application_id) REFERENCES job_applications(id) ON DELETE CASCADE
+    "application_technologies_technology_fkey" FOREIGN KEY (technology_id) REFERENCES technologies(id) ON DELETE RESTRICT
+
+Index "public.application_technologies_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.application_technologies"
+
+    Index "public.application_technologies_unique"
+       Column       | Type | Key? |     Definition     
+--------------------+------+------+--------------------
+ job_application_id | uuid | yes  | job_application_id
+ technology_id      | uuid | yes  | technology_id
+unique, btree, for table "public.application_technologies"
+
+                                Table "public.auth_accounts"
+        Column         |           Type           | Collation | Nullable |      Default      
+-----------------------+--------------------------+-----------+----------+-------------------
+ id                    | uuid                     |           | not null | gen_random_uuid()
+ user_id               | uuid                     |           | not null | 
+ provider              | character varying(50)    |           | not null | 
+ provider_user_id      | character varying(255)   |           |          | 
+ password_hash         | text                     |           |          | 
+ password_changed_at   | timestamp with time zone |           |          | 
+ failed_login_attempts | integer                  |           | not null | 0
+ locked_until          | timestamp with time zone |           |          | 
+ last_login_at         | timestamp with time zone |           |          | 
+ created_at            | timestamp with time zone |           | not null | now()
+ updated_at            | timestamp with time zone |           | not null | now()
+Indexes:
+    "auth_accounts_pkey" PRIMARY KEY, btree (id)
+    "auth_accounts_provider_unique" UNIQUE CONSTRAINT, btree (provider, provider_user_id)
+    "idx_auth_accounts_provider" btree (provider)
+    "idx_auth_accounts_user_id" btree (user_id)
+Check constraints:
+    "auth_accounts_provider_check" CHECK (provider::text = ANY (ARRAY['PASSWORD'::character varying, 'GOOGLE'::character varying, 'GITHUB'::character varying, 'MICROSOFT'::character varying]::text[]))
+Foreign-key constraints:
+    "auth_accounts_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+
+ Index "public.auth_accounts_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.auth_accounts"
+
+            Index "public.auth_accounts_provider_unique"
+      Column      |          Type          | Key? |    Definition    
+------------------+------------------------+------+------------------
+ provider         | character varying(50)  | yes  | provider
+ provider_user_id | character varying(255) | yes  | provider_user_id
+unique, btree, for table "public.auth_accounts"
+
+                             Table "public.concepts"
+   Column   |           Type           | Collation | Nullable |      Default      
+------------+--------------------------+-----------+----------+-------------------
+ id         | uuid                     |           | not null | gen_random_uuid()
+ name       | citext                   |           | not null | 
+ category   | character varying(100)   |           |          | 
+ created_at | timestamp with time zone |           | not null | now()
+Indexes:
+    "concepts_pkey" PRIMARY KEY, btree (id)
+    "concepts_name_key" UNIQUE CONSTRAINT, btree (name)
+Referenced by:
+    TABLE "application_concepts" CONSTRAINT "application_concepts_concept_fkey" FOREIGN KEY (concept_id) REFERENCES concepts(id) ON DELETE RESTRICT
+    TABLE "job_requirements" CONSTRAINT "job_requirements_concept_id_fkey" FOREIGN KEY (concept_id) REFERENCES concepts(id) ON DELETE RESTRICT
+
+  Index "public.concepts_name_key"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ name   | citext | yes  | name
+unique, btree, for table "public.concepts"
+
+   Index "public.concepts_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.concepts"
+
+                       Table "public.evaluation_dimensions"
+   Column    |           Type           | Collation | Nullable |      Default      
+-------------+--------------------------+-----------+----------+-------------------
+ id          | uuid                     |           | not null | gen_random_uuid()
+ code        | character varying(100)   |           | not null | 
+ name        | character varying(255)   |           | not null | 
+ description | text                     |           |          | 
+ created_at  | timestamp with time zone |           | not null | now()
+Indexes:
+    "evaluation_dimensions_pkey" PRIMARY KEY, btree (id)
+    "evaluation_dimensions_code_key" UNIQUE CONSTRAINT, btree (code)
+Referenced by:
+    TABLE "job_evaluation_priorities" CONSTRAINT "job_evaluation_priorities_evaluation_dimension_id_fkey" FOREIGN KEY (evaluation_dimension_id) REFERENCES evaluation_dimensions(id) ON DELETE RESTRICT
+
+    Index "public.evaluation_dimensions_code_key"
+ Column |          Type          | Key? | Definition 
+--------+------------------------+------+------------
+ code   | character varying(100) | yes  | code
+unique, btree, for table "public.evaluation_dimensions"
+
+Index "public.evaluation_dimensions_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.evaluation_dimensions"
+
+                        Table "public.evidence_categories"
+   Column    |           Type           | Collation | Nullable |      Default      
+-------------+--------------------------+-----------+----------+-------------------
+ id          | uuid                     |           | not null | gen_random_uuid()
+ code        | character varying(100)   |           | not null | 
+ name        | character varying(255)   |           | not null | 
+ description | text                     |           |          | 
+ created_at  | timestamp with time zone |           | not null | now()
+Indexes:
+    "evidence_categories_pkey" PRIMARY KEY, btree (id)
+    "evidence_categories_code_key" UNIQUE CONSTRAINT, btree (code)
+Referenced by:
+    TABLE "job_evidence_priorities" CONSTRAINT "job_evidence_priorities_evidence_category_id_fkey" FOREIGN KEY (evidence_category_id) REFERENCES evidence_categories(id) ON DELETE RESTRICT
+
+     Index "public.evidence_categories_code_key"
+ Column |          Type          | Key? | Definition 
+--------+------------------------+------+------------
+ code   | character varying(100) | yes  | code
+unique, btree, for table "public.evidence_categories"
+
+Index "public.evidence_categories_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.evidence_categories"
+
+  Index "public.idx_application_concepts_application"
+       Column       | Type | Key? |     Definition     
+--------------------+------+------+--------------------
+ job_application_id | uuid | yes  | job_application_id
+btree, for table "public.application_concepts"
+
+Index "public.idx_application_concepts_concept"
+   Column   | Type | Key? | Definition 
+------------+------+------+------------
+ concept_id | uuid | yes  | concept_id
+btree, for table "public.application_concepts"
+
+               Index "public.idx_application_eligibility_education"
+         Column          |         Type          | Key? |       Definition        
+-------------------------+-----------------------+------+-------------------------
+ highest_education_level | character varying(20) | yes  | highest_education_level
+btree, for table "public.application_eligibility"
+
+                   Index "public.idx_application_eligibility_experience"
+              Column              |     Type     | Key? |            Definition            
+----------------------------------+--------------+------+----------------------------------
+ years_of_professional_experience | numeric(4,1) | yes  | years_of_professional_experience
+btree, for table "public.application_eligibility"
+
+    Index "public.idx_application_eligibility_notice"
+       Column       |  Type   | Key? |     Definition     
+--------------------+---------+------+--------------------
+ notice_period_days | integer | yes  | notice_period_days
+btree, for table "public.application_eligibility"
+
+Index "public.idx_application_submissions_job_application"
+       Column       | Type | Key? |     Definition     
+--------------------+------+------+--------------------
+ job_application_id | uuid | yes  | job_application_id
+btree, for table "public.application_submissions"
+
+   Index "public.idx_application_tasks_application"
+       Column       | Type | Key? |     Definition     
+--------------------+------+------+--------------------
+ job_application_id | uuid | yes  | job_application_id
+btree, for table "public.application_tasks"
+
+          Index "public.idx_application_tasks_pending"
+    Column     |           Type           | Key? |  Definition   
+---------------+--------------------------+------+---------------
+ status        | character varying(20)    | yes  | status
+ next_retry_at | timestamp with time zone | yes  | next_retry_at
+btree, for table "public.application_tasks"
+
+       Index "public.idx_application_tasks_type"
+  Column   |         Type          | Key? | Definition 
+-----------+-----------------------+------+------------
+ task_type | character varying(50) | yes  | task_type
+btree, for table "public.application_tasks"
+
+Index "public.idx_application_technologies_application"
+       Column       | Type | Key? |     Definition     
+--------------------+------+------+--------------------
+ job_application_id | uuid | yes  | job_application_id
+btree, for table "public.application_technologies"
+
+Index "public.idx_application_technologies_technology"
+    Column     | Type | Key? |  Definition   
+---------------+------+------+---------------
+ technology_id | uuid | yes  | technology_id
+btree, for table "public.application_technologies"
+
+      Index "public.idx_auth_accounts_provider"
+  Column  |         Type          | Key? | Definition 
+----------+-----------------------+------+------------
+ provider | character varying(50) | yes  | provider
+btree, for table "public.auth_accounts"
+
+Index "public.idx_auth_accounts_user_id"
+ Column  | Type | Key? | Definition 
+---------+------+------+------------
+ user_id | uuid | yes  | user_id
+btree, for table "public.auth_accounts"
+
+      Index "public.idx_job_applications_applied_at"
+   Column   |           Type           | Key? | Definition 
+------------+--------------------------+------+------------
+ applied_at | timestamp with time zone | yes  | applied_at
+btree, for table "public.job_applications"
+
+Index "public.idx_job_applications_email"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ email  | citext | yes  | email
+btree, for table "public.job_applications"
+
+Index "public.idx_job_applications_job"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ job_id | uuid | yes  | job_id
+btree, for table "public.job_applications"
+
+     Index "public.idx_job_applications_status"
+ Column |         Type          | Key? | Definition 
+--------+-----------------------+------+------------
+ status | character varying(30) | yes  | status
+btree, for table "public.job_applications"
+
+    Index "public.idx_job_evidence_priorities_category"
+        Column        | Type | Key? |      Definition      
+----------------------+------+------+----------------------
+ evidence_category_id | uuid | yes  | evidence_category_id
+btree, for table "public.job_evidence_priorities"
+
+Index "public.idx_job_evidence_priorities_job"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ job_id | uuid | yes  | job_id
+btree, for table "public.job_evidence_priorities"
+
+Index "public.idx_job_requirements_concept"
+   Column   | Type | Key? | Definition 
+------------+------+------+------------
+ concept_id | uuid | yes  | concept_id
+btree, for table "public.job_requirements"
+
+Index "public.idx_job_requirements_job"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ job_id | uuid | yes  | job_id
+btree, for table "public.job_requirements"
+
+         Index "public.idx_job_requirements_priority"
+    Column     |         Type          | Key? |  Definition   
+---------------+-----------------------+------+---------------
+ priority_type | character varying(20) | yes  | priority_type
+btree, for table "public.job_requirements"
+
+Index "public.idx_job_requirements_technology"
+    Column     | Type | Key? |  Definition   
+---------------+------+------+---------------
+ technology_id | uuid | yes  | technology_id
+btree, for table "public.job_requirements"
+
+                Index "public.idx_jobs_active_org"
+     Column      |         Type          | Key? |   Definition    
+-----------------+-----------------------+------+-----------------
+ organization_id | uuid                  | yes  | organization_id
+ status          | character varying(30) | yes  | status
+btree, for table "public.jobs", predicate (deleted_at IS NULL)
+
+                Index "public.idx_jobs_created_by"
+          Column          | Type | Key? |        Definition        
+--------------------------+------+------+--------------------------
+ created_by_membership_id | uuid | yes  | created_by_membership_id
+btree, for table "public.jobs"
+
+           Index "public.idx_jobs_org"
+     Column      | Type | Key? |   Definition    
+-----------------+------+------+-----------------
+ organization_id | uuid | yes  | organization_id
+btree, for table "public.jobs"
+
+             Index "public.idx_jobs_published_at"
+    Column    |           Type           | Key? |  Definition  
+--------------+--------------------------+------+--------------
+ published_at | timestamp with time zone | yes  | published_at
+btree, for table "public.jobs"
+
+     Index "public.idx_jobs_role_category_id"
+      Column      | Type | Key? |    Definition    
+------------------+------+------+------------------
+ role_category_id | uuid | yes  | role_category_id
+btree, for table "public.jobs"
+
+           Index "public.idx_jobs_status"
+ Column |         Type          | Key? | Definition 
+--------+-----------------------+------+------------
+ status | character varying(30) | yes  | status
+btree, for table "public.jobs"
+
+      Index "public.idx_one_owner_per_org"
+     Column      | Type | Key? |   Definition    
+-----------------+------+------+-----------------
+ organization_id | uuid | yes  | organization_id
+unique, btree, for table "public.organization_members", predicate (role::text = 'ORG_OWNER'::text AND removed_at IS NULL)
+
+   Index "public.idx_org_member_active_unique"
+     Column      | Type | Key? |   Definition    
+-----------------+------+------+-----------------
+ organization_id | uuid | yes  | organization_id
+ user_id         | uuid | yes  | user_id
+unique, btree, for table "public.organization_members", predicate (removed_at IS NULL)
+
+    Index "public.idx_org_members_org_active"
+     Column      | Type | Key? |   Definition    
+-----------------+------+------+-----------------
+ organization_id | uuid | yes  | organization_id
+btree, for table "public.organization_members", predicate (removed_at IS NULL)
+
+             Index "public.idx_org_members_org_role"
+     Column      |         Type          | Key? |   Definition    
+-----------------+-----------------------+------+-----------------
+ organization_id | uuid                  | yes  | organization_id
+ role            | character varying(50) | yes  | role
+btree, for table "public.organization_members", predicate (removed_at IS NULL)
+
+Index "public.idx_org_members_user_active"
+ Column  | Type | Key? | Definition 
+---------+------+------+------------
+ user_id | uuid | yes  | user_id
+btree, for table "public.organization_members", predicate (removed_at IS NULL)
+
+   Index "public.idx_org_security_idempotency"
+     Column      | Type | Key? |   Definition    
+-----------------+------+------+-----------------
+ idempotency_key | uuid | yes  | idempotency_key
+unique, btree, for table "public.organization_security_actions", predicate (idempotency_key IS NOT NULL)
+
+               Index "public.idx_org_security_initiator"
+           Column           | Type | Key? |         Definition         
+----------------------------+------+------+----------------------------
+ initiated_by_membership_id | uuid | yes  | initiated_by_membership_id
+btree, for table "public.organization_security_actions"
+
+       Index "public.idx_org_security_org"
+     Column      | Type | Key? |   Definition    
+-----------------+------+------+-----------------
+ organization_id | uuid | yes  | organization_id
+btree, for table "public.organization_security_actions"
+
+            Index "public.idx_org_security_scheduled"
+    Column     |           Type           | Key? |  Definition   
+---------------+--------------------------+------+---------------
+ scheduled_for | timestamp with time zone | yes  | scheduled_for
+btree, for table "public.organization_security_actions", predicate (status::text = 'PENDING'::text)
+
+       Index "public.idx_org_security_status"
+ Column |         Type          | Key? | Definition 
+--------+-----------------------+------+------------
+ status | character varying(30) | yes  | status
+btree, for table "public.organization_security_actions"
+
+        Index "public.idx_organizations_created_at"
+   Column   |           Type           | Key? | Definition 
+------------+--------------------------+------+------------
+ created_at | timestamp with time zone | yes  | created_at
+btree, for table "public.organizations"
+
+Index "public.idx_organizations_created_by"
+   Column   | Type | Key? | Definition 
+------------+------+------+------------
+ created_by | uuid | yes  | created_by
+btree, for table "public.organizations"
+
+        Index "public.idx_organizations_deleted_at"
+   Column   |           Type           | Key? | Definition 
+------------+--------------------------+------+------------
+ deleted_at | timestamp with time zone | yes  | deleted_at
+btree, for table "public.organizations"
+
+      Index "public.idx_organizations_status"
+ Column |         Type          | Key? | Definition 
+--------+-----------------------+------+------------
+ status | character varying(30) | yes  | status
+btree, for table "public.organizations"
+
+    Index "public.idx_password_reset_tokens_expires_at"
+   Column   |           Type           | Key? | Definition 
+------------+--------------------------+------+------------
+ expires_at | timestamp with time zone | yes  | expires_at
+btree, for table "public.password_reset_tokens"
+
+Index "public.idx_password_reset_tokens_user_id"
+ Column  | Type | Key? | Definition 
+---------+------+------+------------
+ user_id | uuid | yes  | user_id
+btree, for table "public.password_reset_tokens"
+
+Index "public.idx_platform_invites_active_email"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ email  | citext | yes  | email
+unique, btree, for table "public.platform_invites", predicate (accepted_at IS NULL AND revoked_at IS NULL)
+
+Index "public.idx_platform_invites_created_by"
+   Column   | Type | Key? | Definition 
+------------+------+------+------------
+ created_by | uuid | yes  | created_by
+btree, for table "public.platform_invites"
+
+Index "public.idx_platform_invites_email"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ email  | citext | yes  | email
+btree, for table "public.platform_invites"
+
+      Index "public.idx_platform_invites_expires_at"
+   Column   |           Type           | Key? | Definition 
+------------+--------------------------+------+------------
+ expires_at | timestamp with time zone | yes  | expires_at
+btree, for table "public.platform_invites"
+
+        Index "public.idx_user_sessions_expires_at"
+   Column   |           Type           | Key? | Definition 
+------------+--------------------------+------+------------
+ expires_at | timestamp with time zone | yes  | expires_at
+btree, for table "public.user_sessions"
+
+ Index "public.idx_user_sessions_parent_session_id"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ parent_session_id | uuid | yes  | parent_session_id
+btree, for table "public.user_sessions"
+
+Index "public.idx_user_sessions_user_active"
+ Column  | Type | Key? | Definition 
+---------+------+------+------------
+ user_id | uuid | yes  | user_id
+btree, for table "public.user_sessions", predicate (revoked_at IS NULL)
+
+                                   Table "public.job_applications"
+      Column      |           Type           | Collation | Nullable |            Default             
+------------------+--------------------------+-----------+----------+--------------------------------
+ id               | uuid                     |           | not null | gen_random_uuid()
+ job_id           | uuid                     |           | not null | 
+ first_name       | character varying(100)   |           | not null | 
+ last_name        | character varying(100)   |           | not null | 
+ email            | citext                   |           | not null | 
+ phone            | character varying(20)    |           |          | 
+ status           | character varying(30)    |           | not null | 'SUBMITTED'::character varying
+ applied_at       | timestamp with time zone |           | not null | now()
+ created_at       | timestamp with time zone |           | not null | now()
+ updated_at       | timestamp with time zone |           | not null | now()
+ rejection_source | character varying(20)    |           |          | 
+ rejection_reason | character varying(100)   |           |          | 
+ rejected_at      | timestamp with time zone |           |          | 
+Indexes:
+    "job_applications_pkey" PRIMARY KEY, btree (id)
+    "idx_job_applications_applied_at" btree (applied_at)
+    "idx_job_applications_email" btree (email)
+    "idx_job_applications_job" btree (job_id)
+    "idx_job_applications_status" btree (status)
+    "job_applications_unique_application" UNIQUE CONSTRAINT, btree (job_id, email)
+Check constraints:
+    "job_applications_rejection_source_check" CHECK (rejection_source IS NULL OR (rejection_source::text = ANY (ARRAY['SYSTEM'::character varying, 'RECRUITER'::character varying]::text[])))
+    "job_applications_status_check" CHECK (status::text = ANY (ARRAY['SUBMITTED'::character varying, 'QUEUED'::character varying, 'UNDER_REVIEW'::character varying, 'SHORTLISTED'::character varying, 'INTERVIEW'::character varying, 'OFFERED'::character varying, 'HIRED'::character varying, 'REJECTED'::character varying, 'WITHDRAWN'::character varying]::text[]))
+Foreign-key constraints:
+    "job_applications_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "application_concepts" CONSTRAINT "application_concepts_job_application_fkey" FOREIGN KEY (job_application_id) REFERENCES job_applications(id) ON DELETE CASCADE
+    TABLE "application_eligibility" CONSTRAINT "application_eligibility_job_application_fkey" FOREIGN KEY (job_application_id) REFERENCES job_applications(id) ON DELETE CASCADE
+    TABLE "application_submissions" CONSTRAINT "application_submissions_job_application_fkey" FOREIGN KEY (job_application_id) REFERENCES job_applications(id) ON DELETE CASCADE
+    TABLE "application_tasks" CONSTRAINT "application_tasks_job_application_fkey" FOREIGN KEY (job_application_id) REFERENCES job_applications(id) ON DELETE CASCADE
+    TABLE "application_technologies" CONSTRAINT "application_technologies_job_application_fkey" FOREIGN KEY (job_application_id) REFERENCES job_applications(id) ON DELETE CASCADE
+
+Index "public.job_applications_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.job_applications"
+
+Index "public.job_applications_unique_application"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ job_id | uuid   | yes  | job_id
+ email  | citext | yes  | email
+unique, btree, for table "public.job_applications"
+
+                                  Table "public.job_eligibility_criteria"
+           Column            |           Type           | Collation | Nullable |          Default          
+-----------------------------+--------------------------+-----------+----------+---------------------------
+ id                          | uuid                     |           | not null | gen_random_uuid()
+ job_id                      | uuid                     |           | not null | 
+ currency                    | character varying(10)    |           | not null | 
+ salary_min                  | numeric(12,2)            |           | not null | 
+ salary_max                  | numeric(12,2)            |           | not null | 
+ experience_min_years        | numeric(4,1)             |           | not null | 
+ experience_ideal_years      | numeric(4,1)             |           | not null | 
+ experience_max_years        | numeric(4,1)             |           | not null | 
+ notice_period_ideal_days    | integer                  |           | not null | 
+ notice_period_max_days      | integer                  |           | not null | 
+ relocation_assistance       | boolean                  |           | not null | false
+ visa_sponsorship            | boolean                  |           | not null | false
+ work_authorization_required | boolean                  |           | not null | false
+ created_at                  | timestamp with time zone |           | not null | now()
+ updated_at                  | timestamp with time zone |           | not null | now()
+ minimum_education_level     | character varying(20)    |           | not null | 'NONE'::character varying
+Indexes:
+    "job_eligibility_criteria_pkey" PRIMARY KEY, btree (id)
+    "job_eligibility_criteria_job_id_key" UNIQUE CONSTRAINT, btree (job_id)
+Check constraints:
+    "job_eligibility_education_level_check" CHECK (minimum_education_level IS NULL OR (minimum_education_level::text = ANY (ARRAY['NONE'::character varying, 'HIGH_SCHOOL'::character varying, 'DIPLOMA'::character varying, 'UNDERGRADUATE'::character varying, 'POSTGRADUATE'::character varying]::text[])))
+    "job_eligibility_experience_check" CHECK (experience_min_years <= experience_ideal_years AND experience_ideal_years <= experience_max_years)
+    "job_eligibility_notice_check" CHECK (notice_period_ideal_days <= notice_period_max_days)
+    "job_eligibility_salary_check" CHECK (salary_min <= salary_max)
+Foreign-key constraints:
+    "job_eligibility_criteria_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+
+Index "public.job_eligibility_criteria_job_id_key"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ job_id | uuid | yes  | job_id
+unique, btree, for table "public.job_eligibility_criteria"
+
+Index "public.job_eligibility_criteria_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.job_eligibility_criteria"
+
+                           Table "public.job_evaluation_priorities"
+         Column          |           Type           | Collation | Nullable |      Default      
+-------------------------+--------------------------+-----------+----------+-------------------
+ id                      | uuid                     |           | not null | gen_random_uuid()
+ job_id                  | uuid                     |           | not null | 
+ evaluation_dimension_id | uuid                     |           | not null | 
+ weight                  | integer                  |           | not null | 
+ created_at              | timestamp with time zone |           | not null | now()
+Indexes:
+    "job_evaluation_priorities_pkey" PRIMARY KEY, btree (id)
+    "job_evaluation_priorities_unique" UNIQUE CONSTRAINT, btree (job_id, evaluation_dimension_id)
+Check constraints:
+    "job_evaluation_priorities_weight_check" CHECK (weight >= 0 AND weight <= 100)
+Foreign-key constraints:
+    "job_evaluation_priorities_evaluation_dimension_id_fkey" FOREIGN KEY (evaluation_dimension_id) REFERENCES evaluation_dimensions(id) ON DELETE RESTRICT
+    "job_evaluation_priorities_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+
+Index "public.job_evaluation_priorities_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.job_evaluation_priorities"
+
+         Index "public.job_evaluation_priorities_unique"
+         Column          | Type | Key? |       Definition        
+-------------------------+------+------+-------------------------
+ job_id                  | uuid | yes  | job_id
+ evaluation_dimension_id | uuid | yes  | evaluation_dimension_id
+unique, btree, for table "public.job_evaluation_priorities"
+
+                           Table "public.job_evidence_priorities"
+        Column        |           Type           | Collation | Nullable |      Default      
+----------------------+--------------------------+-----------+----------+-------------------
+ id                   | uuid                     |           | not null | gen_random_uuid()
+ job_id               | uuid                     |           | not null | 
+ evidence_category_id | uuid                     |           | not null | 
+ weight               | integer                  |           | not null | 
+ created_at           | timestamp with time zone |           | not null | now()
+Indexes:
+    "job_evidence_priorities_pkey" PRIMARY KEY, btree (id)
+    "idx_job_evidence_priorities_category" btree (evidence_category_id)
+    "idx_job_evidence_priorities_job" btree (job_id)
+    "job_evidence_priorities_unique" UNIQUE CONSTRAINT, btree (job_id, evidence_category_id)
+Check constraints:
+    "job_evidence_priorities_weight_check" CHECK (weight >= 0 AND weight <= 100)
+Foreign-key constraints:
+    "job_evidence_priorities_evidence_category_id_fkey" FOREIGN KEY (evidence_category_id) REFERENCES evidence_categories(id) ON DELETE RESTRICT
+    "job_evidence_priorities_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+
+Index "public.job_evidence_priorities_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.job_evidence_priorities"
+
+       Index "public.job_evidence_priorities_unique"
+        Column        | Type | Key? |      Definition      
+----------------------+------+------+----------------------
+ job_id               | uuid | yes  | job_id
+ evidence_category_id | uuid | yes  | evidence_category_id
+unique, btree, for table "public.job_evidence_priorities"
+
+                            Table "public.job_requirements"
+      Column      |           Type           | Collation | Nullable |      Default      
+------------------+--------------------------+-----------+----------+-------------------
+ id               | uuid                     |           | not null | gen_random_uuid()
+ job_id           | uuid                     |           | not null | 
+ technology_id    | uuid                     |           |          | 
+ concept_id       | uuid                     |           |          | 
+ requirement_type | character varying(20)    |           | not null | 
+ priority_type    | character varying(20)    |           | not null | 
+ weight           | numeric(5,2)             |           | not null | 1.00
+ created_at       | timestamp with time zone |           | not null | now()
+Indexes:
+    "job_requirements_pkey" PRIMARY KEY, btree (id)
+    "idx_job_requirements_concept" btree (concept_id)
+    "idx_job_requirements_job" btree (job_id)
+    "idx_job_requirements_priority" btree (priority_type)
+    "idx_job_requirements_technology" btree (technology_id)
+    "job_requirements_job_id_concept_id_idx" UNIQUE, btree (job_id, concept_id) WHERE concept_id IS NOT NULL
+    "job_requirements_job_id_technology_id_idx" UNIQUE, btree (job_id, technology_id) WHERE technology_id IS NOT NULL
+Check constraints:
+    "job_requirements_priority_check" CHECK (priority_type::text = ANY (ARRAY['MANDATORY'::character varying, 'PREFERRED'::character varying, 'BONUS'::character varying]::text[]))
+    "job_requirements_reference_check" CHECK (requirement_type::text = 'TECHNOLOGY'::text AND technology_id IS NOT NULL AND concept_id IS NULL OR requirement_type::text = 'CONCEPT'::text AND concept_id IS NOT NULL AND technology_id IS NULL)
+    "job_requirements_type_check" CHECK (requirement_type::text = ANY (ARRAY['TECHNOLOGY'::character varying, 'CONCEPT'::character varying]::text[]))
+Foreign-key constraints:
+    "job_requirements_concept_id_fkey" FOREIGN KEY (concept_id) REFERENCES concepts(id) ON DELETE RESTRICT
+    "job_requirements_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    "job_requirements_technology_id_fkey" FOREIGN KEY (technology_id) REFERENCES technologies(id) ON DELETE RESTRICT
+
+Index "public.job_requirements_job_id_concept_id_idx"
+   Column   | Type | Key? | Definition 
+------------+------+------+------------
+ job_id     | uuid | yes  | job_id
+ concept_id | uuid | yes  | concept_id
+unique, btree, for table "public.job_requirements", predicate (concept_id IS NOT NULL)
+
+Index "public.job_requirements_job_id_technology_id_idx"
+    Column     | Type | Key? |  Definition   
+---------------+------+------+---------------
+ job_id        | uuid | yes  | job_id
+ technology_id | uuid | yes  | technology_id
+unique, btree, for table "public.job_requirements", predicate (technology_id IS NOT NULL)
+
+Index "public.job_requirements_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.job_requirements"
+
+                        Table "public.job_role_categories"
+   Column    |           Type           | Collation | Nullable |      Default      
+-------------+--------------------------+-----------+----------+-------------------
+ id          | uuid                     |           | not null | gen_random_uuid()
+ code        | character varying(100)   |           | not null | 
+ name        | character varying(255)   |           | not null | 
+ description | text                     |           |          | 
+ created_at  | timestamp with time zone |           | not null | now()
+Indexes:
+    "job_role_categories_pkey" PRIMARY KEY, btree (id)
+    "job_role_categories_code_key" UNIQUE CONSTRAINT, btree (code)
+Referenced by:
+    TABLE "jobs" CONSTRAINT "jobs_role_category_id_fkey" FOREIGN KEY (role_category_id) REFERENCES job_role_categories(id) ON DELETE RESTRICT
+
+     Index "public.job_role_categories_code_key"
+ Column |          Type          | Key? | Definition 
+--------+------------------------+------+------------
+ code   | character varying(100) | yes  | code
+unique, btree, for table "public.job_role_categories"
+
+Index "public.job_role_categories_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.job_role_categories"
+
+                               Table "public.job_submission_requirements"
+              Column              |           Type           | Collation | Nullable |      Default      
+----------------------------------+--------------------------+-----------+----------+-------------------
+ id                               | uuid                     |           | not null | gen_random_uuid()
+ job_id                           | uuid                     |           | not null | 
+ resume_required                  | boolean                  |           | not null | true
+ github_required                  | boolean                  |           | not null | false
+ portfolio_required               | boolean                  |           | not null | false
+ problem_solving_profile_required | boolean                  |           | not null | false
+ linkedin_required                | boolean                  |           | not null | false
+ project_explanation_required     | boolean                  |           | not null | false
+ feature_explanation_required     | boolean                  |           | not null | false
+ zip_upload_allowed               | boolean                  |           | not null | true
+ created_at                       | timestamp with time zone |           | not null | now()
+ updated_at                       | timestamp with time zone |           | not null | now()
+Indexes:
+    "job_submission_requirements_pkey" PRIMARY KEY, btree (id)
+    "job_submission_requirements_job_id_key" UNIQUE CONSTRAINT, btree (job_id)
+Foreign-key constraints:
+    "job_submission_requirements_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+
+Index "public.job_submission_requirements_job_id_key"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ job_id | uuid | yes  | job_id
+unique, btree, for table "public.job_submission_requirements"
+
+Index "public.job_submission_requirements_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.job_submission_requirements"
+
+                           Table "public.job_success_signals"
+      Column       |           Type           | Collation | Nullable |      Default      
+-------------------+--------------------------+-----------+----------+-------------------
+ id                | uuid                     |           | not null | gen_random_uuid()
+ job_id            | uuid                     |           | not null | 
+ success_signal_id | uuid                     |           | not null | 
+ weight            | integer                  |           | not null | 
+ created_at        | timestamp with time zone |           | not null | now()
+Indexes:
+    "job_success_signals_pkey" PRIMARY KEY, btree (id)
+    "job_success_signals_unique" UNIQUE CONSTRAINT, btree (job_id, success_signal_id)
+Check constraints:
+    "job_success_signals_weight_check" CHECK (weight >= 0 AND weight <= 100)
+Foreign-key constraints:
+    "job_success_signals_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    "job_success_signals_success_signal_id_fkey" FOREIGN KEY (success_signal_id) REFERENCES success_signals(id) ON DELETE RESTRICT
+
+Index "public.job_success_signals_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.job_success_signals"
+
+      Index "public.job_success_signals_unique"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ job_id            | uuid | yes  | job_id
+ success_signal_id | uuid | yes  | success_signal_id
+unique, btree, for table "public.job_success_signals"
+
+                                           Table "public.jobs"
+          Column          |           Type           | Collation | Nullable |          Default           
+--------------------------+--------------------------+-----------+----------+----------------------------
+ id                       | uuid                     |           | not null | gen_random_uuid()
+ organization_id          | uuid                     |           | not null | 
+ created_by_membership_id | uuid                     |           | not null | 
+ title                    | character varying(255)   |           | not null | 
+ department               | character varying(150)   |           |          | 
+ employment_type          | character varying(30)    |           | not null | 
+ work_mode                | character varying(30)    |           | not null | 
+ country                  | character varying(100)   |           | not null | 
+ state                    | character varying(100)   |           |          | 
+ city                     | character varying(100)   |           |          | 
+ open_positions           | integer                  |           | not null | 1
+ description              | text                     |           |          | 
+ status                   | character varying(30)    |           | not null | 'DRAFT'::character varying
+ published_at             | timestamp with time zone |           |          | 
+ closed_at                | timestamp with time zone |           |          | 
+ created_at               | timestamp with time zone |           | not null | now()
+ updated_at               | timestamp with time zone |           | not null | now()
+ deleted_at               | timestamp with time zone |           |          | 
+ role_category_id         | uuid                     |           | not null | 
+ remote_scope             | character varying(30)    |           | not null | 'NONE'::character varying
+Indexes:
+    "jobs_pkey" PRIMARY KEY, btree (id)
+    "idx_jobs_active_org" btree (organization_id, status) WHERE deleted_at IS NULL
+    "idx_jobs_created_by" btree (created_by_membership_id)
+    "idx_jobs_org" btree (organization_id)
+    "idx_jobs_published_at" btree (published_at)
+    "idx_jobs_role_category_id" btree (role_category_id)
+    "idx_jobs_status" btree (status)
+Check constraints:
+    "jobs_closed_after_created_check" CHECK (closed_at IS NULL OR closed_at >= created_at)
+    "jobs_employment_type_check" CHECK (employment_type::text = ANY (ARRAY['FULL_TIME'::character varying, 'INTERNSHIP'::character varying, 'CONTRACT'::character varying, 'PART_TIME'::character varying]::text[]))
+    "jobs_open_positions_check" CHECK (open_positions > 0)
+    "jobs_published_after_created_check" CHECK (published_at IS NULL OR published_at >= created_at)
+    "jobs_remote_scope_check" CHECK (remote_scope::text = ANY (ARRAY['NONE'::character varying, 'GLOBAL'::character varying, 'COUNTRY'::character varying, 'REGION'::character varying]::text[]))
+    "jobs_status_check" CHECK (status::text = ANY (ARRAY['DRAFT'::character varying, 'PUBLISHED'::character varying, 'PAUSED'::character varying, 'CLOSED'::character varying, 'ARCHIVED'::character varying]::text[]))
+    "jobs_work_mode_check" CHECK (work_mode::text = ANY (ARRAY['ONSITE'::character varying, 'HYBRID'::character varying, 'REMOTE'::character varying]::text[]))
+Foreign-key constraints:
+    "jobs_created_by_membership_id_fkey" FOREIGN KEY (created_by_membership_id) REFERENCES organization_members(id) ON DELETE RESTRICT
+    "jobs_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    "jobs_role_category_id_fkey" FOREIGN KEY (role_category_id) REFERENCES job_role_categories(id) ON DELETE RESTRICT
+Referenced by:
+    TABLE "job_applications" CONSTRAINT "job_applications_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    TABLE "job_eligibility_criteria" CONSTRAINT "job_eligibility_criteria_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    TABLE "job_evaluation_priorities" CONSTRAINT "job_evaluation_priorities_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    TABLE "job_evidence_priorities" CONSTRAINT "job_evidence_priorities_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    TABLE "job_requirements" CONSTRAINT "job_requirements_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    TABLE "job_submission_requirements" CONSTRAINT "job_submission_requirements_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    TABLE "job_success_signals" CONSTRAINT "job_success_signals_job_id_fkey" FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+
+     Index "public.jobs_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.jobs"
+
+                          Table "public.organization_members"
+     Column      |           Type           | Collation | Nullable |      Default      
+-----------------+--------------------------+-----------+----------+-------------------
+ id              | uuid                     |           | not null | gen_random_uuid()
+ organization_id | uuid                     |           | not null | 
+ user_id         | uuid                     |           | not null | 
+ role            | character varying(50)    |           | not null | 
+ title           | character varying(150)   |           |          | 
+ joined_at       | timestamp with time zone |           | not null | now()
+ invited_by      | uuid                     |           |          | 
+ removed_at      | timestamp with time zone |           |          | 
+ created_at      | timestamp with time zone |           | not null | now()
+ updated_at      | timestamp with time zone |           | not null | now()
+Indexes:
+    "organization_members_pkey" PRIMARY KEY, btree (id)
+    "idx_one_owner_per_org" UNIQUE, btree (organization_id) WHERE role::text = 'ORG_OWNER'::text AND removed_at IS NULL
+    "idx_org_member_active_unique" UNIQUE, btree (organization_id, user_id) WHERE removed_at IS NULL
+    "idx_org_members_org_active" btree (organization_id) WHERE removed_at IS NULL
+    "idx_org_members_org_role" btree (organization_id, role) WHERE removed_at IS NULL
+    "idx_org_members_user_active" btree (user_id) WHERE removed_at IS NULL
+    "organization_members_organization_id_user_id_key" UNIQUE CONSTRAINT, btree (organization_id, user_id)
+Check constraints:
+    "organization_members_role_check" CHECK (role::text = ANY (ARRAY['ORG_OWNER'::character varying, 'RECRUITING_ADMIN'::character varying, 'RECRUITER'::character varying, 'HIRING_MANAGER'::character varying, 'INTERVIEWER'::character varying, 'VIEWER'::character varying]::text[]))
+Foreign-key constraints:
+    "fk_org_members_invited_by" FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE SET NULL
+    "organization_members_invited_by_fkey" FOREIGN KEY (invited_by) REFERENCES users(id)
+    "organization_members_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    "organization_members_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "jobs" CONSTRAINT "jobs_created_by_membership_id_fkey" FOREIGN KEY (created_by_membership_id) REFERENCES organization_members(id) ON DELETE RESTRICT
+    TABLE "organization_security_actions" CONSTRAINT "organization_security_actions_cancelled_by_membership_id_fkey" FOREIGN KEY (cancelled_by_membership_id) REFERENCES organization_members(id) ON DELETE RESTRICT
+    TABLE "organization_security_actions" CONSTRAINT "organization_security_actions_initiated_by_membership_id_fkey" FOREIGN KEY (initiated_by_membership_id) REFERENCES organization_members(id) ON DELETE RESTRICT
+    TABLE "organization_security_actions" CONSTRAINT "organization_security_actions_target_membership_id_fkey" FOREIGN KEY (target_membership_id) REFERENCES organization_members(id) ON DELETE RESTRICT
+
+Index "public.organization_members_organization_id_user_id_key"
+     Column      | Type | Key? |   Definition    
+-----------------+------+------+-----------------
+ organization_id | uuid | yes  | organization_id
+ user_id         | uuid | yes  | user_id
+unique, btree, for table "public.organization_members"
+
+Index "public.organization_members_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.organization_members"
+
+                                Table "public.organization_security_actions"
+           Column           |           Type           | Collation | Nullable |           Default            
+----------------------------+--------------------------+-----------+----------+------------------------------
+ id                         | uuid                     |           | not null | gen_random_uuid()
+ organization_id            | uuid                     |           | not null | 
+ initiated_by_membership_id | uuid                     |           | not null | 
+ target_membership_id       | uuid                     |           |          | 
+ action_type                | character varying(50)    |           | not null | 
+ status                     | character varying(30)    |           | not null | 'PENDING'::character varying
+ reason                     | text                     |           |          | 
+ mfa_verified_at            | timestamp with time zone |           |          | 
+ scheduled_for              | timestamp with time zone |           | not null | 
+ expires_at                 | timestamp with time zone |           | not null | 
+ cancelled_at               | timestamp with time zone |           |          | 
+ cancelled_by_membership_id | uuid                     |           |          | 
+ executed_at                | timestamp with time zone |           |          | 
+ execution_error            | text                     |           |          | 
+ idempotency_key            | uuid                     |           |          | 
+ created_at                 | timestamp with time zone |           | not null | now()
+ updated_at                 | timestamp with time zone |           | not null | now()
+Indexes:
+    "organization_security_actions_pkey" PRIMARY KEY, btree (id)
+    "idx_org_security_idempotency" UNIQUE, btree (idempotency_key) WHERE idempotency_key IS NOT NULL
+    "idx_org_security_initiator" btree (initiated_by_membership_id)
+    "idx_org_security_org" btree (organization_id)
+    "idx_org_security_scheduled" btree (scheduled_for) WHERE status::text = 'PENDING'::text
+    "idx_org_security_status" btree (status)
+Check constraints:
+    "org_security_action_status_check" CHECK (status::text = ANY (ARRAY['PENDING'::character varying, 'CANCELLED'::character varying, 'EXECUTED'::character varying, 'EXPIRED'::character varying, 'FAILED'::character varying]::text[]))
+    "org_security_action_type_check" CHECK (action_type::text = ANY (ARRAY['OWNERSHIP_TRANSFER'::character varying, 'ORG_DELETION'::character varying, 'BILLING_OWNERSHIP_TRANSFER'::character varying]::text[]))
+Foreign-key constraints:
+    "organization_security_actions_cancelled_by_membership_id_fkey" FOREIGN KEY (cancelled_by_membership_id) REFERENCES organization_members(id) ON DELETE RESTRICT
+    "organization_security_actions_initiated_by_membership_id_fkey" FOREIGN KEY (initiated_by_membership_id) REFERENCES organization_members(id) ON DELETE RESTRICT
+    "organization_security_actions_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    "organization_security_actions_target_membership_id_fkey" FOREIGN KEY (target_membership_id) REFERENCES organization_members(id) ON DELETE RESTRICT
+
+Index "public.organization_security_actions_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.organization_security_actions"
+
+                                Table "public.organizations"
+   Column    |           Type           | Collation | Nullable |           Default           
+-------------+--------------------------+-----------+----------+-----------------------------
+ id          | uuid                     |           | not null | gen_random_uuid()
+ slug        | citext                   |           | not null | 
+ name        | character varying(255)   |           | not null | 
+ description | text                     |           |          | 
+ status      | character varying(30)    |           | not null | 'ACTIVE'::character varying
+ credits     | integer                  |           | not null | 0
+ created_by  | uuid                     |           | not null | 
+ created_at  | timestamp with time zone |           | not null | now()
+ updated_at  | timestamp with time zone |           | not null | now()
+ deleted_at  | timestamp with time zone |           |          | 
+Indexes:
+    "organizations_pkey" PRIMARY KEY, btree (id)
+    "idx_organizations_created_at" btree (created_at)
+    "idx_organizations_created_by" btree (created_by)
+    "idx_organizations_deleted_at" btree (deleted_at)
+    "idx_organizations_status" btree (status)
+    "organizations_slug_key" UNIQUE CONSTRAINT, btree (slug)
+Check constraints:
+    "organizations_credits_check" CHECK (credits >= 0)
+    "organizations_slug_format_check" CHECK (slug ~ '^[a-zA-Z0-9_-]+$'::citext)
+    "organizations_slug_length_check" CHECK (char_length(slug::text) >= 3 AND char_length(slug::text) <= 100)
+    "organizations_status_check" CHECK (status::text = ANY (ARRAY['ACTIVE'::character varying, 'SUSPENDED'::character varying, 'DELETED'::character varying]::text[]))
+Foreign-key constraints:
+    "organizations_created_by_fkey" FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT
+Referenced by:
+    TABLE "jobs" CONSTRAINT "jobs_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    TABLE "organization_members" CONSTRAINT "organization_members_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    TABLE "organization_security_actions" CONSTRAINT "organization_security_actions_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+
+ Index "public.organizations_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.organizations"
+
+Index "public.organizations_slug_key"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ slug   | citext | yes  | slug
+unique, btree, for table "public.organizations"
+
+                            Table "public.password_reset_tokens"
+        Column        |           Type           | Collation | Nullable |      Default      
+----------------------+--------------------------+-----------+----------+-------------------
+ id                   | uuid                     |           | not null | gen_random_uuid()
+ user_id              | uuid                     |           | not null | 
+ token_hash           | text                     |           | not null | 
+ expires_at           | timestamp with time zone |           | not null | 
+ used_at              | timestamp with time zone |           |          | 
+ requested_ip         | inet                     |           |          | 
+ requested_user_agent | text                     |           |          | 
+ created_at           | timestamp with time zone |           | not null | now()
+Indexes:
+    "password_reset_tokens_pkey" PRIMARY KEY, btree (id)
+    "idx_password_reset_tokens_expires_at" btree (expires_at)
+    "idx_password_reset_tokens_user_id" btree (user_id)
+Foreign-key constraints:
+    "password_reset_tokens_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+
+Index "public.password_reset_tokens_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.password_reset_tokens"
+
+                          Table "public.platform_invites"
+   Column    |           Type           | Collation | Nullable |      Default      
+-------------+--------------------------+-----------+----------+-------------------
+ id          | uuid                     |           | not null | gen_random_uuid()
+ email       | citext                   |           | not null | 
+ token_hash  | text                     |           | not null | 
+ expires_at  | timestamp with time zone |           | not null | 
+ accepted_at | timestamp with time zone |           |          | 
+ revoked_at  | timestamp with time zone |           |          | 
+ created_by  | uuid                     |           |          | 
+ revoked_by  | uuid                     |           |          | 
+ created_at  | timestamp with time zone |           | not null | now()
+ updated_at  | timestamp with time zone |           | not null | now()
+ accepted_by | uuid                     |           |          | 
+Indexes:
+    "platform_invites_pkey" PRIMARY KEY, btree (id)
+    "idx_platform_invites_active_email" UNIQUE, btree (email) WHERE accepted_at IS NULL AND revoked_at IS NULL
+    "idx_platform_invites_created_by" btree (created_by)
+    "idx_platform_invites_email" btree (email)
+    "idx_platform_invites_expires_at" btree (expires_at)
+Check constraints:
+    "platform_invites_accept_after_create_check" CHECK (accepted_at IS NULL OR accepted_at >= created_at)
+    "platform_invites_not_both_accepted_and_revoked" CHECK (NOT (accepted_at IS NOT NULL AND revoked_at IS NOT NULL))
+    "platform_invites_revoke_after_create_check" CHECK (revoked_at IS NULL OR revoked_at >= created_at)
+Foreign-key constraints:
+    "platform_invites_accepted_by_fkey" FOREIGN KEY (accepted_by) REFERENCES users(id) ON DELETE SET NULL
+    "platform_invites_created_by_fkey" FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+    "platform_invites_revoked_by_fkey" FOREIGN KEY (revoked_by) REFERENCES users(id) ON DELETE SET NULL
+
+Index "public.platform_invites_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.platform_invites"
+
+                          Table "public.success_signals"
+   Column    |           Type           | Collation | Nullable |      Default      
+-------------+--------------------------+-----------+----------+-------------------
+ id          | uuid                     |           | not null | gen_random_uuid()
+ code        | character varying(100)   |           | not null | 
+ name        | character varying(255)   |           | not null | 
+ description | text                     |           |          | 
+ created_at  | timestamp with time zone |           | not null | now()
+Indexes:
+    "success_signals_pkey" PRIMARY KEY, btree (id)
+    "success_signals_code_key" UNIQUE CONSTRAINT, btree (code)
+Referenced by:
+    TABLE "job_success_signals" CONSTRAINT "job_success_signals_success_signal_id_fkey" FOREIGN KEY (success_signal_id) REFERENCES success_signals(id) ON DELETE RESTRICT
+
+       Index "public.success_signals_code_key"
+ Column |          Type          | Key? | Definition 
+--------+------------------------+------+------------
+ code   | character varying(100) | yes  | code
+unique, btree, for table "public.success_signals"
+
+Index "public.success_signals_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.success_signals"
+
+                           Table "public.technologies"
+   Column   |           Type           | Collation | Nullable |      Default      
+------------+--------------------------+-----------+----------+-------------------
+ id         | uuid                     |           | not null | gen_random_uuid()
+ name       | citext                   |           | not null | 
+ category   | character varying(100)   |           |          | 
+ created_at | timestamp with time zone |           | not null | now()
+Indexes:
+    "technologies_pkey" PRIMARY KEY, btree (id)
+    "technologies_name_key" UNIQUE CONSTRAINT, btree (name)
+Referenced by:
+    TABLE "application_technologies" CONSTRAINT "application_technologies_technology_fkey" FOREIGN KEY (technology_id) REFERENCES technologies(id) ON DELETE RESTRICT
+    TABLE "job_requirements" CONSTRAINT "job_requirements_technology_id_fkey" FOREIGN KEY (technology_id) REFERENCES technologies(id) ON DELETE RESTRICT
+
+Index "public.technologies_name_key"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ name   | citext | yes  | name
+unique, btree, for table "public.technologies"
+
+ Index "public.technologies_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.technologies"
+
+                       Table "public.user_profiles"
+    Column    |           Type           | Collation | Nullable | Default 
+--------------+--------------------------+-----------+----------+---------
+ user_id      | uuid                     |           | not null | 
+ first_name   | character varying(100)   |           | not null | 
+ last_name    | character varying(100)   |           |          | 
+ phone        | character varying(30)    |           |          | 
+ avatar_url   | text                     |           |          | 
+ linkedin_url | text                     |           |          | 
+ created_at   | timestamp with time zone |           | not null | now()
+ updated_at   | timestamp with time zone |           | not null | now()
+Indexes:
+    "user_profiles_pkey" PRIMARY KEY, btree (user_id)
+Foreign-key constraints:
+    "user_profiles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+
+ Index "public.user_profiles_pkey"
+ Column  | Type | Key? | Definition 
+---------+------+------+------------
+ user_id | uuid | yes  | user_id
+primary key, btree, for table "public.user_profiles"
+
+                               Table "public.user_sessions"
+       Column       |           Type           | Collation | Nullable |      Default      
+--------------------+--------------------------+-----------+----------+-------------------
+ id                 | uuid                     |           | not null | gen_random_uuid()
+ user_id            | uuid                     |           | not null | 
+ refresh_token_hash | text                     |           | not null | 
+ parent_session_id  | uuid                     |           |          | 
+ user_agent         | text                     |           |          | 
+ ip_address         | inet                     |           |          | 
+ device_name        | character varying(255)   |           |          | 
+ platform           | character varying(100)   |           |          | 
+ browser            | character varying(100)   |           |          | 
+ expires_at         | timestamp with time zone |           | not null | 
+ revoked_at         | timestamp with time zone |           |          | 
+ revoked_reason     | character varying(100)   |           |          | 
+ last_used_at       | timestamp with time zone |           |          | 
+ created_at         | timestamp with time zone |           | not null | now()
+Indexes:
+    "user_sessions_pkey" PRIMARY KEY, btree (id)
+    "idx_user_sessions_expires_at" btree (expires_at)
+    "idx_user_sessions_parent_session_id" btree (parent_session_id)
+    "idx_user_sessions_user_active" btree (user_id) WHERE revoked_at IS NULL
+Check constraints:
+    "user_sessions_revoke_after_create_check" CHECK (revoked_at IS NULL OR revoked_at >= created_at)
+Foreign-key constraints:
+    "user_sessions_parent_session_id_fkey" FOREIGN KEY (parent_session_id) REFERENCES user_sessions(id) ON DELETE SET NULL
+    "user_sessions_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "user_sessions" CONSTRAINT "user_sessions_parent_session_id_fkey" FOREIGN KEY (parent_session_id) REFERENCES user_sessions(id) ON DELETE SET NULL
+
+ Index "public.user_sessions_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.user_sessions"
+
+                                           Table "public.users"
+      Column       |           Type           | Collation | Nullable |               Default               
+-------------------+--------------------------+-----------+----------+-------------------------------------
+ id                | uuid                     |           | not null | gen_random_uuid()
+ username          | citext                   |           | not null | 
+ email             | citext                   |           | not null | 
+ status            | character varying(30)    |           | not null | 'PENDING_INVITE'::character varying
+ email_verified    | boolean                  |           | not null | false
+ email_verified_at | timestamp with time zone |           |          | 
+ suspended_at      | timestamp with time zone |           |          | 
+ suspended_reason  | text                     |           |          | 
+ deleted_at        | timestamp with time zone |           |          | 
+ created_at        | timestamp with time zone |           | not null | now()
+ updated_at        | timestamp with time zone |           | not null | now()
+ is_platform_admin | boolean                  |           | not null | false
+Indexes:
+    "users_pkey" PRIMARY KEY, btree (id)
+    "users_email_key" UNIQUE CONSTRAINT, btree (email)
+    "users_username_key" UNIQUE CONSTRAINT, btree (username)
+Check constraints:
+    "users_email_format_check" CHECK (email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$'::citext)
+    "users_status_check" CHECK (status::text = ANY (ARRAY['PENDING_INVITE'::character varying, 'ACTIVE'::character varying, 'SUSPENDED'::character varying, 'DELETED'::character varying]::text[]))
+    "users_username_format_check" CHECK (username ~ '^[a-zA-Z0-9_-]+$'::citext)
+    "users_username_length_check" CHECK (char_length(username::text) >= 3 AND char_length(username::text) <= 50)
+Referenced by:
+    TABLE "auth_accounts" CONSTRAINT "auth_accounts_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    TABLE "organization_members" CONSTRAINT "fk_org_members_invited_by" FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE SET NULL
+    TABLE "organization_members" CONSTRAINT "organization_members_invited_by_fkey" FOREIGN KEY (invited_by) REFERENCES users(id)
+    TABLE "organization_members" CONSTRAINT "organization_members_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    TABLE "organizations" CONSTRAINT "organizations_created_by_fkey" FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT
+    TABLE "password_reset_tokens" CONSTRAINT "password_reset_tokens_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    TABLE "platform_invites" CONSTRAINT "platform_invites_accepted_by_fkey" FOREIGN KEY (accepted_by) REFERENCES users(id) ON DELETE SET NULL
+    TABLE "platform_invites" CONSTRAINT "platform_invites_created_by_fkey" FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+    TABLE "platform_invites" CONSTRAINT "platform_invites_revoked_by_fkey" FOREIGN KEY (revoked_by) REFERENCES users(id) ON DELETE SET NULL
+    TABLE "user_profiles" CONSTRAINT "user_profiles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    TABLE "user_sessions" CONSTRAINT "user_sessions_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+
+   Index "public.users_email_key"
+ Column |  Type  | Key? | Definition 
+--------+--------+------+------------
+ email  | citext | yes  | email
+unique, btree, for table "public.users"
+
+     Index "public.users_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.users"
+
+   Index "public.users_username_key"
+  Column  |  Type  | Key? | Definition 
+----------+--------+------+------------
+ username | citext | yes  | username
+unique, btree, for table "public.users"
+

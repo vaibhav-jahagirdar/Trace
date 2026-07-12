@@ -10,6 +10,7 @@ export interface RubricItem {
   name: string;
   description: string | null;
   weight: number;
+  priority_type: "MANDATORY" | "PREFERRED" | "BONUS";
 }
 
 export interface RequirementItem {
@@ -87,12 +88,14 @@ function toRubricItem(row: {
   name: string;
   description: string | null;
   weight: number;
+  priority_type?: string 
 }): RubricItem {
   return {
     code: row.code,
     name: row.name,
     description: row.description,
     weight: row.weight,
+    priority_type: row.priority_type as "MANDATORY" | "PREFERRED" | "BONUS"
   };
 }
 

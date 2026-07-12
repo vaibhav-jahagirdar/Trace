@@ -14,3 +14,4 @@ app.use(cookieParser());
 
 
 app.use(errorHandler); 
+export default app;

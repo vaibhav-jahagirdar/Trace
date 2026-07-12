@@ -1,9 +1,8 @@
-import "dotenv/config"; 
-import { getDb } from "./config/db";
+import "dotenv/config";
+import app from "./app";
 
-async function bootstrap() {
-  await getDb().query("SELECT NOW()");
-  console.log("DB Connected");
-}
+const PORT = process.env.PORT || 3000;
 
-bootstrap();
+app.listen(PORT, () => {
+  console.log(`Server running on ${PORT}`);
+});

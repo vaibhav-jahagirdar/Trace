@@ -1,4 +1,4 @@
-# Candidate Extraction Contract
+# Candidate Extraction Contract - v2
 
 ## Purpose
 
