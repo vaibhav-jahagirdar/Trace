@@ -27,7 +27,7 @@ async def analyze_resume(request: ResumeAnalysisRequest):
         resume_text=cleaned_text,
     )
 
-    prompt_path = Path("/tmp/resume_prompt.txt")
+    prompt_path = Path("/tmp/resume_promptv3.txt")
     prompt_path.parent.mkdir(parents=True, exist_ok=True)
     prompt_path.write_text(prompt, encoding="utf-8")
 

@@ -196,3 +196,73 @@ selection.
 Begin the evaluation now.
 
 Think carefully before producing the final output.
+
+#### Deliverable 4
+Deliverable 4
+Evaluation Audit
+
+Provide a structured evidence summary explaining the primary factors that influenced the evaluation.
+
+Do not reveal internal reasoning or hidden deliberation.
+
+Instead, summarize the observable evidence that materially affected the scores.
+
+Include:
+
+Job Understanding
+Primary hiring priorities extracted from the job
+Mandatory requirements
+Preferred requirements
+Most influential evaluation priorities
+Evidence Used
+
+Identify the primary evidence considered.
+
+For example:
+
+Relevant work experience
+Relevant projects
+Technologies
+Concepts
+Candidate application responses
+Major Positive Signals
+
+List the strongest job-relevant claims that increased the evaluation.
+
+Each item must include:
+
+claim_id
+short explanation
+affected evaluation dimensions
+Major Weaknesses
+
+List the most important evidence gaps, unsupported claims, or weak implementation evidence.
+
+Each item must include:
+
+claim_id (if applicable)
+explanation
+affected evaluation dimensions
+Requirement Coverage Summary
+
+Summarize:
+
+mandatory requirements satisfied
+preferred requirements satisfied
+missing requirements
+unconfirmed requirements
+Score Justification
+
+For every scored category, explain the primary evidence that determined the score.
+
+Do not restate the numeric score.
+
+Instead explain why the score falls within its band.
+
+Stage 2 Verification Priorities
+
+Explain why the selected projects, repositories, or claims were prioritized for repository analysis.
+
+Confidence Notes
+
+Identify any areas where the evaluation is limited by insufficient evidence rather than negative e

@@ -9,7 +9,9 @@ async def generate(prompt: str) -> str:
         model=settings.GEMINI_MODEL,
         contents=prompt,
         config=types.GenerateContentConfig(
-            temperature=0.2,
+            thinking_config=types.ThinkingConfig(
+                thinking_level="high",
+            ),
         ),
     )
 
