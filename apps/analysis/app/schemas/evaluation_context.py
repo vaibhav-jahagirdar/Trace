@@ -107,6 +107,7 @@ class RubricItem(BaseModel):
     name: str
     description: str | None
     weight: float
+    priority_type: Literal["MANDATORY", "PREFERRED", "BONUS"] | None = None
 
 
 class EvaluationContextDto(BaseModel):
@@ -121,6 +122,25 @@ class EvaluationContextDto(BaseModel):
     evaluationPriorities: list[RubricItem]
     evidencePriorities: list[RubricItem]
     successSignals: list[RubricItem]
+
+    def model_post_init(self, __context: object) -> None:
+        """Give unclassified recruiter rubric items a stable neutral tier."""
+        for field_name in (
+            "evaluationPriorities",
+            "evidencePriorities",
+            "successSignals",
+        ):
+            items = getattr(self, field_name)
+            setattr(
+                self,
+                field_name,
+                [
+                    item
+                    if item.priority_type is not None
+                    else item.model_copy(update={"priority_type": "PREFERRED"})
+                    for item in items
+                ],
+            )
 
 
 class ResumeAnalysisContext(BaseModel):

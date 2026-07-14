@@ -386,3 +386,22 @@ class CandidateExtractionOutput(BaseModel):
                     )
 
         return self
+
+
+class ExtractionMetadataLLMOutput(BaseModel):
+    """The model-owned subset of extraction metadata.
+
+    Timestamp and parser version are attached by the service after generation.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    schema_version: str
+    overall_extraction_confidence: Confidence
+    claim_count: int = Field(ge=0)
+
+
+class CandidateExtractionLLMOutput(CandidateExtractionOutput):
+    """Candidate extraction shape emitted by the model before enrichment."""
+
+    metadata: ExtractionMetadataLLMOutput

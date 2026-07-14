@@ -12,9 +12,8 @@ from app.schemas.evaluation_context import (
 
 _CONTEXT_DIR = Path(__file__).parent.parent / "context"
 
-_RUNTIME_CONTEXT = _CONTEXT_DIR / "runtime_context.md"
-
 _STATIC_CONTEXT_FILES = (
+    "runtime_context.md",
     "role_and_constraints.md",
     "evaluation_policy.md",
     "candidate_extraction.md",
@@ -26,14 +25,7 @@ _STATIC_CONTEXT_FILES = (
 
 
 @lru_cache(maxsize=1)
-def _load_runtime_template() -> str:
-    return _RUNTIME_CONTEXT.read_text(
-        encoding="utf-8"
-    ).strip()
-
-
-@lru_cache(maxsize=1)
-def _load_static_context() -> str:
+def build_resume_analysis_system_instruction() -> str:
     """
     Loads every static prompt document once for the lifetime of the
     process. The order of _STATIC_CONTEXT_FILES defines the evaluation
@@ -64,25 +56,17 @@ def build_resume_analysis_prompt(
     candidate_context: ApplicationContextDto,
     resume_text: str,
 ) -> str:
-    runtime_context = (
-        _load_runtime_template()
-        .replace(
-            "{{JOB_CONTEXT_JSON}}",
-            _json(job_context.model_dump()),
-        )
-        .replace(
-            "{{CANDIDATE_CONTEXT_JSON}}",
-            _json(candidate_context.model_dump()),
-        )
-        .replace(
-            "{{PARSED_RESUME_TEXT}}",
-            resume_text.strip(),
-        )
-    )
+    """Serialize runtime inputs as data, never as interpolated prompt text.
 
-    return "\n\n".join(
-        (
-            runtime_context,
-            _load_static_context(),
-        )
+    Resume and application fields are untrusted. JSON encoding prevents a
+    candidate-controlled value from escaping a Markdown fence or changing the
+    surrounding instruction structure.
+    """
+
+    return _json(
+        {
+            "job_context": job_context.model_dump(mode="json"),
+            "candidate_context": candidate_context.model_dump(mode="json"),
+            "parsed_resume": resume_text.strip(),
+        }
     )

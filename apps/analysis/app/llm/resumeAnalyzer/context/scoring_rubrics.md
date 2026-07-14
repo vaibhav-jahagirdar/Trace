@@ -260,7 +260,7 @@ to a round, safe-looking number like 80 or 85 out of hedging:
   phrasing (the kind that's hard to produce without having actually hit
   the problem) pulls it up.
 
-When you write the `reason` field for any scored value, it must
+When you write the `summary` field for any scored value, it must
 explicitly justify the number against its near neighbors — not just
 justify the band. "Strong implementation evidence" is not an adequate
 reason for an 86 versus an 83; "explains the concurrency problem being
@@ -300,13 +300,10 @@ is only moderate, because a precisely-described claim is a *better* Stage
 2 verification target than a vague one regardless of how central it is to
 this particular job.
 
-The bucket's single reported `score` (the field the backend applies
-requirement/priority weighting to) is the simple average of the two axis
-scores, rounded to the nearest integer, unless the recall-bias rule from
-the philosophy file changes which of two adjacent bands you land the
-average in. Report both axis scores individually in your output as well
-as the combined score — never report only the combined number and discard
-the two components that produced it.
+The bucket's single reported `score` is the simple average of the two axis
+scores, rounded to the nearest integer. Report both axis scores individually
+in your output as well as the combined score — never report only the combined
+number and discard the two components that produced it.
 
 Every other scored bucket (concept alignment, technology alignment,
 technical claim precision, supporting signals, and every recruiter-rubric
