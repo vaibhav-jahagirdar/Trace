@@ -1,53 +1,49 @@
-from pathlib import Path
-import tempfile
-
+from app.cleaners.candidate import normalize_candidate
+from app.cleaners.final_resume_report import (
+    normalize_final_resume_report,
+    validate_evaluation_claim_references,
+)
 from app.cleaners.text import clean_text
 from app.clients.r2 import download_resume
-from app.llm.resumeAnalyzer.prompt.builder import (
-    build_resume_analysis_prompt,
-)
+from app.llm.resumeAnalyzer.prompt.builder import build_resume_analysis_prompt
 from app.llm.service import generate
 from app.parsers.pdf import parse_resume_pdf
 from app.schemas.resume import ResumeAnalysisRequest
+from app.schemas.resume_report import ResumeAnalysisResponse
+from app.services.resume_scoring import compute_resume_scores
 
 
-async def analyze_resume(request: ResumeAnalysisRequest):
+async def analyze_resume(
+    request: ResumeAnalysisRequest,
+) -> dict:
     pdf_bytes = download_resume(request.resumeObjectKey)
 
-    parsed = parse_resume_pdf(pdf_bytes)
+    parsed_resume = parse_resume_pdf(pdf_bytes)
+    cleaned_resume = clean_text(parsed_resume.text)
 
-    cleaned_text = clean_text(parsed.text)
-    print(f"[DEBUG] cleaned_text length: {len(cleaned_text)}")
-
-    job_context = request.analysisContext.job
-    candidate_context = request.analysisContext.candidate
     prompt = build_resume_analysis_prompt(
-        job_context=job_context,
-        candidate_context=candidate_context,
-        resume_text=cleaned_text,
+        job_context=request.analysisContext.job,
+        candidate_context=request.analysisContext.candidate,
+        resume_text=cleaned_resume,
     )
 
-    prompt_path = Path("/tmp/resume_promptv3.txt")
-    prompt_path.parent.mkdir(parents=True, exist_ok=True)
-    prompt_path.write_text(prompt, encoding="utf-8")
+    payload = await generate(prompt)
 
-    print(f"[DEBUG] Finalized prompt written to {prompt_path}")
+    candidate = normalize_candidate(payload["candidate"])
+    evaluation = normalize_final_resume_report(
+        payload["evaluation"],
+        request.analysisContext.job,
+    )
+    validate_evaluation_claim_references(evaluation, candidate)
+    computed_scores = compute_resume_scores(
+        evaluation,
+        request.analysisContext.job,
+    )
 
-    llm_response = await generate(prompt)
-
-    with tempfile.NamedTemporaryFile(
-        mode="w",
-        suffix=".txt",
-        prefix="resume_analysis_",
-        delete=False,
-        encoding="utf-8",
-    ) as f:
-        f.write(llm_response)
-        temp_path = Path(f.name)
-
-    print(f"[DEBUG] LLM response written to {temp_path}")
-
-    return {
-        "response": llm_response,
-        "debugFile": str(temp_path),
+    response = {
+        "candidate": candidate,
+        "evaluation": evaluation,
+        "computed_scores": computed_scores,
     }
+
+    return ResumeAnalysisResponse.model_validate(response).model_dump(mode="json")
