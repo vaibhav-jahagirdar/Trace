@@ -1,27 +1,57 @@
-
-from google import genai
+import os
+from openai import OpenAI
 
 from app.core.config import settings
 
 
-class GeminiClient:
-    
+class NIMClient:
+    """
+    NVIDIA NIM client with OpenAI-compatible interface.
+    Provides a `complete` method identical to Azure ChatCompletionsClient.
+    """
+    _instance = None
 
-    _client: genai.Client | None = None
-
-    @classmethod
-    def get_client(cls) -> genai.Client:
-        if cls._client is None:
-            if not settings.GEMINI_API_KEY:
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            api_key = settings.NVIDIA_API_KEY or os.getenv("NVIDIA_API_KEY")
+            if not api_key:
                 raise RuntimeError(
-                    "GEMINI_API_KEY is not configured."
+                    "NVIDIA_API_KEY is not configured. "
+                    "Set it in your .env file or environment variables."
                 )
-
-            cls._client = genai.Client(
-                api_key=settings.GEMINI_API_KEY,
+            cls._instance._client = OpenAI(
+                base_url="https://integrate.api.nvidia.com/v1",
+                api_key=api_key,
             )
+        return cls._instance
 
-        return cls._client
+    def complete(
+        self,
+        model: str,
+        messages: list[dict],
+        temperature: float = 1.0,
+        top_p: float = 1.0,
+        max_tokens: int = 16384,
+        seed: int = 42,
+        stream: bool = False,
+        **kwargs
+    ):
+        """
+        Drop-in replacement for Azure ChatCompletionsClient.complete.
+        Forwards all parameters to OpenAI's chat.completions.create.
+        """
+        return self._client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            top_p=top_p,
+            max_tokens=max_tokens,
+            seed=seed,
+            stream=stream,
+            **kwargs
+        )
 
 
-client = GeminiClient.get_client()
+# Expose a singleton instance (same pattern as your old file)
+client = NIMClient()

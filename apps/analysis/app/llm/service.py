@@ -1,39 +1,106 @@
+import asyncio
 import json
 from typing import Any
-
-from google.genai import types
 
 from app.core.config import settings
 from app.llm.client import client
 from app.llm.resumeAnalyzer.prompt.builder import (
     build_resume_analysis_system_instruction,
 )
-from app.schemas.resume_report import ResumeAnalysisLLMResponse
 
 
 async def generate(prompt: str) -> dict[str, Any]:
-    response = await client.aio.models.generate_content(
-        model=settings.GEMINI_MODEL,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=build_resume_analysis_system_instruction(),
-            response_mime_type="application/json",
-            response_json_schema=ResumeAnalysisLLMResponse.model_json_schema(),
-            thinking_config=types.ThinkingConfig(
-                thinking_level="high",
-            ),
-        ),
-    )
+    # Load model from env, fallback to a strong NVIDIA NIM model
+    model = settings.NVIDIA_MODEL or "meta/llama-3.3-70b-instruct"
 
-    if not response.text:
-        raise RuntimeError("Gemini returned an empty response.")
+    print("=" * 80)
+    print("[LLM] Starting generation")
+    print(f"[LLM] Model: {model}")
+    print(f"[LLM] Prompt chars: {len(prompt)}")
+    print("=" * 80)
+
+    # Build system instruction
+    system_instruction = build_resume_analysis_system_instruction()
+
+    # NVIDIA NIM uses OpenAI-compatible messages (plain dicts)
+    messages = [
+        {"role": "system", "content": system_instruction},
+        {"role": "user", "content": prompt},
+    ]
 
     try:
-        payload = json.loads(response.text)
+        response = await asyncio.to_thread(
+            client.complete,
+            model=model,
+            messages=messages,
+            temperature=0,
+            max_tokens=8000,
+        )
+    except Exception as exc:
+        print("[LLM] Request failed")
+        print(repr(exc))
+        raise
+
+    if not response.choices:
+        raise RuntimeError(
+            "Model returned no choices."
+        )
+
+    text = response.choices[0].message.content
+
+    if isinstance(text, list):
+        text = "".join(
+            getattr(part, "text", str(part))
+            for part in text
+        )
+
+    if not text:
+        raise RuntimeError(
+            "Model returned an empty response."
+        )
+
+    print("=" * 80)
+    print("[LLM] Raw response preview")
+    print(text[:3000])
+    print("=" * 80)
+
+    text = text.strip()
+
+    # DeepSeek / GLM sometimes wrap JSON in markdown
+    if text.startswith("```json"):
+        text = text[len("```json") :].strip()
+
+    elif text.startswith("```"):
+        text = text[len("```") :].strip()
+
+    if text.endswith("```"):
+        text = text[:-3].strip()
+
+    print("=" * 80)
+    print("[LLM] Cleaned response preview")
+    print(text[:3000])
+    print("=" * 80)
+
+    try:
+        payload = json.loads(text)
     except json.JSONDecodeError as exc:
-        raise RuntimeError("Gemini returned invalid JSON.") from exc
+        print("=" * 80)
+        print("[LLM] JSON PARSE FAILED")
+        print(text[:5000])
+        print("=" * 80)
+
+        raise RuntimeError(
+            f"Model returned invalid JSON:\n{text[:2000]}"
+        ) from exc
 
     if not isinstance(payload, dict):
-        raise RuntimeError("Gemini returned JSON that was not an object.")
+        raise RuntimeError(
+            f"Model returned JSON type {type(payload).__name__}, expected object."
+        )
+
+    print("=" * 80)
+    print("[LLM] JSON parsed successfully")
+    print(f"[LLM] Top-level keys: {list(payload.keys())}")
+    print("=" * 80)
 
     return payload

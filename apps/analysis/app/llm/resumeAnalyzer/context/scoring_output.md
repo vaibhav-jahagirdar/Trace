@@ -1,100 +1,54 @@
-# Evaluation Order and Backend Scoring
+# EVALUATION ORDER & OUTPUT SEMANTICS
 
-## Evaluation Order
+## 1. Evaluation Sequence (Operational Pipeline)
 
-Apply this sequence for every candidate:
+Execute these steps **in order** for every candidate. This sequence defines your workflow:
 
-1. Extract all candidate claims independently of the job.
-2. Read the job's configured requirements, evaluation priorities, and
-   evidence priorities. Score every configured item exactly once.
-3. Select `WORK` as primary when relevant professional work exists;
-   otherwise select `PROJECT` as primary. This includes freshers, interns,
-   and candidates whose work is unrelated to the role.
-4. Score the selected primary evidence source, then the secondary source.
-   Judge relevance from role, responsibility, and domain match — never total
-   years alone.
-5. Score job-relevant concepts, then technologies.
-6. Score configured success signals using the same grounded claims.
-7. Use the free-text job description only to fill a genuine gap left by thin
-   structured job configuration.
+1. **Extract Claims** – Parse the candidate context and resume to extract all explicit claims (this happens before evaluating against the job).
+2. **Read Job Configuration** – Identify all configured `requirements`, `evaluationPriorities`, `evidencePriorities`, and `successSignals`. You will score every configured item exactly once.
+3. **Select Primary Source** – Choose `WORK` as primary if relevant professional work exists; otherwise choose `PROJECT` as primary (this applies to freshers, interns, or candidates in unrelated domains).
+4. **Score Evidence Sources** – Score the selected primary source first, then the secondary source. Judge relevance by role, responsibility, and domain match—**never** by total years alone.
+5. **Score Concepts & Technologies** – Score job-relevant concepts first, then job-relevant technologies. Reward conceptual depth in analogous technologies (e.g., DynamoDB expertise for a PostgreSQL role). Surface-level keyword mentions without mechanism detail receive minimal credit.
+6. **Score Success Signals** – Evaluate configured success signals using the same grounded claims.
+7. **Apply Free-Text Fallback** – Use the `job.description` and `roleCategory` **only** to fill gaps left by thin structured job configuration (items 2–6).
 
-The evaluation object reports raw 0–100 evidence judgments. It never reports
-weighted points or `resume_match_score`.
+> **Output Rule:** Your evaluation object reports raw 0–100 evidence judgments. It **never** reports weighted points, running scores, or `resume_match_score`.
 
-## Score Semantics
+---
 
-Every non-`UNDETERMINABLE` scored value has a 0–100 integer score, a matching
-rubric rating, confidence, a grounded summary, and supporting claim IDs.
-`UNDETERMINABLE` has `score: null` and no supporting claim IDs. A score of
-zero is a real judged absence of meaningful evidence; it is not a substitute
-for `UNDETERMINABLE`.
+## 2. Score Semantics (Output Rules)
 
-`primary_evidence` and `secondary_evidence` each contain independent
-`relevance` and `quality` axes. Their combined score is the rounded average
-of the two axes. The source itself is declared only in
-`experience_analysis.primary_source` / `secondary_source`.
+Every scored field in your output must follow these strict rules:
 
-## Backend-Owned Formula
+- **Non‑`UNDETERMINABLE` fields** must have:
+  - A **0–100 integer score**.
+  - A **matching rubric rating** (VERY_HIGH, HIGH, MEDIUM, LOW, VERY_LOW) determined by the band table.
+  - A **confidence level** (HIGH/MEDIUM/LOW).
+  - A **grounded summary** justifying the score.
+  - One or more **supporting `claim_id`s** linked to the candidate extraction.
 
-The backend applies confidence before weighting:
+- **`UNDETERMINABLE` fields** must have:
+  - `score: null`
+  - **No** supporting claim IDs.
+  - A reason explaining why the information was insufficient.
 
-```
-effective_score = score × {HIGH: 1.00, MEDIUM: 0.90, LOW: 0.75}[confidence]
-```
+- **Zero (`0`) is not a substitute for `UNDETERMINABLE`.** A score of zero is a real judged absence of meaningful evidence.
 
-Configured job criteria receive the largest combined allocation. This makes
-the job context a real ranking input rather than a decorative prompt field.
+- **Dual-Axis Rule (Evidence Buckets Only):**
+  - For `primary_evidence` and `secondary_evidence`, you must provide **two independent axis scores**:
+    - **Relevance** – How directly does this work match the job's role and domain?
+    - **Quality** – How well-documented, mechanism-specific, and reasoned is the implementation?
+  - The final `score` for the bucket is the **rounded average** of these two axes.
+  - Report both axis scores individually in your output. Do not collapse them into one number without showing the components.
 
-| Component | Maximum points |
-| --- | ---: |
-| primary evidence | 25 |
-| secondary evidence | 10 |
-| concept alignment | 10 |
-| technology alignment | 5 |
-| technical claim precision | 5 |
-| supporting signals | 5 |
-| named requirement coverage | 15 |
-| recruiter priorities | 25 |
+---
 
-For a direct evidence bucket:
+## 3. Hard Constraint (Never Calculate Weights)
 
-```
-bucket_points = effective_score / 100 × bucket_max_points
-```
+**You are strictly prohibited from performing any arithmetic involving recruiter-defined weights.**
 
-Requirement coverage is derived from the job's canonical requirements, not
-from model-supplied weights:
+- You must **never** multiply scores by weights.
+- You must **never** calculate a weighted total, `coverage`, `priority_points`, or `resume_match_score`.
+- You must **never** output any field that requires a computed weighted sum.
 
-```
-status_mult: CONFIRMED = 1.0, UNCONFIRMED = 0.5, MISSING = 0.0
-tier_mult:   mandatory = 1.0, preferred = 0.6, bonus = 0.3
-
-coverage = 15 × Σ(status_mult × tier_mult × requirement.weight)
-                 / Σ(tier_mult × requirement.weight)
-```
-
-Recruiter priorities are all configured `evaluationPriorities`,
-`evidencePriorities`, and `successSignals` with a non-null score. The
-backend looks up each item's weight from job context and applies its copied
-priority tier:
-
-```
-priority_points = 25 × Σ(effective_score / 100 × item.weight × tier_mult)
-                       / Σ(item.weight × tier_mult)
-```
-
-## Adaptive Denominator
-
-Do not penalize a candidate or cap a score because the job provides no
-requirements/priorities or because the selected secondary source has no
-claims. A component is inactive when it has no configured job items or its
-source is genuinely `UNDETERMINABLE`.
-
-```
-resume_match_score = 100 × sum(points from active components)
-                         / sum(maximum points for active components)
-```
-
-The backend returns `requirement_coverage`, `recruiter_weighted_priorities`,
-and `resume_match_score` after validation. Never calculate or emit these
-fields yourself.
+The backend owns all arithmetic, confidence discounting, and final ranking calculations. Your sole responsibility is to supply the raw 0–100 evidence judgments, the `rating`, the `confidence`, and the grounded `summary` with supporting `claim_ids`. 

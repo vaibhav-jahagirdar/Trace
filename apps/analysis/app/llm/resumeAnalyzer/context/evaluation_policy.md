@@ -1,84 +1,51 @@
-# Evaluation Policy
+# EVALUATION POLICY (Selection Logic)
 
-## Objective
+## 1. Evidence Priority (Strict Hierarchy)
 
-Assess this candidate's stated evidence against this job, not their general
-potential, pedigree, polish, or apparent seniority. The same resume may
-rightly receive different results for different jobs.
+Resolve competing evidence in this exact order. Higher priority always overrides lower priority:
 
-The job context is the authority for what matters. Recruiter-configured
-requirements, evaluation priorities, and evidence priorities set the
-evaluation target. Their declared weight and priority tier express their
-relative importance; do not substitute a generic idea of a good builder.
+1. **Structured Job Configuration** – Explicit `requirements`, `evaluationPriorities`, and `evidencePriorities`. Treat `MANDATORY`, `PREFERRED`, and `BONUS` tiers exactly as supplied.
+2. **Relevant Professional Work** – Actual role scope, responsibilities, and domain matching this job. (Generic titles, total years, and company prestige are insufficient.)
+3. **Relevant Projects** – Become primary **only** if the candidate has no relevant professional work (freshers, interns, or unrelated domains).
+4. **Job-relevant Concepts** – Demonstrated through explicit implementation claims (e.g., "used `SELECT FOR UPDATE` for inventory locking").
+5. **Job-relevant Technologies** – Implementation context (how/why) outweighs a passive skills-list mention.
+6. **Configured Success Signals** – Evaluate using extracted claims; do not invent new capabilities just because a signal is configured.
+7. **Free-Text Fallback** – Use `job.description` and `roleCategory` **only** when structured priorities (1–6) provide insufficient direction.
 
-## Evidence Priority
+---
 
-Resolve competing evidence in this order:
+## 2. Primary vs. Secondary Source Selection
 
-1. The job's explicit requirements, evaluation priorities, and evidence
-   priorities. Treat `MANDATORY`, `PREFERRED`, and `BONUS` exactly as
-   supplied. A named requirement is more important than an adjacent skill
-   you believe is transferable.
-2. Relevant professional work: actual role scope, responsibilities, and
-   domain for this job. Job-relevant work matters more than job title or
-   raw years of experience.
-3. Relevant projects. Projects corroborate relevant work and become the
-   primary evidence source only when the candidate has no relevant
-   professional work — including freshers, interns, and candidates whose
-   work is in an unrelated role or domain.
-4. Job-relevant concepts demonstrated through explicit implementation
-   claims.
-5. Job-relevant technologies, with implementation context stronger than a
-   skills-list mention.
-6. Configured success signals. Assess each using the same extracted claims;
-   do not invent a new capability merely because the signal is configured.
-7. The free-text job description and role category only as fallback when
-   structured job context does not cover the question.
+Select the primary evidence source **once** per candidate and use it consistently across all scoring buckets:
 
-This is an evidence order, not permission to ignore a high-weight configured
-item. When the job has explicit weights, backend aggregation applies those
-weights deterministically.
+- **Relevant professional work exists** → `WORK` = Primary, `PROJECT` = Secondary.
+- **No relevant professional work exists** → `PROJECT` = Primary, `WORK` = Secondary.
 
-## Work Versus Projects
+**Relevance is defined by:** The actual work's role, responsibilities, and domain matching the job. Generic title similarity or total years do not establish relevance. Partially relevant work remains primary, but its relevance score must reflect the partial fit honestly.
 
-Choose one evidence source once and use it consistently:
+**Note:** The absence of professional work is **not** a negative score. A primary project is judged by the same standard as primary work: direct role fit, implementation detail, mechanisms, trade-offs, and ownership.
 
-- Relevant professional work exists: `WORK` is primary and `PROJECT` is
-  secondary.
-- No relevant professional work exists: `PROJECT` is primary and `WORK` is
-  secondary. The absence of work is not itself a negative score.
+---
 
-“Relevant” means the actual work maps to this job's role, responsibilities,
-or domain. Generic title similarity, total years of experience, company
-prestige, and an unrelated internship do not establish relevance. Partially
-relevant work remains primary, but its relevance score must reflect the
-partial fit honestly.
+## 3. Core Judgment Rules (Apply to All Evidence)
 
-Judge a primary project with the same standard as primary work: direct role
-fit, implementation detail, mechanisms, trade-offs, and ownership. Do not
-discount it merely because it was not paid employment.
+Apply these rules strictly when scoring any evidence source:
 
-## Evidence Discipline
+- **Reward Mechanisms over Buzzwords:** Explicit design decisions, trade-offs, and implementation details outweigh skill lists or technology mentions.
+- **Prioritize Job Relevance over Abstract Impressiveness:** Direct alignment with the job's structured requirements takes precedence over general technical brilliance.
+- **Treat All Claims as Unverified:** Never strengthen a claim with assumptions, external knowledge, or benefit-of-the-doubt.
+- **Do Not Search for Hidden Potential:** Score only the evidence explicitly present. Do not infer unstated depth or future capability.
+- **Ignore Non-Technical Biases:** Ignore school prestige, employer prestige, resume design, writing fluency, protected characteristics, or any signal unrelated to job performance.
 
-- Reward explicit mechanism, design decision, trade-off, or ownership over
-  buzzwords and skill lists.
-- Reward direct job relevance over abstract technical impressiveness.
-- Treat every candidate statement as an unverified claim. Do not strengthen
-  it with assumptions or external knowledge.
-- `MISSING` means no claim supports a named requirement. `UNCONFIRMED` means
-  the structured application asserts it but the resume does not substantiate
-  it. Neither means the candidate cannot do the work.
-- `UNDETERMINABLE` means the supplied material gives no basis to judge that
-  dimension. It is not a zero and is excluded from the active score weight.
-- Do not search for hidden potential, infer unstated depth, or give a
-  benefit-of-the-doubt boost. Score the evidence that is present.
-- Ignore school prestige, employer prestige, résumé design, writing fluency,
-  protected characteristics, and any signal unrelated to job performance.
+---
 
-## Output Discipline
+## 4. Handling Outliers & Conceptual Transfer (Anti-ATS Bias)
 
-Extract candidate claims before evaluating them. Reuse only those claim IDs
-as evidence in the evaluation. Every numeric score must match its rubric
-band, every job-configured criterion must appear exactly once, and the model
-must never calculate weighted totals. The backend owns all arithmetic,
-confidence discounts, and ranking.
+Trace must **not** behave like a keyword-matching ATS. Apply these specific rules to protect geniuses/outliers:
+
+- **Do Not Penalize Missing Exact Keywords:** A candidate who deeply understands distributed systems, indexing, and transaction isolation (e.g., in DynamoDB or Cassandra) **should not** be heavily penalized for a job asking for PostgreSQL. Credit conceptual mastery of the underlying engineering domain.
+- **Zero Fit is Not a Negative Judgment:** If a claim is technically profound but completely unrelated to the job's domain, it earns a `VERY_LOW` alignment score—but this reflects **a lack of fit for this specific role**, not a lack of ability. Do not label the candidate negatively in your qualitative summaries (e.g., avoid "weak engineer"). Use neutral phrasing: "Irrelevant to this job."
+- **Surface Mentions = No Credit:** If a candidate merely lists the exact matching technology (e.g., "PostgreSQL") without any implementation mechanism or trade-off reasoning, score them at the bottom of the `LOW` band (30–40). They do not earn "genius" protection because they provided no evidence of depth.
+- **Deep Mechanisms = Partial Credit:** If a candidate demonstrates deep mechanisms in a *different but comparable* technology stack, score them in the `MEDIUM` to `HIGH` band for conceptual alignment, depending on how directly the mechanism translates.
+
+> **Summary Rule:** Reward depth of engineering reasoning. Do not reward buzzwords. Do not punish missing keywords. When relevance is zero, score it as zero—but never frame it as a character or ability flaw.

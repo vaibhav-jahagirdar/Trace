@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from datetime import datetime
@@ -7,7 +6,9 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
-
+# ---------------------------------------------------------------------------
+# Type Aliases & Enums
+# ---------------------------------------------------------------------------
 
 ClaimId = Annotated[str, StringConstraints(pattern=r"^claim_\d{4}$")]
 
@@ -31,18 +32,11 @@ class TechConceptContext(str, Enum):
     OTHER = "Other"
 
 
-class LinkType(str, Enum):
-    GITHUB = "GitHub"
-    PORTFOLIO = "Portfolio"
-    LINKEDIN = "LinkedIn"
-    WEBSITE = "Website"
-    BLOG = "Blog"
-    OTHER = "Other"
-
+# ---------------------------------------------------------------------------
+# Shared Shapes
+# ---------------------------------------------------------------------------
 
 class ClaimItem(BaseModel):
-    
-
     model_config = ConfigDict(extra="forbid")
 
     claim_id: ClaimId
@@ -51,19 +45,49 @@ class ClaimItem(BaseModel):
     explicit_or_inferred: ExplicitOrInferred
 
 
+class NormalizedRegistryEntry(BaseModel):
+    """Shared shape for Technologies and Concepts."""
 
-class ExtractionMetadata(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    claim_id: ClaimId
+    normalized_name: str
+    raw_name: str
+    source_claim_ids: list[ClaimId] = Field(
+        min_length=1,
+        description="Work/project claims, skills-section mentions, or summary claims this entry was derived from.",
+    )
+    confidence: Confidence
+    explicit_or_inferred: ExplicitOrInferred
+    contexts: list[TechConceptContext] = Field(min_length=1)
+
+
+# ---------------------------------------------------------------------------
+# Metadata (LLM output vs. fully enriched)
+# ---------------------------------------------------------------------------
+
+class ExtractionMetadataLLMOutput(BaseModel):
+    """What the model emits (no timestamp/parser_version)."""
+
     model_config = ConfigDict(extra="forbid")
 
     schema_version: str
+    overall_extraction_confidence: Confidence
+    claim_count: int = Field(ge=0)
+
+
+class ExtractionMetadata(ExtractionMetadataLLMOutput):
+    """Full metadata shape used for DB storage (enriched by service)."""
+
+    model_config = ConfigDict(extra="forbid")
+
     extraction_timestamp: datetime
     parser_version: str
-    overall_extraction_confidence: Confidence
-    claim_count: int = Field(
-        ge=0, description="Total number of claim_ids assigned in this extraction."
-    )
 
 
+# ---------------------------------------------------------------------------
+# Candidate Profile
+# ---------------------------------------------------------------------------
 
 class CandidateProfile(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -75,41 +99,38 @@ class CandidateProfile(BaseModel):
     summary: str | None = None
     summary_claim_id: ClaimId | None = Field(
         default=None,
-        description=(
-            "Set only if the summary contains independently citable claim "
-            "content (e.g. 'led backend team of 4'). Null if the summary is "
-            "purely descriptive with no claim beyond what's captured elsewhere."
-        ),
+        description="Set only if summary contains a citable claim (e.g., 'led backend team of 4').",
     )
     domains: list[str] = Field(default_factory=list)
     industries: list[str] = Field(default_factory=list)
     career_focus: str | None = None
-    github_url: str | None = None
-    portfolio_url: str | None = None
-    linkedin_url: str | None = None
-    website_url: str | None = None
+
+    # ❌ Removed: github_url, portfolio_url, linkedin_url, website_url
+    # These now live in the top-level `links` object.
 
 
+# ---------------------------------------------------------------------------
+# Work Experience
+# ---------------------------------------------------------------------------
 
 class WorkExperience(BaseModel):
-    """A container entity: its own claim_id + nested claim-bearing items."""
+    """Container entity with its own claim_id + nested claims."""
 
     model_config = ConfigDict(extra="forbid")
 
-    claim_id: ClaimId = Field(
-        description="Citable as 'this experience as a whole' (role/responsibility/domain alignment)."
-    )
+    claim_id: ClaimId
     company: str | None = None
     role: str | None = None
-    employment_type: str | None = None
     start_date: str | None = None
     end_date: str | None = None
     current: bool = False
-    duration: str | None = None
     domains: list[str] = Field(default_factory=list)
+
+    # ❌ Removed: employment_type, duration
 
     responsibilities: list[ClaimItem] = Field(default_factory=list)
     achievements: list[ClaimItem] = Field(default_factory=list)
+    implementation_claims: list[ClaimItem] = Field(default_factory=list)
 
     technologies: list[ClaimId] = Field(
         default_factory=list,
@@ -119,26 +140,31 @@ class WorkExperience(BaseModel):
         default_factory=list,
         description="References into the top-level Concepts registry.",
     )
-
-    implementation_claims: list[ClaimItem] = Field(default_factory=list)
 
     source_text: str
     confidence: Confidence
 
 
-
+# ---------------------------------------------------------------------------
+# Projects
+# ---------------------------------------------------------------------------
 
 class Project(BaseModel):
-    """A container entity, independent of Work Experience entries."""
+    """Container entity, independent of Work Experience."""
 
     model_config = ConfigDict(extra="forbid")
 
-    claim_id: ClaimId = Field(description="Citable as 'this project as a whole'.")
+    claim_id: ClaimId
     title: str
     description: str | None = None
     role: str | None = None
-    project_type: str | None = None
     domain: str | None = None
+
+    # ❌ Removed: project_type
+
+    implementation_claims: list[ClaimItem] = Field(default_factory=list)
+    architectural_claims: list[ClaimItem] = Field(default_factory=list)
+    major_features: list[ClaimItem] = Field(default_factory=list)
 
     technologies: list[ClaimId] = Field(
         default_factory=list,
@@ -148,10 +174,6 @@ class Project(BaseModel):
         default_factory=list,
         description="References into the top-level Concepts registry.",
     )
-
-    implementation_claims: list[ClaimItem] = Field(default_factory=list)
-    architectural_claims: list[ClaimItem] = Field(default_factory=list)
-    major_features: list[ClaimItem] = Field(default_factory=list)
 
     repository_url: str | None = None
     live_url: str | None = None
@@ -160,30 +182,9 @@ class Project(BaseModel):
     confidence: Confidence
 
 
-
-class NormalizedRegistryEntry(BaseModel):
-    """
-    Shared shape for Technologies and Concepts: one canonical entry per
-    normalized name, deduplicated across contexts, with provenance back
-    to every raw claim it was derived from.
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-    claim_id: ClaimId
-    normalized_name: str
-    raw_name: str
-    source_claim_ids: list[ClaimId] = Field(
-        min_length=1,
-        description=(
-            "The work-experience/project implementation claims, skills-section "
-            "mention, or summary claim this entry was derived from."
-        ),
-    )
-    confidence: Confidence
-    explicit_or_inferred: ExplicitOrInferred
-    contexts: list[TechConceptContext] = Field(min_length=1)
-
+# ---------------------------------------------------------------------------
+# Technologies / Concepts
+# ---------------------------------------------------------------------------
 
 class Technology(NormalizedRegistryEntry):
     pass
@@ -191,14 +192,12 @@ class Technology(NormalizedRegistryEntry):
 
 class Concept(NormalizedRegistryEntry):
     """Represents engineering knowledge rather than tools."""
-
     pass
 
 
 # ---------------------------------------------------------------------------
-# Education / Certifications / Achievements / Publications
+# Education / Certifications
 # ---------------------------------------------------------------------------
-
 
 class Education(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -224,35 +223,12 @@ class Certification(BaseModel):
     credential_url: str | None = None
 
 
-class Achievement(BaseModel):
-    """Top-level achievement, not tied to a specific work experience."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    claim_id: ClaimId
-    title: str
-    description: str | None = None
-    category: str | None = None
-    source_text: str
-
-
-class Publication(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    claim_id: ClaimId
-    title: str
-    publisher: str | None = None
-    publication_date: str | None = None
-    url: str | None = None
-
-
 # ---------------------------------------------------------------------------
-# Languages / Links — explicitly NOT claims per the contract
+# Languages
 # ---------------------------------------------------------------------------
-
 
 class Language(BaseModel):
-    """No claim_id: self-reported metadata, not used as evaluation evidence."""
+    """No claim_id – self-reported metadata."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -260,19 +236,29 @@ class Language(BaseModel):
     proficiency: str | None = None
 
 
-class Link(BaseModel):
-    """No claim_id: links are pointers, not claims."""
+# ---------------------------------------------------------------------------
+# Links (Flat object, not an array)
+# ---------------------------------------------------------------------------
+
+class Links(BaseModel):
+    """
+    Dedicated link fields, extracted from resume text since application forms
+    are optional. No claim_id.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
-    type: LinkType
-    url: str
+    github: str | None = None
+    portfolio: str | None = None
+    linkedin: str | None = None
+    website: str | None = None
+    blog: str | None = None
+    other: str | None = None
 
 
 # ---------------------------------------------------------------------------
 # Miscellaneous Claims
 # ---------------------------------------------------------------------------
-
 
 class MiscellaneousClaim(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -286,51 +272,33 @@ class MiscellaneousClaim(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Extraction Report
+# Root LLM Output (Matches .md contract exactly)
 # ---------------------------------------------------------------------------
 
+class CandidateExtractionLLMOutput(BaseModel):
+    """
+    Exactly matches the .md contract.
+    No achievements, publications, or extraction_report.
+    links is a flat object, not an array.
+    """
 
-class ExtractionReport(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    missing_sections: list[str] = Field(default_factory=list)
-    ambiguous_entities: list[str] = Field(default_factory=list)
-    low_confidence_entities: list[ClaimId] = Field(default_factory=list)
-    duplicate_entities: list[str] = Field(default_factory=list)
-    ignored_content: list[str] = Field(default_factory=list)
-    parsing_notes: list[str] = Field(default_factory=list)
-
-
-# ---------------------------------------------------------------------------
-# Top-level extraction output
-# ---------------------------------------------------------------------------
-
-
-class CandidateExtractionOutput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    metadata: ExtractionMetadata
+    metadata: ExtractionMetadataLLMOutput
     candidate_profile: CandidateProfile
-
     work_experience: list[WorkExperience] = Field(default_factory=list)
     projects: list[Project] = Field(default_factory=list)
-
     technologies: list[Technology] = Field(default_factory=list)
     concepts: list[Concept] = Field(default_factory=list)
-
     education: list[Education] = Field(default_factory=list)
     certifications: list[Certification] = Field(default_factory=list)
-    achievements: list[Achievement] = Field(default_factory=list)
-    publications: list[Publication] = Field(default_factory=list)
-
     languages: list[Language] = Field(default_factory=list)
-    links: list[Link] = Field(default_factory=list)
-
+    links: Links = Field(default_factory=Links)
     miscellaneous_claims: list[MiscellaneousClaim] = Field(default_factory=list)
 
-    extraction_report: ExtractionReport
-
-    # -- Cross-cutting integrity checks that make the registry auditable --
+    # --------------------------------------------------------------------------
+    # Validators (same registry checks, but no achievements/publications)
+    # --------------------------------------------------------------------------
 
     def _all_claim_ids(self) -> list[str]:
         ids: list[str] = []
@@ -354,14 +322,12 @@ class CandidateExtractionOutput(BaseModel):
         ids += [c.claim_id for c in self.concepts]
         ids += [e.claim_id for e in self.education]
         ids += [c.claim_id for c in self.certifications]
-        ids += [a.claim_id for a in self.achievements]
-        ids += [p.claim_id for p in self.publications]
         ids += [m.claim_id for m in self.miscellaneous_claims]
 
         return ids
 
     @model_validator(mode="after")
-    def _validate_claim_registry(self) -> "CandidateExtractionOutput":
+    def _validate_claim_registry(self) -> "CandidateExtractionLLMOutput":
         ids = self._all_claim_ids()
 
         duplicates = {i for i in ids if ids.count(i) > 1}
@@ -374,7 +340,6 @@ class CandidateExtractionOutput(BaseModel):
                 f"match the number of claim_ids actually present ({len(ids)})"
             )
 
-        # every technology/concept source_claim_id must resolve to a real claim
         known = set(ids)
         for registry, label in ((self.technologies, "technology"), (self.concepts, "concept")):
             for entry in registry:
@@ -382,26 +347,23 @@ class CandidateExtractionOutput(BaseModel):
                 if dangling:
                     raise ValueError(
                         f"{label} '{entry.normalized_name}' ({entry.claim_id}) has "
-                        f"source_claim_ids not present elsewhere in the extraction: {dangling}"
+                        f"source_claim_ids not present elsewhere: {dangling}"
                     )
 
         return self
 
 
-class ExtractionMetadataLLMOutput(BaseModel):
-    """The model-owned subset of extraction metadata.
+# ---------------------------------------------------------------------------
+# Full Enriched Output (Used for DB storage, not emitted by LLM)
+# ---------------------------------------------------------------------------
 
-    Timestamp and parser version are attached by the service after generation.
+class CandidateExtractionOutput(CandidateExtractionLLMOutput):
+    """
+    Fully enriched version used for database storage.
+    Adds timestamp, parser_version, and reuses the full metadata model.
     """
 
     model_config = ConfigDict(extra="forbid")
 
-    schema_version: str
-    overall_extraction_confidence: Confidence
-    claim_count: int = Field(ge=0)
-
-
-class CandidateExtractionLLMOutput(CandidateExtractionOutput):
-    """Candidate extraction shape emitted by the model before enrichment."""
-
-    metadata: ExtractionMetadataLLMOutput
+    # Override metadata with the full version
+    metadata: ExtractionMetadata  # type: ignore[assignment]
