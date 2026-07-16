@@ -16,7 +16,7 @@ class Settings:
     GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
     GITHUB_MODEL = os.getenv("GITHUB_MODEL", "deepseek/DeepSeek-R1-0528")
     NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
-    NVIDIA_MODEL = os.getenv("NVIDIA_MODEL", "z-ai/glm-5.2")  # ✅ Added
+    NVIDIA_MODEL = os.getenv("NVIDIA_MODEL", "nvidia/nemotron-3-super-120b-a12b")  # ✅ Added
 
 
 settings = Settings()

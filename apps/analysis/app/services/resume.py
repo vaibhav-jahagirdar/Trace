@@ -1,5 +1,6 @@
 import json
 import tempfile
+import time  # 👈 Added for timing
 from pprint import pprint
 
 from app.cleaners.candidate import normalize_candidate
@@ -10,8 +11,8 @@ from app.cleaners.final_resume_report import (
 from app.cleaners.text import clean_text
 from app.clients.r2 import download_resume
 from app.llm.resumeAnalyzer.prompt.builder import (
-    build_resume_analysis_prompt,  # ✅ CHANGED: Only JSON data, not full prompt
-    build_resume_analysis_system_instruction,  # For debug logging
+    build_resume_analysis_prompt,
+    build_resume_analysis_system_instruction,
 )
 from app.llm.service import generate
 from app.parsers.pdf import parse_resume_pdf
@@ -61,7 +62,7 @@ async def analyze_resume(
     system_instruction = build_resume_analysis_system_instruction()
     print(f"[RESUME] System instruction length: {len(system_instruction):,} chars")
 
-    # ✅ FIXED: This now returns ONLY the JSON data (job_context, candidate_context, parsed_resume)
+    # This now returns ONLY the JSON data (job_context, candidate_context, parsed_resume)
     prompt = build_resume_analysis_prompt(
         job_context=request.analysisContext.job,
         candidate_context=request.analysisContext.candidate,
@@ -75,7 +76,7 @@ async def analyze_resume(
     with tempfile.NamedTemporaryFile(
         mode="w",
         delete=False,
-        suffix=".json",  # Changed to .json since this is now pure JSON
+        suffix=".json",
     ) as f:
         f.write(prompt)
         prompt_temp_path = f.name
@@ -92,7 +93,10 @@ async def analyze_resume(
     print("=" * 80)
 
     # generate() now injects the System Instruction automatically via the NVIDIA NIM client
+    llm_start = time.time()  # 👈 Start timer
     payload = await generate(prompt)
+    llm_elapsed = time.time() - llm_start  # 👈 End timer
+    print(f"[RESUME] ⏱️ LLM call completed in {llm_elapsed:.2f} seconds")
 
     print("=" * 80)
     print("[RESUME] LLM returned payload")

@@ -9,6 +9,15 @@ PARSER_VERSION = "1.0"
 def normalize_candidate(raw: dict) -> dict:
     """Attach metadata that the model cannot truthfully know."""
     candidate = dict(raw)
+
+    # Remove miscellaneous_claims entries that have null or missing 'claim' text
+    misc = candidate.get("miscellaneous_claims")
+    if isinstance(misc, list):
+        candidate["miscellaneous_claims"] = [
+            entry for entry in misc
+            if isinstance(entry, dict) and entry.get("claim") is not None
+        ]
+
     model_metadata = dict(candidate.get("metadata") or {})
     candidate["metadata"] = {
         "schema_version": model_metadata.get("schema_version"),

@@ -38,20 +38,24 @@ Only these top-level keys are allowed. All list fields are required (may be empt
 
 ---
 
-## Claim Registry (Audit IDs)
+## 🔴 CRITICAL: GLOBAL CLAIM ID ALLOCATION (Step‑by‑Step)
 
-- **`claim_id` format**: `claim_0001`, `claim_0002`, etc. (zero-padded, 4 digits).
-- **Globally Unique**: No two entities share the same `claim_id`.
-- **What gets a `claim_id`**:
-  - Work/Project **containers** (the entity as a whole).
-  - Child claims (responsibilities, achievements, implementation/architectural claims).
-  - Education, Certifications, Technologies, Concepts, Miscellaneous Claims.
-- **What does NOT get a `claim_id`**: `languages` and `links` entries (they are metadata).
-- **`metadata.claim_count`** must equal the exact number of `claim_id`s you assign. Count them. Do not estimate.
-- **`source_claim_ids`**: For technologies/concepts, this must reference the `claim_id` of the work/project where they were mentioned. Minimum 1, no dangling references.
+You **must** assign `claim_id`s using this strict sequence to avoid duplicates:
 
----
+1. **Pre‑allocate IDs before writing**: Before you start writing any JSON, decide the total number of claims you will extract. Set `metadata.claim_count` to that number.
+2. **Sequential assignment**: Assign IDs in the order you encounter them in the resume:
+   - First pass: Work/Project **containers** (e.g., `claim_0001`, `claim_0002`, …)
+   - Second pass: **Child claims** inside those containers (responsibilities, achievements, implementation, architectural, major features)
+   - Third pass: **Technologies** and **Concepts** (e.g., `claim_0021`, `claim_0022`, …)
+   - Fourth pass: **Education**, **Certifications**, **Miscellaneous Claims**
+3. **Never reuse an ID**: Once you have used `claim_0001` for a container, you **cannot** use it again for a summary, a responsibility, or a feature. Use the next available ID.
+   - **⚠️ Pay special attention to `summary_claim_id` in `candidate_profile`:** It is a claim and must get its own unique ID (e.g., `claim_0011`). Do not reuse an ID from a project or work experience.
+4. **Count accurately**: The number of IDs you actually assign **must** match `metadata.claim_count`. Count each `claim_id` exactly once.
+## ⚠️ CRITICAL: References vs. Nested Objects
 
+- **`technologies` and `concepts`** are **lists of strings** (e.g., `["claim_0001", "claim_0002"]`). They are just references to the top-level registry.
+- **`implementation_claims`, `architectural_claims`, `major_features`, `responsibilities`, and `achievements`** are **lists of objects** (`ClaimItem`).
+- **DO NOT** output strings for these object lists. Each entry must have `claim_id`, `text`, `confidence`, and `explicit_or_inferred`.
 ## Entity Schemas
 
 ### 1. Metadata (Required)

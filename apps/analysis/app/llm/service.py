@@ -10,7 +10,7 @@ from app.llm.resumeAnalyzer.prompt.builder import (
 
 
 async def generate(prompt: str) -> dict[str, Any]:
-    # Load model from env, fallback to a strong NVIDIA NIM model
+    # Load model from env
     model = settings.NVIDIA_MODEL or "meta/llama-3.3-70b-instruct"
 
     print("=" * 80)
@@ -22,7 +22,6 @@ async def generate(prompt: str) -> dict[str, Any]:
     # Build system instruction
     system_instruction = build_resume_analysis_system_instruction()
 
-    # NVIDIA NIM uses OpenAI-compatible messages (plain dicts)
     messages = [
         {"role": "system", "content": system_instruction},
         {"role": "user", "content": prompt},
@@ -33,8 +32,11 @@ async def generate(prompt: str) -> dict[str, Any]:
             client.complete,
             model=model,
             messages=messages,
-            temperature=0,
-            max_tokens=8000,
+            temperature=0.1,      # 👈 Low temp = deterministic JSON, but not 0 (allows slight variation for edge cases)
+            top_p=0.95,           # 👈 FIXED: Missing comma added here
+            max_tokens=19834,      # 👈 BALANCED: 8k tokens is 2x your expected JSON size (safe, but not wasteful like 10k)
+            seed=42,
+            response_format={"type": "json_object"},
         )
     except Exception as exc:
         print("[LLM] Request failed")
@@ -42,22 +44,15 @@ async def generate(prompt: str) -> dict[str, Any]:
         raise
 
     if not response.choices:
-        raise RuntimeError(
-            "Model returned no choices."
-        )
+        raise RuntimeError("Model returned no choices.")
 
     text = response.choices[0].message.content
 
     if isinstance(text, list):
-        text = "".join(
-            getattr(part, "text", str(part))
-            for part in text
-        )
+        text = "".join(getattr(part, "text", str(part)) for part in text)
 
     if not text:
-        raise RuntimeError(
-            "Model returned an empty response."
-        )
+        raise RuntimeError("Model returned an empty response.")
 
     print("=" * 80)
     print("[LLM] Raw response preview")
@@ -66,13 +61,11 @@ async def generate(prompt: str) -> dict[str, Any]:
 
     text = text.strip()
 
-    # DeepSeek / GLM sometimes wrap JSON in markdown
+    # DeepSeek respects response_format, but keep these for safety
     if text.startswith("```json"):
         text = text[len("```json") :].strip()
-
     elif text.startswith("```"):
         text = text[len("```") :].strip()
-
     if text.endswith("```"):
         text = text[:-3].strip()
 
@@ -88,10 +81,7 @@ async def generate(prompt: str) -> dict[str, Any]:
         print("[LLM] JSON PARSE FAILED")
         print(text[:5000])
         print("=" * 80)
-
-        raise RuntimeError(
-            f"Model returned invalid JSON:\n{text[:2000]}"
-        ) from exc
+        raise RuntimeError(f"Model returned invalid JSON:\n{text[:2000]}") from exc
 
     if not isinstance(payload, dict):
         raise RuntimeError(
