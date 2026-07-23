@@ -4,11 +4,11 @@ from app.schemas.candidate import (
     CandidateExtractionLLMOutput,
     CandidateExtractionOutput,
 )
-from app.schemas.final_report import ComputedScores, ResumeEvaluationReportLLMOutput
+from app.schemas.final_report import ResumeEvaluationReportLLMOutput
 
 
 class ResumeAnalysisLLMResponse(BaseModel):
-    """Exact JSON shape requested from Gemini before service enrichment."""
+    """Exact JSON shape requested from LLM before service enrichment."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -17,8 +17,9 @@ class ResumeAnalysisLLMResponse(BaseModel):
 
 
 class ResumeAnalysisResponse(BaseModel):
+    """Final response from the Python pipeline – no scoring, just cleaned JSON."""
+
     model_config = ConfigDict(extra="forbid")
 
     candidate: CandidateExtractionOutput
     evaluation: ResumeEvaluationReportLLMOutput
-    computed_scores: ComputedScores

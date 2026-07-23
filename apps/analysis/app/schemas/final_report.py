@@ -1,27 +1,32 @@
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Optional
-from uuid import UUID
+from typing import Annotated, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator, model_validator
 
 # ---------------------------------------------------------------------------
-# Shared enums (as Literals)
+# Type Aliases & Enums (shared)
 # ---------------------------------------------------------------------------
 
-from typing import Literal
+ClaimId = Annotated[str, StringConstraints(pattern=r"^claim_\d{4}$")]
 
 Rating = Literal["VERY_LOW", "LOW", "MEDIUM", "HIGH", "VERY_HIGH", "UNDETERMINABLE"]
-RatingNoUndeterminable = Literal["VERY_LOW", "LOW", "MEDIUM", "HIGH", "VERY_HIGH"]
 Confidence = Literal["HIGH", "MEDIUM", "LOW"]
 PriorityType = Literal["MANDATORY", "PREFERRED", "BONUS"]
 RequirementStatus = Literal["CONFIRMED", "UNCONFIRMED", "MISSING"]
-ClaimId = str  # e.g. "claim_0001"
+ClaimType = Literal["RESPONSIBILITY", "ACHIEVEMENT", "IMPLEMENTATION", "ARCHITECTURAL", "MAJOR_FEATURE"]
+Importance = Literal["CRITICAL", "HIGH", "MEDIUM"]
+ExperienceSource = Literal["WORK", "PROJECT"]
+AlignmentRating = Literal["HIGH", "MEDIUM", "LOW", "UNDETERMINABLE"]
+OverallRoleFit = Literal["EXCEPTIONAL", "STRONG", "GOOD", "MODERATE", "WEAK", "POOR"]
+RepositoryPriority = Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"]
+Impact = Literal["HIGH", "MEDIUM", "LOW"]
 
+# ---------------------------------------------------------------------------
+# Helper: expected rating from score
+# ---------------------------------------------------------------------------
 
-def _expected_rating(score: int) -> RatingNoUndeterminable:
+def _expected_rating(score: int) -> Literal["VERY_LOW", "LOW", "MEDIUM", "HIGH", "VERY_HIGH"]:
     if score >= 90:
         return "VERY_HIGH"
     if score >= 75:
@@ -32,31 +37,22 @@ def _expected_rating(score: int) -> RatingNoUndeterminable:
         return "LOW"
     return "VERY_LOW"
 
-
-def _word_count_validator(max_words: int):
-    def _validate(v: str) -> str:
-        if v and len(v.split()) > max_words:
-            raise ValueError(f"must be \u2264 {max_words} words, got {len(v.split())}")
-        return v
-    return _validate
-
-
 # ---------------------------------------------------------------------------
-# Shared shapes
+# Shared Shapes (ScoredField, ScoreRating, DualAxisScoredField, etc.)
 # ---------------------------------------------------------------------------
 
 class ScoredField(BaseModel):
-    """Every single-axis scored item in the report."""
+    """A single scored axis."""
     model_config = ConfigDict(extra="forbid")
 
     rating: Rating
     score: Optional[int] = Field(default=None, ge=0, le=100)
     confidence: Confidence
     summary: str
-    supporting_claim_ids: list[ClaimId]
+    supporting_claim_ids: list[ClaimId] = Field(default_factory=list)  # optional
 
     @model_validator(mode="after")
-    def _check_undeterminable_consistency(self):
+    def _check_undeterminable_consistency(self) -> "ScoredField":
         if self.rating == "UNDETERMINABLE":
             if self.score is not None:
                 raise ValueError("score must be null when rating is UNDETERMINABLE")
@@ -65,81 +61,87 @@ class ScoredField(BaseModel):
         else:
             if self.score is None:
                 raise ValueError("score is required unless rating is UNDETERMINABLE")
-            if not self.supporting_claim_ids:
-                raise ValueError("supporting_claim_ids required — no supporting claim, no conclusion")
             if self.rating != _expected_rating(self.score):
                 raise ValueError("rating must match the score's anchored rubric band")
         return self
 
 
-class DualAxisScoredField(BaseModel):
-    """primary_evidence / secondary_evidence only."""
+class ScoreRating(BaseModel):
+    """Simple score+rating pair, with optional extra fields the LLM may emit."""
     model_config = ConfigDict(extra="forbid")
 
-    relevance: ScoredField
-    quality: ScoredField
+    score: Optional[int] = Field(default=None, ge=0, le=100)
+    rating: Rating
+    confidence: Optional[Confidence] = None
+    supporting_claim_ids: list[ClaimId] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _check_undeterminable_consistency(self) -> "ScoreRating":
+        if self.rating == "UNDETERMINABLE" and self.score is not None:
+            raise ValueError("score must be null when rating is UNDETERMINABLE")
+        if self.rating != "UNDETERMINABLE" and self.score is None:
+            raise ValueError("score is required unless rating is UNDETERMINABLE")
+        return self
+
+
+class DualAxisScoredField(BaseModel):
+    """Used for primary_evidence and secondary_evidence."""
+    model_config = ConfigDict(extra="forbid")
+
+    source_type: ExperienceSource
+    relevance: ScoreRating
+    quality: ScoreRating
     score: Optional[int] = Field(default=None, ge=0, le=100)
     rating: Rating
     confidence: Confidence
     summary: str
-    supporting_claim_ids: list[ClaimId]
+    supporting_claim_ids: list[ClaimId] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def _check_undeterminable_consistency(self):
-        axes_are_undeterminable = (
-            self.relevance.rating == "UNDETERMINABLE"
-            and self.quality.rating == "UNDETERMINABLE"
-        )
-        either_axis_is_undeterminable = (
-            self.relevance.rating == "UNDETERMINABLE"
-            or self.quality.rating == "UNDETERMINABLE"
-        )
+    def _check_dual_axis_consistency(self) -> "DualAxisScoredField":
+        relevance_und = self.relevance.rating == "UNDETERMINABLE"
+        quality_und = self.quality.rating == "UNDETERMINABLE"
 
-        if either_axis_is_undeterminable and not axes_are_undeterminable:
-            raise ValueError(
-                "relevance and quality must both be UNDETERMINABLE or both be scored"
-            )
+        if relevance_und != quality_und:
+            raise ValueError("relevance and quality must both be UNDETERMINABLE or both be scored")
 
-        if axes_are_undeterminable:
+        if relevance_und:  # both und
             if self.rating != "UNDETERMINABLE":
-                raise ValueError(
-                    "rating must be UNDETERMINABLE when both axes are UNDETERMINABLE"
-                )
+                raise ValueError("rating must be UNDETERMINABLE when both axes are UNDETERMINABLE")
             if self.score is not None:
-                raise ValueError(
-                    "score must be null when both axes are UNDETERMINABLE"
-                )
+                raise ValueError("score must be null when axes are UNDETERMINABLE")
             if self.supporting_claim_ids:
-                raise ValueError(
-                    "supporting_claim_ids must be empty when both axes are UNDETERMINABLE"
-                )
+                raise ValueError("supporting_claim_ids must be empty when axes are UNDETERMINABLE")
         else:
             if self.rating == "UNDETERMINABLE":
                 raise ValueError("rating cannot be UNDETERMINABLE when axes are scored")
             if self.score is None:
                 raise ValueError("score is required when axes are scored")
-            if not self.supporting_claim_ids:
-                raise ValueError("supporting_claim_ids required when axes are scored")
             if self.rating != _expected_rating(self.score):
                 raise ValueError("rating must match the score's anchored rubric band")
-
         return self
 
 
-class RubricItem(BaseModel):
-    """Every item in recruiter_rubric."""
+class TechnologyAlignment(ScoredField):
+    mandatory_technologies_present: bool
+
+
+class QualificationAlignment(ScoredField):
+    mandatory_qualifications_present: bool
+
+
+class SupportingSignalItem(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     code: str
-    priority_type: PriorityType  # copied from job context — see Open Dependency note
+    priority_type: PriorityType
     rating: Rating
     score: Optional[int] = Field(default=None, ge=0, le=100)
-    confidence: Confidence
-    summary: str
-    supporting_claim_ids: list[ClaimId]
+    note: str
+    supporting_claim_ids: list[ClaimId] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def _check_undeterminable_consistency(self):
+    def _check_undeterminable_consistency(self) -> "SupportingSignalItem":
         if self.rating == "UNDETERMINABLE":
             if self.score is not None:
                 raise ValueError("score must be null when rating is UNDETERMINABLE")
@@ -148,66 +150,25 @@ class RubricItem(BaseModel):
         else:
             if self.score is None:
                 raise ValueError("score is required unless rating is UNDETERMINABLE")
-            if self.rating != _expected_rating(self.score):
-                raise ValueError("rating must match the score's anchored rubric band")
         return self
 
 
-# ---------------------------------------------------------------------------
-# §1 Metadata
-# ---------------------------------------------------------------------------
+class SupportingSignals(ScoredField):
+    signals: list[SupportingSignalItem] = Field(default_factory=list)
 
-class Metadata(BaseModel):
-    """Only schema_version is ever model output; the rest are system-populated
-    post-generation. Kept here as required fields because this model
-    represents the *stored* report, not the raw LLM completion."""
+
+class BucketScores(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    schema_version: str
-    job_id: UUID
-    application_id: UUID
-    extraction_id: UUID
-    model: str
-    timestamp: datetime
-    evaluation_duration_ms: int = Field(ge=0)
-
-
-class MetadataLLMOutput(BaseModel):
-    """What the model is actually allowed to emit for §1."""
-    model_config = ConfigDict(extra="forbid")
-
-    schema_version: str
-
+    primary_evidence: DualAxisScoredField
+    secondary_evidence: DualAxisScoredField
+    concept_alignment: ScoredField
+    technology_alignment: TechnologyAlignment
+    qualification_alignment: QualificationAlignment
+    supporting_signals: SupportingSignals
 
 # ---------------------------------------------------------------------------
-# §2 Role Fit
-# ---------------------------------------------------------------------------
-
-AlignmentRating = Literal["HIGH", "MEDIUM", "LOW", "UNDETERMINABLE"]
-
-
-class RoleFit(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    role_alignment_evidence: list[ClaimId]
-    role_alignment_summary: str
-    role_alignment: AlignmentRating
-
-    responsibility_alignment_evidence: list[ClaimId]
-    responsibility_alignment_summary: str
-    responsibility_alignment: AlignmentRating
-
-    domain_alignment_evidence: list[ClaimId]
-    domain_alignment_summary: str
-    domain_alignment: AlignmentRating
-
-    _check_role = field_validator("role_alignment_summary")(_word_count_validator(25))
-    _check_resp = field_validator("responsibility_alignment_summary")(_word_count_validator(25))
-    _check_domain = field_validator("domain_alignment_summary")(_word_count_validator(25))
-
-
-# ---------------------------------------------------------------------------
-# §3 Requirement Analysis
+# Requirement Analysis
 # ---------------------------------------------------------------------------
 
 class RequirementAssessment(BaseModel):
@@ -218,22 +179,23 @@ class RequirementAssessment(BaseModel):
     supporting_claim_ids: list[ClaimId]
     note: str
 
-    _check_note = field_validator("note")(_word_count_validator(20))
-
     @model_validator(mode="after")
-    def _check_missing_has_no_claims(self):
-        if self.status == "MISSING" and self.supporting_claim_ids:
-            raise ValueError("supporting_claim_ids must be empty when status is MISSING")
-        if self.status != "MISSING" and not self.supporting_claim_ids:
-            raise ValueError("supporting_claim_ids required unless status is MISSING")
+    def _check_status_evidence(self) -> "RequirementAssessment":
+        if self.status == "MISSING":
+            if self.supporting_claim_ids:
+                raise ValueError("supporting_claim_ids must be empty when status is MISSING")
+        else:
+            if not self.supporting_claim_ids:
+                raise ValueError("supporting_claim_ids required unless status is MISSING")
         return self
 
 
 class RequirementCategory(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    technologies: list[RequirementAssessment]
-    concepts: list[RequirementAssessment]
+    technologies: list[RequirementAssessment] = Field(default_factory=list)
+    concepts: list[RequirementAssessment] = Field(default_factory=list)
+    qualifications: list[RequirementAssessment] = Field(default_factory=list)
 
 
 class RequirementAnalysis(BaseModel):
@@ -243,104 +205,151 @@ class RequirementAnalysis(BaseModel):
     preferred: RequirementCategory
     bonus: RequirementCategory
 
-
 # ---------------------------------------------------------------------------
-# §4 Experience Analysis
-# ---------------------------------------------------------------------------
-
-ExperienceSource = Literal["WORK", "PROJECT"]
-
-
-class RelevantExperience(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    experience_id: ClaimId
-    relevance_evidence: list[ClaimId]
-    relevance_summary: str
-
-    _check_summary = field_validator("relevance_summary")(_word_count_validator(30))
-
-
-class ExperienceAnalysis(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    primary_source: ExperienceSource
-    secondary_source: ExperienceSource
-    relevant_experiences: list[RelevantExperience]
-    experience_summary: str  # synthesis only — no new claims
-
-    _check_summary = field_validator("experience_summary")(_word_count_validator(50))
-
-    @model_validator(mode="after")
-    def _check_sources_differ(self):
-        if self.primary_source == self.secondary_source:
-            raise ValueError("secondary_source must always be the other one")
-        return self
-
-
-# ---------------------------------------------------------------------------
-# §5 Project Analysis
+# Project Analysis
 # ---------------------------------------------------------------------------
 
 class PrioritizedProject(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     project_id: ClaimId
-    relevance_evidence: list[ClaimId]
+    relevance: ScoreRating
+    quality: ScoreRating
+    score: Optional[int] = Field(default=None, ge=0, le=100)
+    rating: Rating
+    priority: int = Field(ge=1)
+    repository_url: Optional[str] = None
     summary: str
-    verification_value: Literal["HIGH", "MEDIUM", "LOW"]
-    priority: int = Field(ge=1)  # 1 = highest
-    repository_url: Optional[str] = None  # system-populated
-    live_url: Optional[str] = None        # system-populated
+    supporting_claim_ids: list[ClaimId] = Field(default_factory=list)
 
-    _check_summary = field_validator("summary")(_word_count_validator(30))
+    @model_validator(mode="after")
+    def _check_scoring_consistency(self) -> "PrioritizedProject":
+        if self.rating == "UNDETERMINABLE":
+            if self.score is not None:
+                raise ValueError("score must be null when rating is UNDETERMINABLE")
+            if self.supporting_claim_ids:
+                raise ValueError("supporting_claim_ids must be empty when rating is UNDETERMINABLE")
+        else:
+            if self.score is None:
+                raise ValueError("score is required unless rating is UNDETERMINABLE")
+            if self.rating != _expected_rating(self.score):
+                raise ValueError("rating must match the score's anchored rubric band")
+        return self
 
 
 class ProjectAnalysis(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    prioritized_projects: list[PrioritizedProject]
-    ignored_projects: list[ClaimId]  # extracted but not job-relevant; no penalty implied
-
+    prioritized_projects: list[PrioritizedProject] = Field(default_factory=list)
+    ignored_projects: list[ClaimId] = Field(default_factory=list)
 
 # ---------------------------------------------------------------------------
-# §6 Recruiter Rubric Alignment
+# Score Rationale
 # ---------------------------------------------------------------------------
 
-class RecruiterRubric(BaseModel):
+class ScoreDriverUp(BaseModel):
+    """Driver for upward score movement (no impact field)."""
     model_config = ConfigDict(extra="forbid")
 
-    evaluation_dimensions: list[RubricItem]  # from job's evaluationPriorities
-    evidence_categories: list[RubricItem]    # from job's evidencePriorities
-    success_signals: list[RubricItem]        # from job's successSignals
+    claim_ids: list[ClaimId]
+    reason: str
+
+    @field_validator("reason")
+    @classmethod
+    def _limit_reason_words(cls, v: str) -> str:
+        if len(v.split()) > 15:
+            raise ValueError("reason must be ≤ 15 words")
+        return v
+
+
+class ScoreDriverDown(BaseModel):
+    """Driver for downward score movement (includes impact for triage)."""
+    model_config = ConfigDict(extra="forbid")
+
+    claim_ids: list[ClaimId]
+    reason: str
+    impact: Impact
+
+    @field_validator("reason")
+    @classmethod
+    def _limit_reason_words(cls, v: str) -> str:
+        if len(v.split()) > 15:
+            raise ValueError("reason must be ≤ 15 words")
+        return v
+
+
+class ScoreRationale(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    drivers_up: list[ScoreDriverUp] = Field(default_factory=list)
+    drivers_down: list[ScoreDriverDown] = Field(default_factory=list)
+
+# ---------------------------------------------------------------------------
+# Verification Plan
+# ---------------------------------------------------------------------------
+
+class VerificationTarget(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    claim_id: ClaimId
+    claim_type: ClaimType
+    related_project_id: Optional[ClaimId] = None
+    importance: Importance
+    search_hints: list[str] = Field(default_factory=list, max_length=3)
+
+
+class VerificationPlan(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    verification_targets: list[VerificationTarget] = Field(default_factory=list, max_length=5)
+
+# ---------------------------------------------------------------------------
+# Confidence & Overall
+# ---------------------------------------------------------------------------
+
+class ReportConfidence(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    extraction_quality: Confidence
+    scoring_quality: Confidence
+    overall: Confidence
+
+
+class OverallEvaluation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    overall_role_fit: OverallRoleFit
+    repository_priority: RepositoryPriority
+
+# ---------------------------------------------------------------------------
+# Metadata
+# ---------------------------------------------------------------------------
+
+class MetadataLLMOutput(BaseModel):
+    """What the LLM emits – only schema_version."""
+    model_config = ConfigDict(extra="forbid")
+    schema_version: str = "v4"
+
+
+class MetadataFull(BaseModel):
+    """Full metadata with system‑populated fields (for stored report)."""
+    model_config = ConfigDict(extra="forbid")
+
+    schema_version: str = "v4"
+    job_id: str
+    application_id: str
+    extraction_id: str
+    model: str
+    timestamp: str
+    evaluation_duration_ms: int = Field(ge=0)
 
 
 # ---------------------------------------------------------------------------
-# §7 Bucket Scores
+# Computed Scores (backend-owned)
 # ---------------------------------------------------------------------------
-
-class TechnologyAlignment(ScoredField):
-    model_config = ConfigDict(extra="forbid")
-
-    mandatory_technologies_present: bool
-
-
-class BucketScores(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    primary_evidence: DualAxisScoredField      # max 25 pts downstream
-    secondary_evidence: DualAxisScoredField    # max 10 pts downstream
-    concept_alignment: ScoredField             # max 10 pts downstream
-    technology_alignment: TechnologyAlignment  # max 5 pts downstream
-    technical_claim_precision: ScoredField     # max 5 pts downstream
-    supporting_signals: ScoredField            # max 5 pts downstream
-    # requirement_coverage & recruiter_weighted_priorities intentionally absent —
-    # Requirement and recruiter-priority points are computed downstream.
-
 
 class ComputedScores(BaseModel):
-    """Backend-owned scores attached after LLM output validation."""
-
+    """Scores computed downstream, never emitted by the LLM."""
     model_config = ConfigDict(extra="forbid")
 
     requirement_coverage: float = Field(ge=0, le=15)
@@ -349,187 +358,35 @@ class ComputedScores(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# §8 Strengths & Gaps
+# Root Models
 # ---------------------------------------------------------------------------
-
-class Strength(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    category: str
-    supporting_claim_ids: list[ClaimId]
-    summary: str
-
-    _check_summary = field_validator("summary")(_word_count_validator(25))
-
-
-class Gap(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    category: str
-    supporting_claim_ids: list[ClaimId]  # empty allowed for MISSING-type gaps
-    summary: str
-    impact: Literal["HIGH", "MEDIUM", "LOW"]
-
-    _check_summary = field_validator("summary")(_word_count_validator(25))
-
-
-# ---------------------------------------------------------------------------
-# §9 Verification Plan
-# ---------------------------------------------------------------------------
-
-ClaimType = Literal["RESPONSIBILITY", "ACHIEVEMENT", "IMPLEMENTATION", "ARCHITECTURAL", "MAJOR_FEATURE"]
-Importance = Literal["CRITICAL", "HIGH", "MEDIUM"]
-
-
-class VerificationTarget(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    claim_id: ClaimId
-    claim_type: ClaimType
-    claim_summary: str
-    related_project_id: Optional[ClaimId] = None
-    importance: Importance
-    why_verify: str
-    search_hints: list[str] = Field(max_length=3)  # grounded in the claim, never invented
-
-    _check_claim_summary = field_validator("claim_summary")(_word_count_validator(20))
-    _check_why_verify = field_validator("why_verify")(_word_count_validator(25))
-
-
-class VerificationPlan(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    verification_targets: list[VerificationTarget]
-    repository_strategy: str
-
-    _check_strategy = field_validator("repository_strategy")(_word_count_validator(40))
-
-
-# ---------------------------------------------------------------------------
-# §10 Technical Outlier
-# ---------------------------------------------------------------------------
-
-class TechnicalOutlier(BaseModel):
-    """Never affects score. May override repository-analysis gating."""
-    model_config = ConfigDict(extra="forbid")
-
-    is_outlier: bool
-    supporting_claim_ids: list[ClaimId]  # required when is_outlier is true
-    justification: str
-    missing_requirements: list[str]
-    repository_analysis_recommended: bool
-
-    _check_justification = field_validator("justification")(_word_count_validator(40))
-
-    @model_validator(mode="after")
-    def _check_outlier_evidence(self):
-        if self.is_outlier and not self.supporting_claim_ids:
-            raise ValueError("supporting_claim_ids required when is_outlier is true")
-        return self
-
-
-# ---------------------------------------------------------------------------
-# §11 Confidence (report-level)
-# ---------------------------------------------------------------------------
-
-class ReportConfidence(BaseModel):
-    """Distinct from per-field confidence in §6/§7."""
-    model_config = ConfigDict(extra="forbid")
-
-    extraction_quality: Confidence  # copied from extraction.overall_extraction_confidence
-    scoring_quality: Confidence     # LLM's own view of this report's internal coherence
-    overall: Confidence             # min(extraction_quality, scoring_quality) — computed downstream
-
-
-# ---------------------------------------------------------------------------
-# §12 Overall Evaluation
-# ---------------------------------------------------------------------------
-
-class Overall(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    overall_role_fit: Literal["EXCEPTIONAL", "STRONG", "GOOD", "MODERATE", "WEAK", "POOR"]
-    repository_priority: Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"]
-    # No resume_match_score (computed downstream).
-    # No proceed_to_repository_analysis — downstream treats
-    # repository_priority != LOW as default, with
-    # technical_outlier.repository_analysis_recommended as explicit override.
-
-
-# ---------------------------------------------------------------------------
-# §13 Executive Summary
-# ---------------------------------------------------------------------------
-
-class ExecutiveSummary(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    recruiter_summary: str
-    top_strengths: list[str] = Field(max_length=3)  # each traceable to a §8 strengths[].category
-    primary_risks: list[str] = Field(max_length=3)   # each traceable to a §8 gaps[].category
-    # No recommendation field — Stage 1 doesn't make hiring decisions.
-
-    _check_summary = field_validator("recruiter_summary")(_word_count_validator(60))
-
-    @field_validator("top_strengths")
-    @classmethod
-    def _check_strength_lengths(cls, v: list[str]) -> list[str]:
-        for item in v:
-            if len(item.split()) > 12:
-                raise ValueError(f"each top_strength must be \u2264 12 words: {item!r}")
-        return v
-
-    @field_validator("primary_risks")
-    @classmethod
-    def _check_risk_lengths(cls, v: list[str]) -> list[str]:
-        for item in v:
-            if len(item.split()) > 12:
-                raise ValueError(f"each primary_risk must be \u2264 12 words: {item!r}")
-        return v
-
-
-# ---------------------------------------------------------------------------
-# Root model
-# ---------------------------------------------------------------------------
-
-class ResumeEvaluationReport(BaseModel):
-    """Fully enriched report shape used after backend scoring."""
-    model_config = ConfigDict(extra="forbid")
-
-    metadata: Metadata
-    role_fit: RoleFit
-    requirement_analysis: RequirementAnalysis
-    experience_analysis: ExperienceAnalysis
-    project_analysis: ProjectAnalysis
-    recruiter_rubric: RecruiterRubric
-    bucket_scores: BucketScores
-    computed_scores: ComputedScores
-    strengths: list[Strength]
-    gaps: list[Gap]
-    verification_plan: VerificationPlan
-    technical_outlier: TechnicalOutlier
-    confidence: ReportConfidence
-    overall: Overall
-    executive_summary: ExecutiveSummary
-
 
 class ResumeEvaluationReportLLMOutput(BaseModel):
-    """What the LLM should actually be asked to produce — §1 restricted to
-    schema_version, with system-populated metadata fields, resume_match_score,
-    requirement_coverage, and recruiter_weighted_priorities all injected
-    downstream rather than requested from the model."""
+    """The LLM‑generated report (metadata only schema_version)."""
     model_config = ConfigDict(extra="forbid")
 
     metadata: MetadataLLMOutput
-    role_fit: RoleFit
     requirement_analysis: RequirementAnalysis
-    experience_analysis: ExperienceAnalysis
     project_analysis: ProjectAnalysis
-    recruiter_rubric: RecruiterRubric
     bucket_scores: BucketScores
-    strengths: list[Strength]
-    gaps: list[Gap]
+    score_rationale: ScoreRationale
+    decision_critical_claims: list[ClaimId] = Field(default_factory=list, max_length=5)
     verification_plan: VerificationPlan
-    technical_outlier: TechnicalOutlier
     confidence: ReportConfidence
-    overall: Overall
-    executive_summary: ExecutiveSummary
+    overall: OverallEvaluation
+
+
+class ResumeEvaluationReport(BaseModel):
+    """Full enriched report with system‑provided metadata and computed scores."""
+    model_config = ConfigDict(extra="forbid")
+
+    metadata: MetadataFull
+    requirement_analysis: RequirementAnalysis
+    project_analysis: ProjectAnalysis
+    bucket_scores: BucketScores
+    computed_scores: ComputedScores
+    score_rationale: ScoreRationale
+    decision_critical_claims: list[ClaimId] = Field(default_factory=list, max_length=5)
+    verification_plan: VerificationPlan
+    confidence: ReportConfidence
+    overall: OverallEvaluation

@@ -17,6 +17,8 @@ class Settings:
     GITHUB_MODEL = os.getenv("GITHUB_MODEL", "deepseek/DeepSeek-R1-0528")
     NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
     NVIDIA_MODEL = os.getenv("NVIDIA_MODEL", "nvidia/nemotron-3-super-120b-a12b")  # ✅ Added
-
+    AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
+    AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
+    AZURE_DEPLOYMENT_NAME = os.getenv("AZURE_DEPLOYMENT_NAME", "gpt-5-mini")
 
 settings = Settings()

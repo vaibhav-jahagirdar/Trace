@@ -26,27 +26,7 @@ def _validate_job_bound_sections(
                     f"configured items exactly and in order."
                 )
 
-    rubric_sections = (
-        ("evaluation_dimensions", job_context.evaluationPriorities),
-        ("evidence_categories", job_context.evidencePriorities),
-        ("success_signals", job_context.successSignals),
-    )
-    for section, configured_items in rubric_sections:
-        actual_items = report["recruiter_rubric"][section]
-        expected_codes = [item.code for item in configured_items]
-        actual_codes = [item["code"] for item in actual_items]
-        if actual_codes != expected_codes:
-            raise ValueError(
-                f"recruiter_rubric.{section} must contain the job's configured "
-                "items exactly and in order."
-            )
-
-        for actual, configured in zip(actual_items, configured_items, strict=True):
-            if actual["priority_type"] != configured.priority_type:
-                raise ValueError(
-                    f"recruiter_rubric.{section}.{actual['code']} has a priority "
-                    "tier that does not match the job context."
-                )
+    # ❌ recruiter_rubric validation removed – no longer in the schema.
 
 
 def _collect_candidate_claim_ids(candidate: Any) -> set[str]:
