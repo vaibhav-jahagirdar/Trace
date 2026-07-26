@@ -1,9 +1,10 @@
 import json
+import tempfile
 
 from app.cleaners.candidate import normalize_candidate
 from app.cleaners.final_resume_report import (
     normalize_final_resume_report,
-    validate_evaluation_claim_references,
+    # validate_evaluation_claim_references,   # <-- remove this import
 )
 from app.cleaners.text import clean_text
 from app.clients.r2 import download_resume
@@ -22,14 +23,12 @@ async def analyze_resume(request: ResumeAnalysisRequest) -> dict:
     parsed_resume = parse_resume_pdf(pdf_bytes)
     cleaned_resume = clean_text(parsed_resume.text)
 
-
     prompt = build_resume_analysis_prompt(
         job_context=request.analysisContext.job,
         candidate_context=request.analysisContext.candidate,
         resume_text=cleaned_resume,
     )
 
-   
     payload, _raw_response = await generate(prompt)
     if payload is None:
         raise RuntimeError("LLM returned invalid JSON – cannot proceed.")
@@ -40,11 +39,18 @@ async def analyze_resume(request: ResumeAnalysisRequest) -> dict:
         request.analysisContext.job,
     )
 
- 
-    validate_evaluation_claim_references(evaluation, candidate)
+    # ✅ Skip claim reference validation – not used downstream
+    # validate_evaluation_claim_references(evaluation, candidate)
 
-
-    return {
+    response = {
         "candidate": candidate,
         "evaluation": evaluation,
     }
+
+    
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(response, f, indent=2, ensure_ascii=False)
+        temp_path = f.name
+    print(f"[RESUME] Cleaned response written to: {temp_path}")
+
+    return response

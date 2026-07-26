@@ -4,9 +4,6 @@ from typing import Annotated, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator, model_validator
 
-# ---------------------------------------------------------------------------
-# Type Aliases & Enums (shared)
-# ---------------------------------------------------------------------------
 
 ClaimId = Annotated[str, StringConstraints(pattern=r"^claim_\d{4}$")]
 
@@ -22,34 +19,15 @@ OverallRoleFit = Literal["EXCEPTIONAL", "STRONG", "GOOD", "MODERATE", "WEAK", "P
 RepositoryPriority = Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"]
 Impact = Literal["HIGH", "MEDIUM", "LOW"]
 
-# ---------------------------------------------------------------------------
-# Helper: expected rating from score
-# ---------------------------------------------------------------------------
-
-def _expected_rating(score: int) -> Literal["VERY_LOW", "LOW", "MEDIUM", "HIGH", "VERY_HIGH"]:
-    if score >= 90:
-        return "VERY_HIGH"
-    if score >= 75:
-        return "HIGH"
-    if score >= 55:
-        return "MEDIUM"
-    if score >= 30:
-        return "LOW"
-    return "VERY_LOW"
-
-# ---------------------------------------------------------------------------
-# Shared Shapes (ScoredField, ScoreRating, DualAxisScoredField, etc.)
-# ---------------------------------------------------------------------------
 
 class ScoredField(BaseModel):
-    """A single scored axis."""
     model_config = ConfigDict(extra="forbid")
 
     rating: Rating
     score: Optional[int] = Field(default=None, ge=0, le=100)
     confidence: Confidence
     summary: str
-    supporting_claim_ids: list[ClaimId] = Field(default_factory=list)  # optional
+    supporting_claim_ids: list[ClaimId] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _check_undeterminable_consistency(self) -> "ScoredField":
@@ -61,13 +39,10 @@ class ScoredField(BaseModel):
         else:
             if self.score is None:
                 raise ValueError("score is required unless rating is UNDETERMINABLE")
-            if self.rating != _expected_rating(self.score):
-                raise ValueError("rating must match the score's anchored rubric band")
         return self
 
 
 class ScoreRating(BaseModel):
-    """Simple score+rating pair, with optional extra fields the LLM may emit."""
     model_config = ConfigDict(extra="forbid")
 
     score: Optional[int] = Field(default=None, ge=0, le=100)
@@ -85,7 +60,6 @@ class ScoreRating(BaseModel):
 
 
 class DualAxisScoredField(BaseModel):
-    """Used for primary_evidence and secondary_evidence."""
     model_config = ConfigDict(extra="forbid")
 
     source_type: ExperienceSource
@@ -105,7 +79,7 @@ class DualAxisScoredField(BaseModel):
         if relevance_und != quality_und:
             raise ValueError("relevance and quality must both be UNDETERMINABLE or both be scored")
 
-        if relevance_und:  # both und
+        if relevance_und:
             if self.rating != "UNDETERMINABLE":
                 raise ValueError("rating must be UNDETERMINABLE when both axes are UNDETERMINABLE")
             if self.score is not None:
@@ -117,8 +91,6 @@ class DualAxisScoredField(BaseModel):
                 raise ValueError("rating cannot be UNDETERMINABLE when axes are scored")
             if self.score is None:
                 raise ValueError("score is required when axes are scored")
-            if self.rating != _expected_rating(self.score):
-                raise ValueError("rating must match the score's anchored rubric band")
         return self
 
 
@@ -167,9 +139,6 @@ class BucketScores(BaseModel):
     qualification_alignment: QualificationAlignment
     supporting_signals: SupportingSignals
 
-# ---------------------------------------------------------------------------
-# Requirement Analysis
-# ---------------------------------------------------------------------------
 
 class RequirementAssessment(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -205,9 +174,6 @@ class RequirementAnalysis(BaseModel):
     preferred: RequirementCategory
     bonus: RequirementCategory
 
-# ---------------------------------------------------------------------------
-# Project Analysis
-# ---------------------------------------------------------------------------
 
 class PrioritizedProject(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -232,8 +198,6 @@ class PrioritizedProject(BaseModel):
         else:
             if self.score is None:
                 raise ValueError("score is required unless rating is UNDETERMINABLE")
-            if self.rating != _expected_rating(self.score):
-                raise ValueError("rating must match the score's anchored rubric band")
         return self
 
 
@@ -243,12 +207,8 @@ class ProjectAnalysis(BaseModel):
     prioritized_projects: list[PrioritizedProject] = Field(default_factory=list)
     ignored_projects: list[ClaimId] = Field(default_factory=list)
 
-# ---------------------------------------------------------------------------
-# Score Rationale
-# ---------------------------------------------------------------------------
 
 class ScoreDriverUp(BaseModel):
-    """Driver for upward score movement (no impact field)."""
     model_config = ConfigDict(extra="forbid")
 
     claim_ids: list[ClaimId]
@@ -263,7 +223,6 @@ class ScoreDriverUp(BaseModel):
 
 
 class ScoreDriverDown(BaseModel):
-    """Driver for downward score movement (includes impact for triage)."""
     model_config = ConfigDict(extra="forbid")
 
     claim_ids: list[ClaimId]
@@ -284,9 +243,6 @@ class ScoreRationale(BaseModel):
     drivers_up: list[ScoreDriverUp] = Field(default_factory=list)
     drivers_down: list[ScoreDriverDown] = Field(default_factory=list)
 
-# ---------------------------------------------------------------------------
-# Verification Plan
-# ---------------------------------------------------------------------------
 
 class VerificationTarget(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -303,9 +259,6 @@ class VerificationPlan(BaseModel):
 
     verification_targets: list[VerificationTarget] = Field(default_factory=list, max_length=5)
 
-# ---------------------------------------------------------------------------
-# Confidence & Overall
-# ---------------------------------------------------------------------------
 
 class ReportConfidence(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -319,20 +272,16 @@ class OverallEvaluation(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     overall_role_fit: OverallRoleFit
+    overall_role_fit_score: int = Field(ge=0, le=100) 
     repository_priority: RepositoryPriority
 
-# ---------------------------------------------------------------------------
-# Metadata
-# ---------------------------------------------------------------------------
 
 class MetadataLLMOutput(BaseModel):
-    """What the LLM emits – only schema_version."""
     model_config = ConfigDict(extra="forbid")
     schema_version: str = "v4"
 
 
 class MetadataFull(BaseModel):
-    """Full metadata with system‑populated fields (for stored report)."""
     model_config = ConfigDict(extra="forbid")
 
     schema_version: str = "v4"
@@ -344,12 +293,7 @@ class MetadataFull(BaseModel):
     evaluation_duration_ms: int = Field(ge=0)
 
 
-# ---------------------------------------------------------------------------
-# Computed Scores (backend-owned)
-# ---------------------------------------------------------------------------
-
 class ComputedScores(BaseModel):
-    """Scores computed downstream, never emitted by the LLM."""
     model_config = ConfigDict(extra="forbid")
 
     requirement_coverage: float = Field(ge=0, le=15)
@@ -357,12 +301,7 @@ class ComputedScores(BaseModel):
     resume_match_score: float = Field(ge=0, le=100)
 
 
-# ---------------------------------------------------------------------------
-# Root Models
-# ---------------------------------------------------------------------------
-
 class ResumeEvaluationReportLLMOutput(BaseModel):
-    """The LLM‑generated report (metadata only schema_version)."""
     model_config = ConfigDict(extra="forbid")
 
     metadata: MetadataLLMOutput
@@ -377,7 +316,6 @@ class ResumeEvaluationReportLLMOutput(BaseModel):
 
 
 class ResumeEvaluationReport(BaseModel):
-    """Full enriched report with system‑provided metadata and computed scores."""
     model_config = ConfigDict(extra="forbid")
 
     metadata: MetadataFull

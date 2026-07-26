@@ -1,0 +1,219 @@
+[01;34m.[0m
+├── [01;34mapps[0m
+│   ├── [01;34manalysis[0m
+│   │   ├── [01;34mapp[0m
+│   │   │   ├── [01;34manalyzers[0m
+│   │   │   │   └── __init__.py
+│   │   │   ├── [01;34mapi[0m
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── resume.py
+│   │   │   ├── [01;34mcleaners[0m
+│   │   │   │   ├── base.py
+│   │   │   │   ├── candidate.py
+│   │   │   │   ├── final_resume_report.py
+│   │   │   │   └── text.py
+│   │   │   ├── [01;34mclients[0m
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── r2.py
+│   │   │   ├── [01;34mcore[0m
+│   │   │   │   └── config.py
+│   │   │   ├── [01;34mllm[0m
+│   │   │   │   ├── client.py
+│   │   │   │   ├── [01;34mresumeAnalyzer[0m
+│   │   │   │   │   ├── [01;34mcontext[0m
+│   │   │   │   │   │   └── system.md
+│   │   │   │   │   └── [01;34mprompt[0m
+│   │   │   │   │       └── builder.py
+│   │   │   │   └── service.py
+│   │   │   ├── main.py
+│   │   │   ├── [01;34mparsers[0m
+│   │   │   │   └── pdf.py
+│   │   │   ├── [01;34mschemas[0m
+│   │   │   │   ├── candidate.py
+│   │   │   │   ├── evaluation_context.py
+│   │   │   │   ├── final_report.py
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── resume.py
+│   │   │   │   └── resume_report.py
+│   │   │   ├── [01;34mservices[0m
+│   │   │   │   └── resume.py
+│   │   │   └── test_gemini.py
+│   │   └── requirements.txt
+│   ├── [01;34mapi[0m
+│   │   ├── package.json
+│   │   ├── package-lock.json
+│   │   ├── [01;34mscripts[0m
+│   │   │   ├── debug-analyze.ts
+│   │   │   └── test-logger.ts
+│   │   ├── [01;34msrc[0m
+│   │   │   ├── app.ts
+│   │   │   ├── [01;34mconfig[0m
+│   │   │   │   ├── db.ts
+│   │   │   │   ├── env.ts
+│   │   │   │   └── transaction.ts
+│   │   │   ├── [01;34mhelpers[0m
+│   │   │   │   ├── evaluationContext.ts
+│   │   │   │   ├── fileValidation.ts
+│   │   │   │   └── membershipCheck.ts
+│   │   │   ├── [01;34mlib[0m
+│   │   │   │   └── logger.ts
+│   │   │   ├── [01;34mmiddleware[0m
+│   │   │   │   ├── asyncHandler.ts
+│   │   │   │   ├── errorHandler.ts
+│   │   │   │   ├── logger.ts
+│   │   │   │   ├── requireAuth.ts
+│   │   │   │   ├── requireMembership.ts
+│   │   │   │   ├── upload.ts
+│   │   │   │   └── validateParams.ts
+│   │   │   ├── [01;34mmodules[0m
+│   │   │   │   ├── [01;34mapplications[0m
+│   │   │   │   │   ├── [01;34manalysis[0m
+│   │   │   │   │   │   ├── [01;34mgithub[0m
+│   │   │   │   │   │   ├── [01;34mresume[0m
+│   │   │   │   │   │   │   ├── [01;34mclient[0m
+│   │   │   │   │   │   │   │   └── analysis.client.ts
+│   │   │   │   │   │   │   ├── [01;34mdto[0m
+│   │   │   │   │   │   │   │   └── resumeEvaluationReport.ts
+│   │   │   │   │   │   │   └── [01;34mevaluationContext[0m
+│   │   │   │   │   │   │       └── contextBuilder.service.ts
+│   │   │   │   │   │   └── [01;34mvalidators[0m
+│   │   │   │   │   │       ├── candidateExtraction.ts
+│   │   │   │   │   │       ├── evaluationReport.ts
+│   │   │   │   │   │       └── resumeEvaluation.ts
+│   │   │   │   │   ├── [01;34m[applicationId][0m
+│   │   │   │   │   │   ├── [01;34mhelpers[0m
+│   │   │   │   │   │   │   ├── getApplicationConcepts.ts
+│   │   │   │   │   │   │   ├── getApplicationForEvaluation.ts
+│   │   │   │   │   │   │   ├── getApplicationTechnologies.ts
+│   │   │   │   │   │   │   └── toApplicationContextDto.ts
+│   │   │   │   │   │   ├── [01;34mlogic[0m
+│   │   │   │   │   │   └── [01;34mservices[0m
+│   │   │   │   │   │       └── applicationContext.service.ts
+│   │   │   │   │   ├── [01;34mapply[0m
+│   │   │   │   │   │   ├── jobs.apply.controller.ts
+│   │   │   │   │   │   ├── jobs.apply.route.ts
+│   │   │   │   │   │   ├── [01;34mlogic[0m
+│   │   │   │   │   │   │   └── evaluation.ts
+│   │   │   │   │   │   ├── [01;34mservices[0m
+│   │   │   │   │   │   │   └── jobs.apply.service.ts
+│   │   │   │   │   │   └── validator.ts
+│   │   │   │   │   └── [01;34mhelpers[0m
+│   │   │   │   │       ├── createApplication.ts
+│   │   │   │   │       ├── createEligibility.ts
+│   │   │   │   │       ├── createSubmission.ts
+│   │   │   │   │       └── createTechAndConcepts.ts
+│   │   │   │   ├── [01;34mauth[0m
+│   │   │   │   │   ├── auth.controller.ts
+│   │   │   │   │   ├── auth.logout.controller.ts
+│   │   │   │   │   ├── auth.logout.service.ts
+│   │   │   │   │   ├── auth.refresh.controller.ts
+│   │   │   │   │   ├── auth.refresh.service.ts
+│   │   │   │   │   ├── auth.routes.ts
+│   │   │   │   │   ├── auth.service.ts
+│   │   │   │   │   ├── auth.types.ts
+│   │   │   │   │   └── auth.validator.ts
+│   │   │   │   ├── [01;34minvites[0m
+│   │   │   │   │   ├── invites.controller.ts
+│   │   │   │   │   ├── invites.routes.ts
+│   │   │   │   │   ├── invites.validator.ts
+│   │   │   │   │   └── [01;34mservices[0m
+│   │   │   │   │       ├── invites.accept.service.ts
+│   │   │   │   │       ├── invites.service.ts
+│   │   │   │   │       └── invites.validate.service.ts
+│   │   │   │   ├── [01;34mjobs[0m
+│   │   │   │   │   ├── [01;34mconstants[0m
+│   │   │   │   │   │   ├── jobPolicy.ts
+│   │   │   │   │   │   └── scoring.ts
+│   │   │   │   │   ├── jobs.controller.ts
+│   │   │   │   │   ├── jobs.route.ts
+│   │   │   │   │   ├── [01;34mlogic[0m
+│   │   │   │   │   │   ├── evaluation.ts
+│   │   │   │   │   │   ├── evidence.ts
+│   │   │   │   │   │   ├── requirements.ts
+│   │   │   │   │   │   └── success.ts
+│   │   │   │   │   ├── [01;34mservices[0m
+│   │   │   │   │   │   ├── [01;34mhelpers[0m
+│   │   │   │   │   │   │   ├── createJobRecords.ts
+│   │   │   │   │   │   │   ├── eligibilityCriteria.ts
+│   │   │   │   │   │   │   ├── evaluationRecord.ts
+│   │   │   │   │   │   │   ├── evidenceRecord.ts
+│   │   │   │   │   │   │   ├── getJobDto.ts
+│   │   │   │   │   │   │   ├── getJobEvaluationPriorities.ts
+│   │   │   │   │   │   │   ├── getJobEvidencePriorities.ts
+│   │   │   │   │   │   │   ├── getJobForEvaluation.ts
+│   │   │   │   │   │   │   ├── getJobRequirement.ts
+│   │   │   │   │   │   │   ├── getJobSuccessSignals.ts
+│   │   │   │   │   │   │   ├── getPublishedJob.ts
+│   │   │   │   │   │   │   ├── jobRequirements.ts
+│   │   │   │   │   │   │   ├── submissionRequirements.ts
+│   │   │   │   │   │   │   ├── successRecord.ts
+│   │   │   │   │   │   │   └── toEvaluationContextDto.ts
+│   │   │   │   │   │   ├── [01;34m[jobId][0m
+│   │   │   │   │   │   │   ├── evaluationContext.ts
+│   │   │   │   │   │   │   ├── job.get.service.ts
+│   │   │   │   │   │   │   └── jobs.publish.service.ts
+│   │   │   │   │   │   └── jobs.create.service.ts
+│   │   │   │   │   └── [01;34mvalidators[0m
+│   │   │   │   │       ├── [01;34mcreate[0m
+│   │   │   │   │       │   └── jobs.validator.ts
+│   │   │   │   │       └── [01;34mget[0m
+│   │   │   │   │           └── validator.ts
+│   │   │   │   ├── [01;34morganizations[0m
+│   │   │   │   │   ├── [01;34mcontroller[0m
+│   │   │   │   │   │   └── orgs.controller.ts
+│   │   │   │   │   ├── orgs.routes.ts
+│   │   │   │   │   ├── orgs.types.ts
+│   │   │   │   │   ├── orgs.validator.ts
+│   │   │   │   │   └── [01;34mservices[0m
+│   │   │   │   │       ├── orgs.create.service.ts
+│   │   │   │   │       └── orgs.fetch.service.ts
+│   │   │   │   └── [01;34mplatform-invites[0m
+│   │   │   ├── [01;34mqueues[0m
+│   │   │   │   ├── connection.ts
+│   │   │   │   ├── events.ts
+│   │   │   │   ├── [01;34mprocessors[0m
+│   │   │   │   ├── producer.ts
+│   │   │   │   ├── queue.ts
+│   │   │   │   ├── redis.ts
+│   │   │   │   └── worker.ts
+│   │   │   ├── [01;34mroutes[0m
+│   │   │   ├── server.ts
+│   │   │   ├── [01;34mstorage[0m
+│   │   │   │   ├── r2.client.ts
+│   │   │   │   └── r2.service.ts
+│   │   │   ├── [01;34mtypes[0m
+│   │   │   │   └── express.d.ts
+│   │   │   └── [01;34mutils[0m
+│   │   │       └── postgresErrors.ts
+│   │   └── tsconfig.json
+│   ├── [01;34mweb[0m
+│   └── [01;34mworker[0m
+├── [01;34mdocs[0m
+│   ├── [01;34marchitecture[0m
+│   │   └── system-overview.md
+│   ├── [01;34mdatabase[0m
+│   │   └── schema-v1.md
+│   └── [01;34mdomain[0m
+│       └── entities.md
+├── [01;34minfra[0m
+│   ├── docker-compose.yml
+│   ├── [01;34mpostgres[0m
+│   │   ├── [01;34mmigrations[0m
+│   │   ├── [01;34mseeds[0m
+│   │   └── [01;34msnapshots[0m
+│   │       └── schema_v1.sql
+│   └── schema_dump.txt
+├── package.json
+├── package-lock.json
+├── [01;34mpackages[0m
+│   └── [01;34mshared[0m
+│       ├── [01;34mcosntants[0m
+│       ├── [01;34menums[0m
+│       ├── [01;34mtypes[0m
+│       └── [01;34mvalidators[0m
+├── README.md
+├── structure.txt
+├── taged schema files
+└── tsconfig.json
+
+79 directories, 138 files

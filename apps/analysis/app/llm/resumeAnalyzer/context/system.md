@@ -423,7 +423,11 @@ receive LOW repository priority.
     ]
   },
   "confidence": { "extraction_quality": "HIGH | MEDIUM | LOW", "scoring_quality": "HIGH | MEDIUM | LOW", "overall": "HIGH | MEDIUM | LOW" },
-  "overall": { "overall_role_fit": "EXCEPTIONAL | STRONG | GOOD | MODERATE | WEAK | POOR", "repository_priority": "CRITICAL | HIGH | MEDIUM | LOW" }
+  "overall": {
+  "overall_role_fit": "EXCEPTIONAL | STRONG | GOOD | MODERATE | WEAK | POOR",
+  "overall_role_fit_score": 0,
+  "repository_priority": "CRITICAL | HIGH | MEDIUM | LOW"
+}
 }
 ```
 
