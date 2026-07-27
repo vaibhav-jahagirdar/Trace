@@ -1,3 +1,1 @@
-from app.schemas.evaluation_context import ResumeAnalysisPayload
-
-ResumeAnalysisRequest = ResumeAnalysisPayload
+from app.schemas.resume_report import ResumeAnalysisRequest

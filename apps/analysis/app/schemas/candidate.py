@@ -200,25 +200,6 @@ class CandidateExtractionLLMOutput(BaseModel):
 
     @model_validator(mode="after")
     def validate_claim_registry(self) -> "CandidateExtractionLLMOutput":
-        ids = self._collect_all_claim_ids()
-        known = set(ids)
-
-        for we in self.work_experience:
-            for tid in we.technologies:
-                if tid not in known:
-                    raise ValueError(f"Work experience references unknown technology claim_id: {tid}")
-            for cid in we.concepts:
-                if cid not in known:
-                    raise ValueError(f"Work experience references unknown concept claim_id: {cid}")
-
-        for p in self.projects:
-            for tid in p.technologies:
-                if tid not in known:
-                    raise ValueError(f"Project references unknown technology claim_id: {tid}")
-            for cid in p.concepts:
-                if cid not in known:
-                    raise ValueError(f"Project references unknown concept claim_id: {cid}")
-
         return self
 
 

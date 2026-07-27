@@ -1,5 +1,5 @@
 from typing import Literal
-
+from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 
@@ -157,3 +157,9 @@ class ResumeAnalysisPayload(BaseModel):
     taskId: str
     resumeObjectKey: str
     analysisContext: ResumeAnalysisContext
+
+
+class ResumeAnalysisPayload(BaseModel):
+    resumeObjectKey: str
+    analysisContext: EvaluationContextDto
+    raw_llm_response: Optional[str] = None  
