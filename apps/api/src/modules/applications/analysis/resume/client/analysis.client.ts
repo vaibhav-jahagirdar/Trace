@@ -19,10 +19,16 @@ export class AnalysisServiceError extends Error {
 }
 
 export async function analyzeResume(
+ 
   applicationId: string,
   taskId: string,
-): Promise<ResumeAnalysisResponse> {
+  rawLlmResponse?: string,
+): Promise<ResumeAnalysisResponse & { raw_llm_response?: string }> {
   const payload = await getResumeAnalysisPayload(applicationId, taskId);
+
+  if (rawLlmResponse) {
+    (payload as any).raw_llm_response = rawLlmResponse;
+  }
 
   const response = await fetch(`${ANALYSIS_SERVICE_URL}/resume/analyze`, {
     method: "POST",
@@ -59,5 +65,8 @@ export async function analyzeResume(
     );
   }
 
-  return parsed.data;
+  return {
+    ...parsed.data,
+    raw_llm_response: (json as any).raw_llm_response,
+  };
 }

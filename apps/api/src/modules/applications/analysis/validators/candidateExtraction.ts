@@ -26,10 +26,6 @@ export const ContextFlagSchema = z.enum([
 ]);
 export type ContextFlag = z.infer<typeof ContextFlagSchema>;
 
-// ---------------------------------------------------------------------------
-// ClaimItem — pydantic ClaimItem only has claim_id + text
-// ---------------------------------------------------------------------------
-
 export const ClaimItemSchema = z
   .object({
     claim_id: ClaimIdSchema,
@@ -37,10 +33,6 @@ export const ClaimItemSchema = z
   })
   .strict();
 export type ClaimItem = z.infer<typeof ClaimItemSchema>;
-
-// ---------------------------------------------------------------------------
-// Metadata — pydantic Metadata has no extraction_timestamp / parser_version
-// ---------------------------------------------------------------------------
 
 export const MetadataSchema = z
   .object({
@@ -50,10 +42,6 @@ export const MetadataSchema = z
   })
   .strict();
 export type Metadata = z.infer<typeof MetadataSchema>;
-
-// ---------------------------------------------------------------------------
-// CandidateProfile — pydantic has no domains/industries/career_focus/urls
-// ---------------------------------------------------------------------------
 
 export const CandidateProfileSchema = z
   .object({
@@ -67,10 +55,6 @@ export const CandidateProfileSchema = z
   .strict();
 export type CandidateProfile = z.infer<typeof CandidateProfileSchema>;
 
-// ---------------------------------------------------------------------------
-// WorkExperience — pydantic has no employment_type/duration/source_text
-// ---------------------------------------------------------------------------
-
 export const WorkExperienceSchema = z
   .object({
     claim_id: ClaimIdSchema,
@@ -80,23 +64,16 @@ export const WorkExperienceSchema = z
     end_date: z.string().nullable().optional().default(null),
     current: z.boolean().default(false),
     domains: z.array(z.string()).default([]),
-
     responsibilities: z.array(ClaimItemSchema).default([]),
     achievements: z.array(ClaimItemSchema).default([]),
     implementation_claims: z.array(ClaimItemSchema).default([]),
-
     technologies: z.array(ClaimIdSchema).default([]),
     concepts: z.array(ClaimIdSchema).default([]),
-
     context_flags: z.array(ContextFlagSchema).default([]),
     confidence: ConfidenceSchema,
   })
   .strict();
 export type WorkExperience = z.infer<typeof WorkExperienceSchema>;
-
-// ---------------------------------------------------------------------------
-// Project — pydantic has no project_type/live_url/source_text
-// ---------------------------------------------------------------------------
 
 export const ProjectSchema = z
   .object({
@@ -105,26 +82,17 @@ export const ProjectSchema = z
     description: z.string().nullable().optional().default(null),
     role: z.string().nullable().optional().default(null),
     domain: z.string().nullable().optional().default(null),
-
     implementation_claims: z.array(ClaimItemSchema).default([]),
     architectural_claims: z.array(ClaimItemSchema).default([]),
     major_features: z.array(ClaimItemSchema).default([]),
-
     technologies: z.array(ClaimIdSchema).default([]),
     concepts: z.array(ClaimIdSchema).default([]),
-
     repository_url: z.string().nullable().optional().default(null),
     context_flags: z.array(ContextFlagSchema).default([]),
     confidence: ConfidenceSchema,
   })
   .strict();
 export type Project = z.infer<typeof ProjectSchema>;
-
-// ---------------------------------------------------------------------------
-// Technology / Concept — pydantic NormalizedRegistryEntry has no raw_name,
-// no confidence, no explicit_or_inferred; source_claim_ids defaults to []
-// (not min-length-1)
-// ---------------------------------------------------------------------------
 
 const NormalizedRegistryEntryFields = {
   claim_id: ClaimIdSchema,
@@ -138,10 +106,6 @@ export type Technology = z.infer<typeof TechnologySchema>;
 
 export const ConceptSchema = z.object(NormalizedRegistryEntryFields).strict();
 export type Concept = z.infer<typeof ConceptSchema>;
-
-// ---------------------------------------------------------------------------
-// Education / Certification — match pydantic field sets exactly
-// ---------------------------------------------------------------------------
 
 export const EducationSchema = z
   .object({
@@ -169,7 +133,6 @@ export const CertificationSchema = z
   .strict();
 export type Certification = z.infer<typeof CertificationSchema>;
 
-
 export const LinksSchema = z
   .object({
     github: z.string().nullable().optional().default(null),
@@ -177,7 +140,6 @@ export const LinksSchema = z
   })
   .strict();
 export type Links = z.infer<typeof LinksSchema>;
-
 
 export const MiscellaneousClaimSchema = z
   .object({
@@ -190,8 +152,7 @@ export const MiscellaneousClaimSchema = z
   .strict();
 export type MiscellaneousClaim = z.infer<typeof MiscellaneousClaimSchema>;
 
-
-export const CandidateExtractionOutputBaseSchema = z
+export const CandidateExtractionOutputSchema = z
   .object({
     metadata: MetadataSchema,
     candidate_profile: CandidateProfileSchema,
@@ -205,88 +166,6 @@ export const CandidateExtractionOutputBaseSchema = z
     miscellaneous_claims: z.array(MiscellaneousClaimSchema).default([]),
   })
   .strict();
-
-export type CandidateExtractionOutputBase = z.infer<
-  typeof CandidateExtractionOutputBaseSchema
->;
-
-function collectAllClaimIds(data: CandidateExtractionOutputBase): string[] {
-  const ids: string[] = [];
-
-  if (data.candidate_profile.summary_claim_id) {
-    ids.push(data.candidate_profile.summary_claim_id);
-  }
-
-  for (const we of data.work_experience) {
-    ids.push(we.claim_id);
-    ids.push(...we.responsibilities.map((c) => c.claim_id));
-    ids.push(...we.achievements.map((c) => c.claim_id));
-    ids.push(...we.implementation_claims.map((c) => c.claim_id));
-  }
-
-  for (const p of data.projects) {
-    ids.push(p.claim_id);
-    ids.push(...p.implementation_claims.map((c) => c.claim_id));
-    ids.push(...p.architectural_claims.map((c) => c.claim_id));
-    ids.push(...p.major_features.map((c) => c.claim_id));
-  }
-
-  ids.push(...data.technologies.map((t) => t.claim_id));
-  ids.push(...data.concepts.map((c) => c.claim_id));
-  ids.push(...data.education.map((e) => e.claim_id));
-  ids.push(...data.certifications.map((c) => c.claim_id));
-  ids.push(...data.miscellaneous_claims.map((m) => m.claim_id));
-
-  return ids;
-}
-
-export const CandidateExtractionOutputSchema = CandidateExtractionOutputBaseSchema.superRefine(
-  (data, ctx) => {
-    const known = new Set(collectAllClaimIds(data));
-
-    data.work_experience.forEach((we, weIdx) => {
-      we.technologies.forEach((tid, tIdx) => {
-        if (!known.has(tid)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Work experience references unknown technology claim_id: ${tid}`,
-            path: ["work_experience", weIdx, "technologies", tIdx],
-          });
-        }
-      });
-      we.concepts.forEach((cid, cIdx) => {
-        if (!known.has(cid)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Work experience references unknown concept claim_id: ${cid}`,
-            path: ["work_experience", weIdx, "concepts", cIdx],
-          });
-        }
-      });
-    });
-
-    data.projects.forEach((p, pIdx) => {
-      p.technologies.forEach((tid, tIdx) => {
-        if (!known.has(tid)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Project references unknown technology claim_id: ${tid}`,
-            path: ["projects", pIdx, "technologies", tIdx],
-          });
-        }
-      });
-      p.concepts.forEach((cid, cIdx) => {
-        if (!known.has(cid)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Project references unknown concept claim_id: ${cid}`,
-            path: ["projects", pIdx, "concepts", cIdx],
-          });
-        }
-      });
-    });
-  }
-);
 
 export type CandidateExtractionOutput = z.infer<typeof CandidateExtractionOutputSchema>;
 

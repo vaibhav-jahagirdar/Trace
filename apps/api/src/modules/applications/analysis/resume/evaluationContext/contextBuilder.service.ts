@@ -10,8 +10,7 @@ export async function getResumeAnalysisPayload(
   const job = await getEvaluationContext(application.jobId);
 
   return {
-    applicationId,
-    taskId,
+
     resumeObjectKey: application.resumeObjectKey,
     analysisContext: {
       job,

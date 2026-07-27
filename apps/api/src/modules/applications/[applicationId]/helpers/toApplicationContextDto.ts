@@ -2,15 +2,6 @@ import { ApplicationForEvaluationRow } from "./getApplicationForEvaluation";
 import { ApplicationTechnologyRow } from "./getApplicationTechnologies";
 import { ApplicationConceptRow } from "./getApplicationConcepts";
 
-/**
- * PII EXCLUSION: name/email/phone are intentionally never read into this
- * DTO. Feeding candidate names/emails into an LLM scoring prompt risks
- * introducing gender/ethnicity bias into evaluation output, which is a
- * correctness and compliance problem, not just a style choice. Callers
- * needing to display/log candidate identity should join that in *outside*
- * the evaluation payload, keyed by applicationId.
- */
-
 export interface TaggedItem {
   name: string;
   category: string | null;

@@ -1,17 +1,13 @@
 
-
 import { z } from "zod";
 import { CandidateExtractionOutput, CandidateExtractionOutputSchema } from "./candidateExtraction";
-import {
-  ComputedScoresSchema,
-  ResumeEvaluationReportLLMOutputSchema,
-} from "./evaluationReport";
+import { ResumeEvaluationReportLLMOutputSchema } from "./evaluationReport";
 
 export const ResumeAnalysisResponseSchema = z
   .object({
     candidate: CandidateExtractionOutputSchema,
     evaluation: ResumeEvaluationReportLLMOutputSchema,
-    computed_scores: ComputedScoresSchema,
+    raw_llm_response: z.string().optional(),
   })
   .strict();
 
