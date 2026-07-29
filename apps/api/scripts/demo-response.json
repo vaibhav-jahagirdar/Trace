@@ -1,0 +1,403 @@
+{
+  "candidate": {
+    "metadata": {
+      "schema_version": "v6",
+      "overall_extraction_confidence": "HIGH",
+      "claim_count": 31
+    },
+    "candidate_profile": {
+      "current_title": "Software Engineer - Full-Stack Development",
+      "summary": "Full-stack developer focused on building reliable web applications...",
+      "summary_claim_id": "claim_0001"
+    },
+    "work_experience": [],
+    "projects": [
+      {
+        "claim_id": "claim_0002",
+        "title": "OrgOps - Multi-tenant Project & Access Management System",
+        "description": "Built and shipped a multi-tenant project management platform...",
+        "domain": "Project Management",
+        "implementation_claims": [
+          { "claim_id": "claim_0003", "text": "Designed and implemented REST APIs..." },
+          { "claim_id": "claim_0004", "text": "Implemented refresh token rotation..." },
+          { "claim_id": "claim_0005", "text": "Improved scalability of list endpoints..." },
+          { "claim_id": "claim_0006", "text": "Used PostgreSQL transactions and row-level locking..." },
+          { "claim_id": "claim_0007", "text": "Developed reusable frontend components..." },
+          { "claim_id": "claim_0008", "text": "Built handling for loading states..." }
+        ],
+        "architectural_claims": [],
+        "major_features": [
+          { "claim_id": "claim_0009", "text": "Multi-tenant project management platform..." }
+        ],
+        "technologies": [
+          "claim_0018", "claim_0019", "claim_0020", "claim_0021",
+          "claim_0022", "claim_0023", "claim_0024", "claim_0025",
+          "claim_0026", "claim_0027", "claim_0028", "claim_0029",
+          "claim_0030", "claim_0031", "claim_0032", "claim_0033",
+          "claim_0034"
+        ],
+        "concepts": ["claim_0035", "claim_0036", "claim_0037"],
+        "context_flags": [],
+        "confidence": "HIGH"
+      },
+      {
+        "claim_id": "claim_0010",
+        "title": "Smart Campus Navigation - Academic Project",
+        "description": "Contributed to development of a campus navigation platform...",
+        "domain": "Navigation",
+        "implementation_claims": [
+          { "claim_id": "claim_0011", "text": "Worked on frontend integration..." },
+          { "claim_id": "claim_0012", "text": "Implemented graph-based pathfinding..." },
+          { "claim_id": "claim_0013", "text": "Built UI flows for location tracking..." }
+        ],
+        "architectural_claims": [],
+        "major_features": [
+          { "claim_id": "claim_0014", "text": "Campus navigation platform..." }
+        ],
+        "technologies": [
+          "claim_0018", "claim_0019", "claim_0020", "claim_0021",
+          "claim_0022", "claim_0023", "claim_0024", "claim_0025",
+          "claim_0026", "claim_0027", "claim_0028", "claim_0029",
+          "claim_0030", "claim_0031", "claim_0032", "claim_0033",
+          "claim_0034"
+        ],
+        "concepts": ["claim_0035", "claim_0036", "claim_0037"],
+        "context_flags": ["ACADEMIC", "AI_ASSISTED", "TIME_CONSTRAINED"],
+        "confidence": "HIGH"
+      }
+    ],
+    "technologies": [
+      {
+        "claim_id": "claim_0018",
+        "normalized_name": "React",
+        "source_claim_ids": ["claim_0003", "claim_0011", "claim_0015"],
+        "contexts": ["Project", "Skills Section"]
+      },
+      {
+        "claim_id": "claim_0019",
+        "normalized_name": "Node.js",
+        "source_claim_ids": ["claim_0003", "claim_0011", "claim_0015"],
+        "contexts": ["Project", "Skills Section"]
+      },
+      {
+        "claim_id": "claim_0020",
+        "normalized_name": "PostgreSQL",
+        "source_claim_ids": ["claim_0003", "claim_0005", "claim_0006", "claim_0015"],
+        "contexts": ["Project", "Skills Section"]
+      },
+      {
+        "claim_id": "claim_0021",
+        "normalized_name": "JavaScript",
+        "source_claim_ids": ["claim_0015"],
+        "contexts": ["Skills Section"]
+      },
+      {
+        "claim_id": "claim_0022",
+        "normalized_name": "TypeScript",
+        "source_claim_ids": ["claim_0015"],
+        "contexts": ["Skills Section"]
+      },
+      {
+        "claim_id": "claim_0023",
+        "normalized_name": "Next.js",
+        "source_claim_ids": ["claim_0015"],
+        "contexts": ["Skills Section"]
+      },
+      {
+        "claim_id": "claim_0024",
+        "normalized_name": "Tailwind CSS",
+        "source_claim_ids": ["claim_0015"],
+        "contexts": ["Skills Section"]
+      },
+      {
+        "claim_id": "claim_0025",
+        "normalized_name": "Express",
+        "source_claim_ids": ["claim_0015"],
+        "contexts": ["Skills Section"]
+      },
+      {
+        "claim_id": "claim_0026",
+        "normalized_name": "MongoDB",
+        "source_claim_ids": ["claim_0015"],
+        "contexts": ["Skills Section"]
+      },
+      {
+        "claim_id": "claim_0027",
+        "normalized_name": "Git",
+        "source_claim_ids": ["claim_0015"],
+        "contexts": ["Skills Section"]
+      },
+      {
+        "claim_id": "claim_0028",
+        "normalized_name": "Socket.IO",
+        "source_claim_ids": ["claim_0011", "claim_0015"],
+        "contexts": ["Project", "Skills Section"]
+      },
+      {
+        "claim_id": "claim_0029",
+        "normalized_name": "Postman",
+        "source_claim_ids": ["claim_0015"],
+        "contexts": ["Skills Section"]
+      }
+    ],
+    "concepts": [
+      {
+        "claim_id": "claim_0035",
+        "normalized_name": "REST APIs",
+        "source_claim_ids": ["claim_0003", "claim_0015"],
+        "contexts": ["Project", "Skills Section"]
+      },
+      {
+        "claim_id": "claim_0036",
+        "normalized_name": "Authentication",
+        "source_claim_ids": ["claim_0004", "claim_0015"],
+        "contexts": ["Project", "Skills Section"]
+      },
+      {
+        "claim_id": "claim_0037",
+        "normalized_name": "Database Transactions",
+        "source_claim_ids": ["claim_0006", "claim_0015"],
+        "contexts": ["Project", "Skills Section"]
+      },
+      {
+        "claim_id": "claim_0038",
+        "normalized_name": "Role-Based Access Control",
+        "source_claim_ids": ["claim_0015"],
+        "contexts": ["Skills Section"]
+      }
+    ],
+    "education": [
+      {
+        "claim_id": "claim_0016",
+        "degree": "B.E.",
+        "specialization": "Electrical and Electronics Engineering",
+        "institution": "Acharya Institute of Technology, Bengaluru",
+        "grade": "6.5 CGPA",
+        "current": false
+      }
+    ],
+    "certifications": [],
+    "links": {
+      "github": "https://github.com/erin",
+      "portfolio": "https://erin.dev"
+    },
+    "miscellaneous_claims": [
+      {
+        "claim_id": "claim_0017",
+        "category": "Skills Section",
+        "title": "Skills Section",
+        "claim": "Skills section lists: Languages: JavaScript, TypeScript; Frontend: React, Next.js, Tailwind CSS; Backend: Node.js, Express; Database: PostgreSQL, MongoDB; Concepts: REST APIs, Authentication, Database Transactions, Role-Based Access Control; Tools: Git, Socket.IO, Postman",
+        "confidence": "HIGH"
+      }
+    ]
+  },
+  "evaluation": {
+    "metadata": {
+      "schema_version": "v4"
+    },
+    "requirement_analysis": {
+      "mandatory": {
+        "technologies": [
+          {
+            "name": "PostgreSQL",
+            "status": "CONFIRMED",
+            "supporting_claim_ids": ["claim_0006"],
+            "note": "Used with row-level locking and transactions"
+          }
+        ],
+        "concepts": [],
+        "qualifications": []
+      },
+      "preferred": {
+        "technologies": [],
+        "concepts": [
+          {
+            "name": "Distributed Systems",
+            "status": "UNCONFIRMED",
+            "supporting_claim_ids": ["claim_0035", "claim_0036", "claim_0037"],
+            "note": "No explicit distributed systems claims"
+          }
+        ],
+        "qualifications": []
+      },
+      "bonus": {
+        "technologies": [],
+        "concepts": [],
+        "qualifications": []
+      }
+    },
+    "project_analysis": {
+      "prioritized_projects": [
+        {
+          "project_id": "claim_0002",
+          "relevance": { "score": 80, "rating": "HIGH" },
+          "quality": { "score": 80, "rating": "HIGH" },
+          "score": 80,
+          "rating": "HIGH",
+          "priority": 1,
+          "summary": "Multi-tenant system with PostgreSQL transactions and row-level locking for concurrency",
+          "supporting_claim_ids": ["claim_0002", "claim_0006"]
+        },
+        {
+          "project_id": "claim_0010",
+          "relevance": { "score": 60, "rating": "MEDIUM" },
+          "quality": { "score": 60, "rating": "MEDIUM" },
+          "score": 60,
+          "rating": "MEDIUM",
+          "priority": 2,
+          "summary": "Academic project with graph-based pathfinding, limited backend depth",
+          "supporting_claim_ids": ["claim_0010", "claim_0012"]
+        }
+      ],
+      "ignored_projects": []
+    },
+    "bucket_scores": {
+      "primary_evidence": {
+        "source_type": "PROJECT",
+        "relevance": {
+          "score": 80,
+          "rating": "HIGH",
+          "confidence": "HIGH",
+          "supporting_claim_ids": ["claim_0002"]
+        },
+        "quality": {
+          "score": 80,
+          "rating": "HIGH",
+          "confidence": "HIGH",
+          "supporting_claim_ids": ["claim_0006"]
+        },
+        "score": 80,
+        "rating": "HIGH",
+        "confidence": "HIGH",
+        "summary": "OrgOps project shows PostgreSQL concurrency mechanisms and API design",
+        "supporting_claim_ids": ["claim_0002", "claim_0006"]
+      },
+      "secondary_evidence": {
+        "source_type": "PROJECT",
+        "relevance": {
+          "score": 60,
+          "rating": "MEDIUM",
+          "confidence": "MEDIUM",
+          "supporting_claim_ids": ["claim_0010"]
+        },
+        "quality": {
+          "score": 60,
+          "rating": "MEDIUM",
+          "confidence": "MEDIUM",
+          "supporting_claim_ids": ["claim_0012"]
+        },
+        "score": 60,
+        "rating": "MEDIUM",
+        "confidence": "MEDIUM",
+        "summary": "Academic navigation project with pathfinding, limited backend depth",
+        "supporting_claim_ids": ["claim_0010", "claim_0012"]
+      },
+      "concept_alignment": {
+        "rating": "MEDIUM",
+        "score": 60,
+        "confidence": "MEDIUM",
+        "summary": "REST APIs and authentication confirmed, distributed systems unconfirmed",
+        "supporting_claim_ids": ["claim_0035", "claim_0036"]
+      },
+      "technology_alignment": {
+        "rating": "HIGH",
+        "score": 80,
+        "confidence": "HIGH",
+        "summary": "PostgreSQL confirmed with mechanism depth, mandatory requirement met",
+        "supporting_claim_ids": ["claim_0006"],
+        "mandatory_technologies_present": true
+      },
+      "qualification_alignment": {
+        "rating": "UNDETERMINABLE",
+        "score": null,
+        "confidence": "HIGH",
+        "summary": "No education or certification requirements configured in job context",
+        "supporting_claim_ids": [],
+        "mandatory_qualifications_present": false
+      },
+      "supporting_signals": {
+        "rating": "LOW",
+        "score": 50,
+        "confidence": "LOW",
+        "summary": "No evidence of fast ramp-up or high retention",
+        "supporting_claim_ids": [],
+        "signals": [
+          {
+            "code": "FAST_RAMP_UP",
+            "priority_type": "PREFERRED",
+            "rating": "UNDETERMINABLE",
+            "note": "No claims about ramp-up speed",
+            "supporting_claim_ids": []
+          },
+          {
+            "code": "HIGH_RETENTION",
+            "priority_type": "PREFERRED",
+            "rating": "UNDETERMINABLE",
+            "note": "No claims about tenure or retention",
+            "supporting_claim_ids": []
+          }
+        ]
+      }
+    },
+    "score_rationale": {
+      "drivers_up": [
+        {
+          "claim_ids": ["claim_0006"],
+          "reason": "PostgreSQL row-level locking and transactions demonstrate backend depth"
+        },
+        {
+          "claim_ids": ["claim_0002"],
+          "reason": "Multi-tenant project management system is relevant to backend engineering"
+        }
+      ],
+      "drivers_down": [
+        {
+          "claim_ids": [],
+          "reason": "No professional work experience, projects are primary evidence",
+          "impact": "MEDIUM"
+        },
+        {
+          "claim_ids": [],
+          "reason": "Distributed Systems concept unconfirmed",
+          "impact": "LOW"
+        }
+      ]
+    },
+    "decision_critical_claims": ["claim_0006"],
+    "verification_plan": {
+      "verification_targets": [
+        {
+          "claim_id": "claim_0006",
+          "claim_type": "IMPLEMENTATION",
+          "related_project_id": "claim_0002",
+          "importance": "CRITICAL",
+          "search_hints": ["SELECT FOR UPDATE", "PostgreSQL transaction", "row-level locking"]
+        },
+        {
+          "claim_id": "claim_0004",
+          "claim_type": "IMPLEMENTATION",
+          "related_project_id": "claim_0002",
+          "importance": "HIGH",
+          "search_hints": ["refresh token rotation", "session revocation", "JWT"]
+        },
+        {
+          "claim_id": "claim_0005",
+          "claim_type": "IMPLEMENTATION",
+          "related_project_id": "claim_0002",
+          "importance": "MEDIUM",
+          "search_hints": ["pagination", "filtering", "indexed query"]
+        }
+      ]
+    },
+    "confidence": {
+      "extraction_quality": "HIGH",
+      "scoring_quality": "HIGH",
+      "overall": "HIGH"
+    },
+    "overall": {
+      "overall_role_fit": "GOOD",
+      "overall_role_fit_score": 70,
+      "repository_priority": "CRITICAL"
+    }
+  }
+}
