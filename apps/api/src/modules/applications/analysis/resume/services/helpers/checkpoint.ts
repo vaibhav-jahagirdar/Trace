@@ -64,23 +64,40 @@ export async function deleteExpiredCheckpoints(client: PoolClient): Promise<numb
 export async function storePermanentResult(
   client: PoolClient,
   taskId: string,
-  rawLlmResponse: string,
   requestHash: string,
-): Promise<void> {
+  rawLlmResponse: string,
+  cleanedResponse: object,
+): Promise<string> {
+  const cleanedJson = JSON.stringify(cleanedResponse);
+
   const query = `
     INSERT INTO resume_analysis_results (
       application_task_id,
       request_hash,
-      raw_llm_response
-    ) VALUES ($1, $2, $3)
+      raw_llm_response,
+      cleaned_response
+    ) VALUES ($1, $2, $3, $4)
     ON CONFLICT (application_task_id)
     DO UPDATE SET
       raw_llm_response = EXCLUDED.raw_llm_response,
+      cleaned_response = EXCLUDED.cleaned_response,
       request_hash = EXCLUDED.request_hash,
       updated_at = NOW()
+    RETURNING id
   `;
 
-  await client.query(query, [taskId, requestHash, rawLlmResponse]);
+  const result = await client.query<{ id: string }>(query, [
+    taskId,
+    requestHash,
+    rawLlmResponse,
+    cleanedJson,
+  ]);
+
+  if (result.rowCount === 0 || !result.rows[0]) {
+    throw new Error('Failed to store permanent result');
+  }
+
+  return result.rows[0].id;
 }
 
 
