@@ -24,7 +24,9 @@ export async function applyJobController(
       applicationData.submission,
     );
 
-    res.status(201).json(result);
+    const statusCode = result.passed ? 202 : 201;
+
+    res.status(statusCode).json(result);
   } catch (error) {
     next(error);
   }
