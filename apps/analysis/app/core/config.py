@@ -20,5 +20,6 @@ class Settings:
     AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
     AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
     AZURE_DEPLOYMENT_NAME = os.getenv("AZURE_DEPLOYMENT_NAME", "gpt-5-mini")
+    GIHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
 settings = Settings()
