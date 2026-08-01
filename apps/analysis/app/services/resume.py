@@ -2,7 +2,10 @@ import json
 import tempfile
 
 from app.cleaners.candidate import normalize_candidate
-from app.cleaners.final_resume_report import normalize_final_resume_report
+from app.cleaners.final_resume_report import (
+    normalize_final_resume_report,
+    validate_evaluation_claim_references,
+)
 from app.cleaners.text import clean_text
 from app.clients.r2 import download_resume
 from app.llm.resumeAnalyzer.prompt.builder import build_resume_analysis_prompt
@@ -45,6 +48,7 @@ async def analyze_resume(request: ResumeAnalysisRequest) -> dict:
         evaluation_raw,
         request.analysisContext.job,
     )
+    validate_evaluation_claim_references(evaluation, candidate)
 
     response = {
         "candidate": candidate,

@@ -26,6 +26,23 @@ def _validate_job_bound_sections(
                     f"configured items exactly and in order."
                 )
 
+    expected_qualification = job_context.qualifications.minimumEducationLevel
+    actual_qualification = report["requirement_analysis"]["qualification"]
+    if expected_qualification is None:
+        if actual_qualification is not None:
+            raise ValueError(
+                "requirement_analysis.qualification must be null when no minimum "
+                "education requirement is configured."
+            )
+    elif (
+        actual_qualification is None
+        or actual_qualification["name"] != expected_qualification
+    ):
+        raise ValueError(
+            "requirement_analysis.qualification must match the configured minimum "
+            "education requirement."
+        )
+
     # ❌ recruiter_rubric validation removed – no longer in the schema.
 
 
@@ -99,8 +116,8 @@ def normalize_final_resume_report(
             if not isinstance(target, dict):
                 continue
             hints = target.get("search_hints")
-            if isinstance(hints, list) and len(hints) > 3:
-                target["search_hints"] = hints[:3]
+            if isinstance(hints, list) and len(hints) > 6:
+                target["search_hints"] = hints[:6]
 
     normalized = validate_llm_output(
         raw=report,

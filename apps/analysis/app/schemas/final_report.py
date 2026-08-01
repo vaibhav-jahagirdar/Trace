@@ -13,7 +13,7 @@ PriorityType = Literal["MANDATORY", "PREFERRED", "BONUS"]
 RequirementStatus = Literal["CONFIRMED", "UNCONFIRMED", "MISSING"]
 ClaimType = Literal["RESPONSIBILITY", "ACHIEVEMENT", "IMPLEMENTATION", "ARCHITECTURAL", "MAJOR_FEATURE"]
 Importance = Literal["CRITICAL", "HIGH", "MEDIUM"]
-ExperienceSource = Literal["WORK", "PROJECT"]
+ExperienceSource = Literal["WORK", "PROJECT", "NONE"]
 AlignmentRating = Literal["HIGH", "MEDIUM", "LOW", "UNDETERMINABLE"]
 OverallRoleFit = Literal["EXCEPTIONAL", "STRONG", "GOOD", "MODERATE", "WEAK", "POOR"]
 RepositoryPriority = Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"]
@@ -80,6 +80,8 @@ class DualAxisScoredField(BaseModel):
             raise ValueError("relevance and quality must both be UNDETERMINABLE or both be scored")
 
         if relevance_und:
+            if self.source_type != "NONE":
+                raise ValueError("source_type must be NONE when both axes are UNDETERMINABLE")
             if self.rating != "UNDETERMINABLE":
                 raise ValueError("rating must be UNDETERMINABLE when both axes are UNDETERMINABLE")
             if self.score is not None:
@@ -87,6 +89,8 @@ class DualAxisScoredField(BaseModel):
             if self.supporting_claim_ids:
                 raise ValueError("supporting_claim_ids must be empty when axes are UNDETERMINABLE")
         else:
+            if self.source_type == "NONE":
+                raise ValueError("source_type NONE requires UNDETERMINABLE axes")
             if self.rating == "UNDETERMINABLE":
                 raise ValueError("rating cannot be UNDETERMINABLE when axes are scored")
             if self.score is None:
@@ -99,7 +103,7 @@ class TechnologyAlignment(ScoredField):
 
 
 class QualificationAlignment(ScoredField):
-    mandatory_qualifications_present: bool
+    minimum_education_present: bool
 
 
 class SupportingSignalItem(BaseModel):
@@ -153,9 +157,11 @@ class RequirementAssessment(BaseModel):
         if self.status == "MISSING":
             if self.supporting_claim_ids:
                 raise ValueError("supporting_claim_ids must be empty when status is MISSING")
-        else:
+        elif self.status == "CONFIRMED":
             if not self.supporting_claim_ids:
-                raise ValueError("supporting_claim_ids required unless status is MISSING")
+                raise ValueError("supporting_claim_ids required when status is CONFIRMED")
+        elif self.supporting_claim_ids:
+            raise ValueError("supporting_claim_ids must be empty when status is UNCONFIRMED")
         return self
 
 
@@ -164,7 +170,6 @@ class RequirementCategory(BaseModel):
 
     technologies: list[RequirementAssessment] = Field(default_factory=list)
     concepts: list[RequirementAssessment] = Field(default_factory=list)
-    qualifications: list[RequirementAssessment] = Field(default_factory=list)
 
 
 class RequirementAnalysis(BaseModel):
@@ -173,6 +178,7 @@ class RequirementAnalysis(BaseModel):
     mandatory: RequirementCategory
     preferred: RequirementCategory
     bonus: RequirementCategory
+    qualification: Optional[RequirementAssessment] = None
 
 
 class PrioritizedProject(BaseModel):
@@ -251,7 +257,7 @@ class VerificationTarget(BaseModel):
     claim_type: ClaimType
     related_project_id: Optional[ClaimId] = None
     importance: Importance
-    search_hints: list[str] = Field(default_factory=list, max_length=3)
+    search_hints: list[str] = Field(min_length=3, max_length=6)
 
 
 class VerificationPlan(BaseModel):
@@ -272,7 +278,6 @@ class OverallEvaluation(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     overall_role_fit: OverallRoleFit
-    overall_role_fit_score: int = Field(ge=0, le=100) 
     repository_priority: RepositoryPriority
 
 
