@@ -1,0 +1,249 @@
+/* ========================================================= */
+/* Trace Motion System                                       */
+/* Meaningful Motion Only                                    */
+/* ========================================================= */
+
+:root {
+  --motion-fast: 180ms;
+  --motion-normal: 320ms;
+  --motion-slow: 700ms;
+
+  --ease-editorial: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+/* ========================================================= */
+/* Keyframes */
+/* ========================================================= */
+
+@keyframes trace-rise {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes trace-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes trace-slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(-48px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes trace-slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(48px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes trace-scale {
+  from {
+    opacity: 0;
+    transform: scale(.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes trace-rule {
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes trace-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes trace-marquee {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes trace-float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ========================================================= */
+/* Animation Utilities */
+/* ========================================================= */
+
+.animate-rise {
+  animation: trace-rise var(--motion-slow) var(--ease-editorial) both;
+}
+
+.animate-fade {
+  animation: trace-fade var(--motion-normal) ease both;
+}
+
+.animate-slide-left {
+  animation: trace-slide-left var(--motion-slow) var(--ease-editorial) both;
+}
+
+.animate-slide-right {
+  animation: trace-slide-right var(--motion-slow) var(--ease-editorial) both;
+}
+
+.animate-scale {
+  animation: trace-scale var(--motion-normal) var(--ease-soft) both;
+}
+
+.animate-rule {
+  animation: trace-rule 1.1s var(--ease-editorial) forwards;
+}
+
+.animate-caret {
+  animation: trace-blink .9s infinite;
+}
+
+.animate-marquee {
+  animation: trace-marquee 18s linear infinite;
+}
+
+.animate-float {
+  animation: trace-float 5s ease-in-out infinite;
+}
+
+/* ========================================================= */
+/* Scroll Reveal */
+/* ========================================================= */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+
+  transition:
+    opacity 700ms var(--ease-editorial),
+    transform 700ms var(--ease-editorial);
+}
+
+/* ========================================================= */
+/* Storytelling Components */
+/* ========================================================= */
+
+.resume-stack>*+* {
+  margin-top: -1.25rem;
+}
+
+.report-stack>*+* {
+  margin-top: -0.75rem;
+}
+
+.repo-tree>*+* {
+  margin-top: .25rem;
+}
+
+.timeline-step {
+  position: relative;
+}
+
+.timeline-step::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  left: -.75rem;
+
+  width: 2px;
+  height: 100%;
+
+  background: var(--color-border);
+}
+
+.rule-grow {
+  overflow: hidden;
+}
+
+.rule-grow::after {
+  content: "";
+
+  display: block;
+
+  width: 100%;
+  height: 1px;
+
+  background: currentColor;
+
+  transform-origin: left;
+  animation: trace-rule .8s var(--ease-editorial);
+}
+
+/* ========================================================= */
+/* Motion Preferences */
+/* ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .animate-rise,
+  .animate-fade,
+  .animate-slide-left,
+  .animate-slide-right,
+  .animate-scale,
+  .animate-marquee,
+  .animate-float,
+  .animate-rule,
+  .animate-caret {
+    animation: none !important;
+  }
+
+  .reveal,
+  .reveal-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

@@ -1,0 +1,12 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@import "./base/reset.css";
+@import "./base/tokens.css";
+@import "./base/utilities.css";
+
+@import "./typography/index.css";
+@import "./animations/index.css";
+
+@import "./themes/forensic.css";
+@import "./themes/moss.css";

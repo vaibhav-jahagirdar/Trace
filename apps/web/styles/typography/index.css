@@ -1,0 +1,228 @@
+/* ========================================================= */
+/* Trace Typography System                                   */
+/* Shared by Forensic + Moss                                 */
+/* ========================================================= */
+
+:root {
+  --tracking-editorial: -0.045em;
+  --tracking-display: -0.035em;
+  --tracking-tight: -0.02em;
+
+  --leading-display: 0.9;
+  --leading-heading: 1;
+  --leading-copy: 1.65;
+
+  --measure-copy: 68ch;
+  --measure-wide: 82ch;
+}
+
+/* ------------------------------------------------ */
+/* Hero */
+/* ------------------------------------------------ */
+
+.display-hero,
+.text-hero {
+  font-family: var(--font-sans);
+  font-size: clamp(4.5rem, 9vw, 8rem);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-editorial);
+  font-weight: 500;
+  text-wrap: balance;
+}
+
+/* ------------------------------------------------ */
+/* Large Editorial Sections */
+/* ------------------------------------------------ */
+
+.display-section,
+.text-section {
+  font-family: var(--font-sans);
+  font-size: clamp(2.75rem, 5vw, 4.5rem);
+  line-height: 0.95;
+  letter-spacing: var(--tracking-display);
+  font-weight: 500;
+  text-wrap: balance;
+}
+
+/* ------------------------------------------------ */
+/* Statements */
+/* ------------------------------------------------ */
+
+.display-statement {
+  font-family: var(--font-sans);
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-weight: 500;
+}
+
+/* ------------------------------------------------ */
+/* H1-H6 */
+/* ------------------------------------------------ */
+
+h1 {
+  font-size: clamp(4rem, 8vw, 6rem);
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  font-weight: 500;
+}
+
+h2 {
+  font-size: clamp(3rem, 6vw, 4rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-weight: 500;
+}
+
+h3 {
+  font-size: clamp(2rem, 4vw, 2.5rem);
+  line-height: 1.05;
+  font-weight: 500;
+}
+
+h4 {
+  font-size: 1.5rem;
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+h5 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+h6 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* ------------------------------------------------ */
+/* Body */
+/* ------------------------------------------------ */
+
+.body-editorial,
+p {
+  font-family: var(--font-sans);
+  font-size: 1.125rem;
+  line-height: var(--leading-copy);
+  max-width: var(--measure-copy);
+  color: var(--color-muted-foreground);
+}
+
+/* ------------------------------------------------ */
+/* Small Text */
+/* ------------------------------------------------ */
+
+.body-small {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--color-muted-foreground);
+}
+
+/* ------------------------------------------------ */
+/* Labels */
+/* ------------------------------------------------ */
+
+.label-index {
+  font-size: 0.75rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+}
+
+.label-section {
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* ------------------------------------------------ */
+/* Quotes */
+/* ------------------------------------------------ */
+
+blockquote {
+  border-left: 2px solid var(--color-border);
+  padding-left: 2rem;
+  margin: 2rem 0;
+
+  font-size: 1.4rem;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+/* ------------------------------------------------ */
+/* Lists */
+/* ------------------------------------------------ */
+
+ul,
+ol {
+  padding-left: 1.5rem;
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+/* ------------------------------------------------ */
+/* Code */
+/* ------------------------------------------------ */
+
+code,
+pre {
+  font-family: var(--font-mono);
+}
+
+code {
+  font-size: 0.92rem;
+}
+
+pre {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+}
+
+/* ------------------------------------------------ */
+/* Links */
+/* ------------------------------------------------ */
+
+a {
+  transition: color 180ms ease;
+}
+
+a:hover {
+  color: var(--color-primary);
+}
+
+/* ------------------------------------------------ */
+/* Utility Classes */
+/* ------------------------------------------------ */
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.measure {
+  max-width: var(--measure-copy);
+}
+
+.measure-wide {
+  max-width: var(--measure-wide);
+}
+
+.text-mono {
+  font-family: var(--font-mono);
+}
+
+.text-serif {
+  font-family: var(--font-serif);
+}
+
+.text-display {
+  letter-spacing: var(--tracking-display);
+}
+
+.text-editorial {
+  letter-spacing: var(--tracking-editorial);
+}
