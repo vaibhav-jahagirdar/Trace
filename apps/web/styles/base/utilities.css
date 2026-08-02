@@ -287,7 +287,9 @@
 .border-default {
   border: 1px solid var(--color-border);
 }
-
+.font-heading {
+  font-family: var(--font-heading);
+}
 /* ------------------------------------------------ */
 /* Responsive */
 /* ------------------------------------------------ */

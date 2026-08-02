@@ -5,12 +5,12 @@
 
 .theme-moss {
   /* ------------------------------------------------ */
-  /* Fonts */
+  /* Fonts — combined from both codebases             */
   /* ------------------------------------------------ */
 
   --font-primary: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --font-serif: "Inter", ui-serif, serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
 
   /* ------------------------------------------------ */
   /* Radius */
@@ -33,7 +33,7 @@
 
   --moss: oklch(0.294 0.017 148);
 
-  --forest: oklch(0.251 0.029 154);
+  --forest: oklch(0.33 0.05 152);
 
   --ink: oklch(0.184 0 0);
 

@@ -20,13 +20,17 @@
 /* Hero */
 /* ------------------------------------------------ */
 
-.display-hero,
+.display-hero {
+  font-family: var(--font-heading, Inter, sans-serif);
+  font-size: clamp(3.25rem, 8.5vw, 6rem);
+  line-height: 0.88;
+  letter-spacing: -0.035em;
+}
 .text-hero {
   font-family: var(--font-sans);
   font-size: clamp(4.5rem, 9vw, 8rem);
   line-height: var(--leading-display);
   letter-spacing: var(--tracking-editorial);
-  font-weight: 500;
   text-wrap: balance;
 }
 

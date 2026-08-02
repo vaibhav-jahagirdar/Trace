@@ -112,6 +112,35 @@
   }
 }
 
+/* The review loop deliberately becomes less legible over time. */
+@keyframes weekend-tab-switch {
+  0%, 13%, 100% { opacity: .45; transform: translateY(0); background: rgb(255 255 255 / .025); }
+  16%, 29% { opacity: 1; transform: translateY(1px); background: rgb(255 255 255 / .12); }
+  32% { opacity: .5; }
+}
+
+@keyframes weekend-card-swap {
+  0%, 18%, 100% { transform: translateX(0); opacity: 1; }
+  23% { transform: translateX(9px); opacity: .6; }
+  29% { transform: translateX(-5px); opacity: .82; }
+  35% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes weekend-memory-fade {
+  0%, 45%, 100% { opacity: .8; filter: blur(0); }
+  62%, 80% { opacity: .22; filter: blur(1.5px); }
+}
+
+@keyframes weekend-overload {
+  0%, 52%, 100% { opacity: 0; transform: translateX(-15%); }
+  58%, 75% { opacity: .16; transform: translateX(10%); }
+}
+
+@keyframes weekend-clock {
+  0%, 100% { opacity: .45; }
+  50% { opacity: .9; color: rgb(254 202 202 / .9); }
+}
+
 /* ========================================================= */
 /* Animation Utilities */
 /* ========================================================= */
@@ -151,6 +180,44 @@
 .animate-float {
   animation: trace-float 5s ease-in-out infinite;
 }
+
+.weekend-tab {
+  display: flex;
+  min-width: 0;
+  flex: 1 0 5.5rem;
+  align-items: center;
+  gap: .35rem;
+  border: 1px solid rgb(255 255 255 / .1);
+  border-bottom: 0;
+  padding: .45rem .5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  color: rgb(255 255 255 / .55);
+}
+
+.weekend-candidate {
+  border: 1px solid rgb(255 255 255 / .1);
+  background: rgb(255 255 255 / .035);
+  padding: .65rem .75rem;
+}
+
+.weekend-overload {
+  background: repeating-linear-gradient(0deg, transparent 0, transparent 7px, rgb(255 255 255 / .8) 8px);
+  mix-blend-mode: overlay;
+}
+
+.weekend-loop-running .weekend-tab { animation: weekend-tab-switch 5.6s steps(1, end) infinite; }
+.weekend-loop-running .weekend-tab-1 { animation-delay: -1.2s; }
+.weekend-loop-running .weekend-tab-2 { animation-delay: -2.3s; }
+.weekend-loop-running .weekend-tab-3 { animation-delay: -3.5s; }
+.weekend-loop-running .weekend-tab-4 { animation-delay: -4.6s; }
+.weekend-loop-running .weekend-candidate { animation: weekend-card-swap 6.8s var(--ease-editorial) infinite; }
+.weekend-loop-running .weekend-candidate-1 { animation-delay: -2.1s; }
+.weekend-loop-running .weekend-candidate-2 { animation-delay: -4.5s; }
+.weekend-loop-running .weekend-memory,
+.weekend-loop-running .weekend-note-fade { animation: weekend-memory-fade 5.5s ease-in-out infinite; }
+.weekend-loop-running .weekend-overload { animation: weekend-overload 5.5s ease-in-out infinite; }
+.weekend-loop-running .weekend-clock { animation: weekend-clock 1.2s ease-in-out infinite; }
 
 /* ========================================================= */
 /* Scroll Reveal */
@@ -237,6 +304,10 @@
   .animate-float,
   .animate-rule,
   .animate-caret {
+    animation: none !important;
+  }
+
+  .weekend-loop-running * {
     animation: none !important;
   }
 
