@@ -3,66 +3,95 @@
 import {
   createContext,
   useContext,
+  useEffect,
+  useState,
+  useMemo,
   type ReactNode,
 } from "react";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMe } from "@/features/auth/hooks/use-me";
+import { OrgMembership } from "@/features/auth/api/me";
+import { api } from "@/lib/api/client";
 
-import { getSession, type Session } from "@/lib/auth/session";
-import { queryKeys } from "@/lib/query/keys";
 
 type AuthContextValue = {
-  session: Session | null;
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    status: string;
+    created_at: string;
+    updated_at: string;
+  } | null;
+  organizations: OrgMembership[];
+  activeOrg: OrgMembership | null;
+  setActiveOrg: (org: OrgMembership) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
   isError: boolean;
+  error: Error | null;
   refetch: () => Promise<unknown>;
 };
 
-const AuthContext = createContext<AuthContextValue | null>(
-  null
-);
+const AuthContext = createContext<AuthContextValue | null>(null);
 
 type AuthProviderProps = {
   children: ReactNode;
 };
 
-export function AuthProvider({
-  children,
-}: AuthProviderProps) {
-  const {
-    data,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: queryKeys.auth.me(),
-    queryFn: getSession,
-    retry: false,
-  });
+export function AuthProvider({ children }: AuthProviderProps) {
+  const { data, isLoading, isError, error, refetch } = useMe();
 
-  const value: AuthContextValue = {
-    session: data ?? null,
-    isAuthenticated: !!data,
-    isLoading,
-    isError,
-    refetch,
-  };
+  // Client state: which org is currently active
+  const [activeOrg, setActiveOrg] = useState<OrgMembership | null>(null);
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+  const user = data?.data ?? null;
+  const organizations = user?.organizations ?? [];
+
+  // Auto‑select the first organisation if none is chosen
+  useEffect(() => {
+    if (!activeOrg && organizations.length > 0) {
+      setActiveOrg(organizations[0]);
+    }
+  }, [activeOrg, organizations]);
+
+  // Optionally bind logout behaviour (redirect on refresh failure)
+  // api.setRefreshFailureHandler(() => {
+  //   window.location.href = "/login";
+  // });
+
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      user: user
+        ? {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            status: user.status,
+            created_at: user.created_at,
+            updated_at: user.updated_at,
+          }
+        : null,
+      organizations,
+      activeOrg,
+      setActiveOrg,
+      isAuthenticated: !!user,
+      isLoading,
+      isError,
+      error: error instanceof Error ? error : error ? new Error("Unknown error") : null,
+      refetch,
+    }),
+    [user, organizations, activeOrg, isLoading, isError, error, refetch],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error(
-      "useAuth must be used within AuthProvider."
-    );
+    throw new Error("useAuth must be used within AuthProvider.");
   }
 
   return context;

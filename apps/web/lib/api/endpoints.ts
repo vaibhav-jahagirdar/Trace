@@ -1,6 +1,6 @@
 export const API = {
   auth: {
-    signup: "/auth/signup",
+    signup: "/auth/register",
     login: "/auth/login",
     logout: "/auth/logout",
     refresh: "/auth/refresh",
