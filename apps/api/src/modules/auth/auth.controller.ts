@@ -1,8 +1,9 @@
 import type { Request, Response } from "express";
 import { registerSchema, loginSchema } from "./auth.validator";
-import { registerUser, loginUser } from "./auth.service";
+import { registerUser, loginUser, getUserWithOrgs } from "./auth.service";
 import { asyncHandler } from "../../middleware/asyncHandler";
 import { UAParser } from "ua-parser-js";
+import { UnauthorizedError } from "../../middleware/errorHandler";
 
 const REFRESH_TOKEN_EXPIRY_DAYS = Number(process.env.REFRESH_TOKEN_EXPIRY_DAYS) || 7;
 export const IS_PRODUCTION = process.env.NODE_ENV === "production";
@@ -60,4 +61,12 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     message: "Login successful",
     data: { userId },
   });
+});
+
+export const me = asyncHandler(async (req: Request, res: Response) => {
+
+  const userId = req.user?.id;
+  if (!userId) throw new UnauthorizedError("User not authenticated");
+  const data = await getUserWithOrgs(userId);
+  res.json({ data });
 });

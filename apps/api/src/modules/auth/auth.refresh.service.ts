@@ -7,7 +7,8 @@ import {
 
 import { withTransaction } from "../../config/transaction";
 
-import { AppError, UnauthorizedError } from "../../middleware/errorHandler";
+import { AppError, UnauthorizedError, NotFoundError } from "../../middleware/errorHandler";
+import { getDb } from "../../config/db";
 
 export async function revokeRefreshToken(
   client: any,
@@ -149,3 +150,4 @@ export async function refreshTokenRotation(
     };
   });
 }
+

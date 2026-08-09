@@ -9,7 +9,8 @@ import {
   NotFoundError,
   UnauthorizedError,
 } from "../../middleware/errorHandler";
-
+import { getDb } from "../../config/db";
+getDb
 export const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
@@ -229,4 +230,47 @@ AND u.suspended_at IS NULL`,
       tokens: { accessToken, refreshToken },
     };
   });
+}
+export async function getUserWithOrgs(userId: string) {
+  const client = await getDb().connect();
+  try {
+
+    const { rows: userRows } = await client.query(
+      `SELECT id, username, email, status, created_at, updated_at
+       FROM users
+       WHERE id = $1
+         AND deleted_at IS NULL
+         AND suspended_at IS NULL`,
+      [userId]
+    );
+    if (userRows.length === 0) throw new NotFoundError("User not found");
+
+    const user = userRows[0];
+
+
+    const { rows: orgRows } = await client.query(
+      `SELECT
+         om.organization_id AS "orgId",
+         o.slug          AS "orgSlug",
+         o.name          AS "orgName",
+         om.role         AS "role",
+         om.title        AS "title",
+         om.joined_at    AS "joinedAt"
+       FROM organization_members om
+       JOIN organizations o ON o.id = om.organization_id
+       WHERE om.user_id = $1
+         AND om.removed_at IS NULL
+         AND o.deleted_at IS NULL
+         AND o.status = 'ACTIVE'
+       ORDER BY om.joined_at ASC`,
+      [userId]
+    );
+
+    return {
+      ...user,
+      organizations: orgRows,
+    };
+  } finally {
+    client.release();
+  }
 }

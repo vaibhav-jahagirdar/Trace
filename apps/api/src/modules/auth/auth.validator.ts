@@ -23,6 +23,16 @@ const password = z
   .regex(/[0-9]/)
   .regex(/[^A-Za-z0-9]/);
 
+const optionalString = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.string().optional(),
+);
+
+const optionalUrl = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.url().optional(),
+);
+
 export const registerSchema = z.object({
   username,
   email,
@@ -34,26 +44,13 @@ export const registerSchema = z.object({
     .min(1)
     .max(100),
 
-  last_name: z
-    .string()
-    .trim()
-    .max(100)
-    .optional(),
+  last_name: optionalString.pipe(z.string().max(100).optional()),
 
-  phone: z
-    .string()
-    .trim()
-    .max(30)
-    .regex(/^\+?[0-9\s\-().]+$/)
-    .optional(),
+  phone: optionalString.pipe(z.string().max(30).regex(/^\+?[0-9\s\-().]+$/).optional()),
 
-  linkedin_url: z
-    .url()
-    .optional(),
+  linkedin_url: optionalUrl,
 
-  avatar_url: z
-    .url()
-    .optional(),
+  avatar_url: optionalUrl,
 });
 export const loginSchema = z.object({
   email,
