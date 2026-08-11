@@ -151,7 +151,6 @@ export type CreateJobInput =
   z.infer<typeof createJobSchema>;
 
   export const successSignalSchema = z.object({
-    job_id: z.string().uuid(),
     success_signal_id : z.string().uuid(),
     weight : z.number().int().min(1).max(100),
   })

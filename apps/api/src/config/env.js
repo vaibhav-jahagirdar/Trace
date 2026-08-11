@@ -1,0 +1,33 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.env = void 0;
+require("dotenv/config");
+function required(name) {
+    const value = process.env[name];
+    if (!value)
+        throw new Error(`Missing required env var: ${name}`);
+    return value;
+}
+exports.env = {
+    NODE_ENV: process.env.NODE_ENV ?? "development",
+    PORT: Number(process.env.PORT ?? 3000),
+    DATABASE_URL: required("DATABASE_URL"),
+    JWT_SECRET: required("JWT_SECRET"),
+    REFRESH_TOKEN_EXPIRY_DAYS: Number(process.env.REFRESH_TOKEN_EXPIRY_DAYS ?? 7),
+    RESEND_API_KEY: process.env.RESEND_API_KEY ?? "",
+    EMAIL_FROM: process.env.EMAIL_FROM ?? "",
+    APP_URL: process.env.APP_URL ?? "http://localhost:3000",
+    R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID ?? "",
+    R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID ?? "",
+    R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY ?? "",
+    R2_BUCKET: process.env.R2_BUCKET ?? "",
+    R2_ENDPOINT: process.env.R2_ENDPOINT ?? "",
+    R2_REGION: process.env.R2_REGION ?? "auto",
+    REDIS_HOST: process.env.REDIS_HOST ?? "localhost",
+    REDIS_PORT: Number(process.env.REDIS_PORT ?? 6379),
+    REDIS_PASSWORD: process.env.REDIS_PASSWORD ?? "",
+    REDIS_DB: Number(process.env.REDIS_DB ?? 0),
+    BULLMQ_RESUME_QUEUE: process.env.BULLMQ_RESUME_QUEUE ?? "resume-analysis",
+};
+exports.default = exports.env;
+//# sourceMappingURL=env.js.map

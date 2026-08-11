@@ -1,6 +1,8 @@
+
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation"; 
 import { useState } from "react";
 import { ArrowRightIcon, EyeIcon, EyeOffIcon } from "lucide-react";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -17,6 +19,7 @@ export function LoginForm() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const loginMutation = useLogin();
   const isPending = loginMutation.isPending;
+  const router = useRouter(); 
 
   const {
     register,
@@ -32,7 +35,13 @@ export function LoginForm() {
 
   const onSubmit: SubmitHandler<LoginInput> = (data) => {
     if (loginMutation.isPending) return;
-    loginMutation.mutate(data);
+
+    
+    loginMutation.mutate(data, {
+      onSuccess: () => {
+        router.push("/create-org");
+      },
+    });
   };
 
   const mutationError = loginMutation.error;
@@ -46,8 +55,8 @@ export function LoginForm() {
   return (
     <main className="min-h-svh bg-paper text-ink">
       <div className="grid min-h-svh lg:grid-cols-[minmax(0,1fr)_minmax(32rem,0.82fr)]">
-        {/* ------ Sidebar (same as register) ------ */}
-        <aside className="relative hidden overflow-hidden bg-forest px-10 py-10 text-paper lg:flex lg:flex-col xl:px-16 xl:py-14">
+        {/* ===== Brand Sidebar ===== */}
+        <aside className="relative hidden overflow-hidden bg-moss px-10 py-10 text-paper lg:flex lg:flex-col xl:px-16 xl:py-14">
           <div className="pointer-events-none absolute -left-32 top-24 size-[32rem] rounded-full border border-paper/10" />
           <div className="pointer-events-none absolute -bottom-72 -right-48 size-[42rem] rounded-full border border-paper/10" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_12%,oklch(0.65_0.06_145_/_0.24),transparent_28%),linear-gradient(135deg,transparent_30%,oklch(0.18_0.03_154_/_0.42))]" />
@@ -85,9 +94,9 @@ export function LoginForm() {
           </div>
         </aside>
 
-        {/* ------ Main form area ------ */}
+
         <section className="relative flex min-h-svh flex-col px-6 py-6 sm:px-10 sm:py-10 lg:px-12 xl:px-20">
-          {/* Mobile header */}
+
           <header className="flex items-center justify-between lg:hidden">
             <Link
               href="/"
@@ -125,16 +134,8 @@ export function LoginForm() {
               Enter your credentials to access your workspace.
             </p>
 
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="mt-10 space-y-6"
-              noValidate
-            >
-              <Field
-                id="email"
-                label="Work email"
-                error={errors.email?.message}
-              >
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-10 space-y-6" noValidate>
+              <Field id="email" label="Work email" error={errors.email?.message}>
                 <input
                   {...register("email")}
                   id="email"
@@ -148,11 +149,7 @@ export function LoginForm() {
                 />
               </Field>
 
-              <Field
-                id="password"
-                label="Password"
-                error={errors.password?.message}
-              >
+              <Field id="password" label="Password" error={errors.password?.message}>
                 <div className="relative">
                   <input
                     {...register("password")}
@@ -165,13 +162,9 @@ export function LoginForm() {
                   />
                   <button
                     type="button"
-                    onClick={() =>
-                      setIsPasswordVisible((visible) => !visible)
-                    }
+                    onClick={() => setIsPasswordVisible((visible) => !visible)}
                     className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-olive transition-colors hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                    aria-label={
-                      isPasswordVisible ? "Hide password" : "Show password"
-                    }
+                    aria-label={isPasswordVisible ? "Hide password" : "Show password"}
                   >
                     {isPasswordVisible ? (
                       <EyeOffIcon className="size-4" />
@@ -182,7 +175,6 @@ export function LoginForm() {
                 </div>
               </Field>
 
-              {/* Optional “Forgot password?” link */}
               <div className="flex justify-end">
                 <Link
                   href="/forgot-password"
@@ -193,10 +185,7 @@ export function LoginForm() {
               </div>
 
               {errorMessage && (
-                <p
-                  className="border-l-2 border-destructive bg-destructive/5 px-4 py-3 text-sm leading-relaxed text-destructive"
-                  role="alert"
-                >
+                <p className="border-l-2 border-destructive bg-destructive/5 px-4 py-3 text-sm leading-relaxed text-destructive" role="alert">
                   {errorMessage}
                 </p>
               )}
@@ -210,16 +199,23 @@ export function LoginForm() {
                   <span className="font-mono text-[11px] font-medium uppercase tracking-[0.18em]">
                     {isPending ? "Signing in…" : "Sign in"}
                   </span>
-                  <ArrowRightIcon
-                    className="size-4 transition-transform duration-300 group-hover:translate-x-1"
-                    aria-hidden="true"
-                  />
+                  <ArrowRightIcon className="size-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
                 </button>
               </div>
             </form>
+
+            <p className="mt-8 text-center text-sm leading-relaxed text-olive">
+              Don’t have an account?{" "}
+              <Link
+                href="/register"
+                className="font-medium text-primary underline underline-offset-4 transition-colors hover:text-forest"
+              >
+                Sign up
+              </Link>
+            </p>
           </div>
 
-          {/* Footer */}
+
           <footer className="flex items-center justify-between gap-4 border-t border-rule pt-5 font-mono text-[10px] uppercase tracking-[0.16em] text-olive">
             <span>Evidence‑first hiring</span>
             <span className="hidden sm:inline">Private by design</span>
@@ -230,9 +226,7 @@ export function LoginForm() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Shared input style + helper Field component (same as register)    */
-/* ------------------------------------------------------------------ */
+
 const inputClassName =
   "w-full border-0 border-b border-rule bg-transparent px-0 py-3 text-base text-ink outline-none transition-colors placeholder:text-olive/45 focus:border-primary focus:ring-0";
 
@@ -246,19 +240,12 @@ type FieldProps = {
 function Field({ id, label, error, children }: FieldProps) {
   return (
     <div>
-      <label
-        htmlFor={id}
-        className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-olive"
-      >
+      <label htmlFor={id} className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-olive">
         {label}
       </label>
       <div className="mt-1.5">{children}</div>
       {error && (
-        <p
-          className="mt-2 text-xs leading-relaxed text-destructive"
-          id={`${id}-error`}
-          role="alert"
-        >
+        <p className="mt-2 text-xs leading-relaxed text-destructive" id={`${id}-error`} role="alert">
           {error}
         </p>
       )}

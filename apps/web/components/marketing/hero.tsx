@@ -9,7 +9,7 @@ export function Hero() {
       <div className="mx-auto max-w-[1440px]">
         <h1
           style={{
-            fontFamily: 'var(--font-heading)',
+            fontFamily: 'var(--font-primary)',
             fontWeight: 800,
             fontSize: 'clamp(3.5rem, 9vw, 8.5rem) !important',
             lineHeight: 0.88,

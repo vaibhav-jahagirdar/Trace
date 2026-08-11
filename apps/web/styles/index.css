@@ -3,7 +3,6 @@
 
 @import "./base/reset.css";
 @import "./base/tokens.css";
-@import "./base/utilities.css";
 
 @import "./typography/index.css";
 @import "./animations/index.css";

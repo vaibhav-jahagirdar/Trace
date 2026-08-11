@@ -9,7 +9,7 @@ import {
   NotFoundError,
   ValidationError,
 } from "../../../middleware/errorHandler";
-
+import { PoolClient } from "pg";
 const pool = getDb();
 
 export type WeightedJobRequirementInput =
@@ -19,8 +19,9 @@ export type WeightedJobRequirementInput =
 
 export async function getRole(
   roleCategoryId: string,
+  client: PoolClient,
 ): Promise<JobRole> {
-  const result = await pool.query<{
+  const result = await client.query<{
     code: JobRole;
   }>(
     `

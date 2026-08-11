@@ -33,7 +33,7 @@ export function setAuthCookies(res: Response, accessToken: string, refreshToken:
     secure: IS_PRODUCTION,
     sameSite: "strict",
     maxAge: REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
-    path: "/auth/refresh",
+    path: "/api/auth/refresh",
   });
 }
 

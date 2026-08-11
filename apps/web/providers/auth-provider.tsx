@@ -42,23 +42,20 @@ type AuthProviderProps = {
 export function AuthProvider({ children }: AuthProviderProps) {
   const { data, isLoading, isError, error, refetch } = useMe();
 
-  // Client state: which org is currently active
+ 
   const [activeOrg, setActiveOrg] = useState<OrgMembership | null>(null);
 
   const user = data?.data ?? null;
   const organizations = user?.organizations ?? [];
 
-  // Auto‑select the first organisation if none is chosen
+ 
   useEffect(() => {
     if (!activeOrg && organizations.length > 0) {
       setActiveOrg(organizations[0]);
     }
   }, [activeOrg, organizations]);
 
-  // Optionally bind logout behaviour (redirect on refresh failure)
-  // api.setRefreshFailureHandler(() => {
-  //   window.location.href = "/login";
-  // });
+  
 
   const value = useMemo<AuthContextValue>(
     () => ({

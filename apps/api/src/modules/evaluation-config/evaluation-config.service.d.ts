@@ -1,0 +1,20 @@
+import type { z } from "zod";
+import { updateEvaluationConfigSchema } from "./evaluation-config.schema";
+type UpdateEvaluationConfigInput = z.infer<typeof updateEvaluationConfigSchema>;
+export declare function createEvidenceCategory(code: string, name: string, description: string | null): Promise<any>;
+export declare function getEvidenceCategory(id: string): Promise<any>;
+export declare function listEvidenceCategories(limit: number, offset: number, search?: string): Promise<any[]>;
+export declare function updateEvidenceCategory(id: string, fields: UpdateEvaluationConfigInput): Promise<any>;
+export declare function deleteEvidenceCategory(id: string): Promise<any>;
+export declare function createEvaluationDimension(code: string, name: string, description: string | null): Promise<any>;
+export declare function getEvaluationDimension(id: string): Promise<any>;
+export declare function listEvaluationDimensions(limit: number, offset: number, search?: string): Promise<any[]>;
+export declare function updateEvaluationDimension(id: string, fields: UpdateEvaluationConfigInput): Promise<any>;
+export declare function deleteEvaluationDimension(id: string): Promise<any>;
+export declare function createSuccessSignal(code: string, name: string, description: string | null): Promise<any>;
+export declare function getSuccessSignal(id: string): Promise<any>;
+export declare function listSuccessSignals(limit: number, offset: number, search?: string): Promise<any[]>;
+export declare function updateSuccessSignal(id: string, fields: UpdateEvaluationConfigInput): Promise<any>;
+export declare function deleteSuccessSignal(id: string): Promise<any>;
+export {};
+//# sourceMappingURL=evaluation-config.service.d.ts.map

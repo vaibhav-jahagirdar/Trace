@@ -21,10 +21,12 @@ import { processEvidencePriorities } from "../logic/evidence";
 import { createJobEvidencePriorityRecords } from "./helpers/evidenceRecord";
 import { processSuccessSignals } from "../logic/success";
 import { createSuccessSignalRecord } from "./helpers/successRecord";
+import { getDraftById, markDraftCompleted } from "./helpers/jobDraft";
 
 export async function createJob(
   userId: string,
   orgId: string,
+  draftId: string,
   jobData: CreateJobInput,
   eligibilityCriteriaData: JobEligibilityCriteriaInput,
   submissionRequirementsData: JobSubmissionRequirementsInput,
@@ -34,6 +36,14 @@ export async function createJob(
   successSignals: JobSuccessSignalsInput,
 ) {
   return withTransaction(async (client) => {
+    
+    const draft = await getDraftById(draftId, userId, orgId, client);
+
+    if (draft.status === "COMPLETED") {
+      
+      return { jobId: draft.job_id as string, alreadySubmitted: true };
+    }
+
     const membership = await getActiveMembership(userId, orgId, client);
 
     assertMinimumRole(membership.role, "RECRUITER");
@@ -57,7 +67,7 @@ export async function createJob(
       client,
     );
 
-    const role = await getRole(roleCategoryId);
+    const role = await getRole(roleCategoryId, client);
 
     const weightedRequirements = processJobRequirements(role, requirements);
 
@@ -79,8 +89,9 @@ export async function createJob(
 
     await createSuccessSignalRecord(jobId, successSignals, client);
 
-    return {
-      jobId,
-    };
+    
+    await markDraftCompleted(draftId, jobId, client);
+
+    return { jobId };
   });
 }
