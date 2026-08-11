@@ -75,5 +75,5 @@ export async function createJobRecord(
     );
   }
 
-  return jobId;
+  return {jobId, roleCategoryId};
 }

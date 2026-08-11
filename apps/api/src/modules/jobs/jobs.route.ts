@@ -7,6 +7,9 @@ import {
   publishJobController,
   getJobController
 } from "./jobs.controller";
+import { getJobDraftController } from "./jobs.controller";
+import { saveJobDraftController } from "./jobs.controller";
+import { orgIdParamSchema } from "../organizations/orgs.validator";
 
 const router = Router({ mergeParams: true });
 
@@ -14,7 +17,7 @@ router.post(
   "/",
   requireAuth,
   requireMembership,
-  validateParams,
+  validateParams(orgIdParamSchema),
   createJobController,
 );
 
@@ -22,12 +25,9 @@ router.post(
   "/:jobId/publish",
     requireAuth,
     requireMembership,
-    validateParams,
   publishJobController,
 );
-router.get(
-  "/:jobId",
-  validateParams,
-  getJobController,
-)
-export default router;
+router.get("/draft", requireAuth, requireMembership, validateParams(orgIdParamSchema), getJobDraftController);
+router.put("/draft", requireAuth, requireMembership, validateParams(orgIdParamSchema), saveJobDraftController);
+router.get("/:jobId", getJobController);
+export default router;   

@@ -28,9 +28,9 @@ export async function createJobEvidencePriorityRecords(
   );
   if (result.rowCount !== evidencePriorities.length) {
     throw new AppError(
-      "Failed to create job evaluation priority records",
+      "Failed to create job evidenece priority records",
       500,
-      "FAILED_TO_CREATE_JOB_EVALUATION_PRIORITIES",
+      "FAILED_TO_CREATE_JOB_EVIDENCE_PRIORITIES",
     );
   }
   return result.rows.map((row) => row.id);
