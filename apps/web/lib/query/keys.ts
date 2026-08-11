@@ -13,8 +13,12 @@ export const queryKeys = {
   jobs: {
     all: () => ["jobs"] as const,
 
+    list: (orgId: string) => ["jobs", orgId] as const,   
+
     detail: (jobId: string) =>
       ["jobs", jobId] as const,
+
+    draft: (orgId: string) => ["jobs", orgId, "draft"] as const, 
   },
 
   applications: {

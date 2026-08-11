@@ -282,6 +282,17 @@ export function RegisterForm() {
                 </p>
               </div>
             </form>
+            <p className="mt-8 text-center text-sm leading-relaxed text-olive">
+              Already have an account?{" "}
+              <Link
+                href="/login"
+                className="font-medium text-primary underline underline-offset-4 transition-colors hover:text-forest"
+              >
+                Sign in
+              </Link>
+            </p>
+            
+            
           </div>
 
           <footer className="flex items-center justify-between gap-4 border-t border-rule pt-5 font-mono text-[10px] uppercase tracking-[0.16em] text-olive">
