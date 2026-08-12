@@ -1,0 +1,97 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { Country, State, City } from "country-state-city";
+import { ArrowRight, Check, Upload } from "lucide-react";
+import { env } from "@/lib/env/client";
+
+type PublicJob = {
+  title: string;
+  department: string | null;
+  employment_type: string;
+  role_category: string | null;
+  work: { mode: string; remote_scope: string | null; country: string; state: string | null; city: string | null };
+  description: string | null;
+  organization: { name: string; slug: string };
+  eligibility: { currency: string; salary_min: number | null; salary_max: number | null; experience_min_years: number | null; experience_max_years: number | null; notice_period_max_days: number | null; relocation_assistance: boolean; visa_sponsorship: boolean; work_authorization_required: boolean; minimum_education_level: string | null };
+  submission_requirements: { resume_required: boolean; github_required: boolean; portfolio_required: boolean; problem_solving_profile_required: boolean; linkedin_required: boolean; project_explanation_required: boolean; feature_explanation_required: boolean; zip_upload_allowed: boolean };
+};
+
+type Props = { orgSlug: string; jobSlug: string };
+
+export function PublicJobApplication({ orgSlug, jobSlug }: Props) {
+  const [job, setJob] = useState<PublicJob | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [country, setCountry] = useState("");
+  const [state, setState] = useState("");
+  const [city, setCity] = useState("");
+  const countries = useMemo(() => Country.getAllCountries(), []);
+  const countryCode = countries.find((item) => item.name === country)?.isoCode ?? "";
+  const states = useMemo(() => countryCode ? State.getStatesOfCountry(countryCode) : [], [countryCode]);
+  const stateCode = states.find((item) => item.name === state)?.isoCode ?? "";
+  const cities = useMemo(() => countryCode && stateCode ? City.getCitiesOfState(countryCode, stateCode) : [], [countryCode, stateCode]);
+
+  useEffect(() => {
+    fetch(`${env.NEXT_PUBLIC_API_URL}/public/organizations/${encodeURIComponent(orgSlug)}/jobs/${encodeURIComponent(jobSlug)}`)
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error?.message ?? "This role is no longer available.");
+        setJob(data.job);
+        setCountry(data.job.work.country ?? "");
+        setState(data.job.work.state ?? "");
+        setCity(data.job.work.city ?? "");
+      })
+      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Unable to load this role."));
+  }, [jobSlug, orgSlug]);
+
+  if (error) return <StateMessage>{error}</StateMessage>;
+  if (!job) return <StateMessage>Opening this role...</StateMessage>;
+  if (submitted) return <StateMessage>Application received. We will be in touch.</StateMessage>;
+
+  const requirements = job.submission_requirements;
+  const locationMismatch = country && country !== job.work.country;
+  const remoteRestricted = job.work.mode === "REMOTE" && job.work.remote_scope !== "GLOBAL";
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true); setError(null);
+    const form = new FormData(event.currentTarget);
+    const eligibility = {
+      yearsOfProfessionalExperience: Number(form.get("yearsOfProfessionalExperience")),
+      highestEducationLevel: String(form.get("highestEducationLevel")),
+      noticePeriodDays: Number(form.get("noticePeriodDays")),
+      willingToRelocate: form.get("willingToRelocate") === "on",
+      requiresVisaSponsorship: form.get("requiresVisaSponsorship") === "on",
+      workAuthorized: form.get("workAuthorized") === "on",
+      currentCountry: String(form.get("currentCountry")), currentState: String(form.get("currentState") || ""), currentCity: String(form.get("currentCity") || ""),
+    };
+    const submission = {
+      githubUrl: String(form.get("githubUrl")), portfolioUrl: String(form.get("portfolioUrl") || ""), linkedinUrl: String(form.get("linkedinUrl") || ""),
+      problemSolvingProfileUrl: String(form.get("problemSolvingProfileUrl") || ""), projectDescription: String(form.get("projectDescription") || ""), featureDescription: String(form.get("featureDescription") || ""),
+    };
+    const payload = new FormData();
+    for (const key of ["firstName", "lastName", "email", "phone"]) payload.append(key, String(form.get(key) || ""));
+    payload.append("eligibility", JSON.stringify(eligibility)); payload.append("submission", JSON.stringify(submission)); payload.append("technologies", "[]"); payload.append("concepts", "[]");
+    const resume = form.get("resume"); if (resume instanceof File) payload.append("resume", resume);
+    try {
+      const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/public/organizations/${encodeURIComponent(orgSlug)}/jobs/${encodeURIComponent(jobSlug)}/applications`, { method: "POST", body: payload });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error?.message ?? "Application could not be submitted.");
+      setSubmitted(true);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Application could not be submitted."); }
+    finally { setBusy(false); }
+  }
+
+  return <main className="min-h-screen bg-paper text-ink"><header className="border-b border-forest/12 px-6 py-6 md:px-10"><div className="mx-auto flex max-w-5xl justify-between"><span className="font-mono text-sm uppercase tracking-[.18em] text-forest">{job.organization.name}</span><span className="font-mono text-sm uppercase tracking-[.14em] text-olive">Apply</span></div></header><div className="mx-auto max-w-5xl px-6 pb-24 md:px-10"><section className="border-b border-forest/12 py-16"><p className="font-mono text-sm uppercase tracking-[.16em] text-olive">{job.role_category ?? "Open role"} · {job.employment_type}</p><h1 className="mt-5 max-w-[18ch] text-5xl font-light leading-[.95] tracking-[-.04em] md:text-6xl">{job.title}</h1><p className="mt-6 max-w-[60ch] text-lg leading-relaxed text-olive">{job.description || "Bring the work you are proud of. Tell us clearly where you are and what you can do."}</p><LocationSummary job={job} /></section><form onSubmit={submit} className="mt-14 grid gap-14 lg:grid-cols-[1fr_17rem]"><div className="space-y-12"><Section title="About you"><div className="grid gap-6 sm:grid-cols-2"><Input name="firstName" label="First name" required /><Input name="lastName" label="Last name" required /><Input name="email" label="Email" type="email" required /><Input name="phone" label="Phone" /></div></Section><Section title="Your location"><p className="mb-5 text-sm leading-relaxed text-olive">Use the same place naming shown above when it applies. Similar names such as Bangalore, Bengaluru, or Bangalore Urban are not normalized yet and may affect eligibility.</p><LocationFields country={country} state={state} city={city} countries={countries} states={states} cities={cities} onCountry={(value) => { setCountry(value); setState(""); setCity(""); }} onState={(value) => { setState(value); setCity(""); }} onCity={setCity} /></Section><Section title="Eligibility"><div className="grid gap-6 sm:grid-cols-2"><Input name="yearsOfProfessionalExperience" label="Professional experience (years)" type="number" required /><Input name="noticePeriodDays" label="Notice period (days)" type="number" required /><Select name="highestEducationLevel" label="Highest education" options={["NONE", "HIGH_SCHOOL", "DIPLOMA", "UNDERGRADUATE", "POSTGRADUATE"]} /><label className="flex items-center gap-3 text-base"><input name="workAuthorized" type="checkbox" required /> I am legally authorized to work in this location.</label></div><div className="mt-6 space-y-4"><label className="flex items-center gap-3 text-base"><input name="requiresVisaSponsorship" type="checkbox" /> I need visa sponsorship for this role.</label><label className="flex items-center gap-3 text-base"><input name="willingToRelocate" type="checkbox" /> I am willing to relocate if this role requires it.</label></div>{locationMismatch && !job.eligibility.relocation_assistance && <Warning>Are you willing to relocate to {job.work.city || job.work.state || job.work.country} on your own? Relocation assistance is not configured for this role.</Warning>}{remoteRestricted && <Warning>This role is remote only within the stated boundary. Enter your current location exactly as it applies: {job.work.remote_scope === "COUNTRY" ? job.work.country : `${job.work.state || "the stated region"}, ${job.work.country}`}.</Warning>}{job.eligibility.visa_sponsorship && <p className="mt-4 text-sm text-olive">Visa sponsorship may be available for candidates who otherwise meet the work authorization requirements.</p>}</Section><Section title="Required proof"><p className="mb-6 text-sm leading-relaxed text-olive">A resume and GitHub profile are required for every application. Folder uploads are currently unavailable.</p><div className="space-y-6"><label className="block text-sm text-forest">Resume (PDF or DOCX)<span className="ml-2 text-destructive">Required</span><span className="mt-2 flex items-center gap-3 border-b border-forest/20 py-3 text-base text-olive"><Upload className="size-4" /><input name="resume" type="file" accept=".pdf,.doc,.docx" required /></span></label><Input name="githubUrl" label="GitHub profile" type="url" required />{requirements.portfolio_required && <Input name="portfolioUrl" label="Portfolio" type="url" required />}{requirements.linkedin_required && <Input name="linkedinUrl" label="LinkedIn" type="url" required />}{requirements.problem_solving_profile_required && <Input name="problemSolvingProfileUrl" label="Problem-solving profile" type="url" required />}{requirements.project_explanation_required && <TextArea name="projectDescription" label="Project explanation" required />}{requirements.feature_explanation_required && <TextArea name="featureDescription" label="Feature explanation" required />}</div></Section><button disabled={busy} className="inline-flex items-center gap-4 bg-forest px-6 py-4 font-mono text-sm uppercase tracking-[.14em] text-paper disabled:opacity-50">{busy ? "Submitting..." : "Submit application"}<ArrowRight className="size-4" /></button>{error && <p className="text-sm text-destructive" role="alert">{error}</p>}</div><aside className="lg:pt-2"><div className="bg-forest p-7 text-paper lg:sticky lg:top-8"><Check className="size-4 text-sage" /><p className="mt-7 font-mono text-sm uppercase tracking-[.16em] text-sage">Before you submit</p><p className="mt-4 text-xl leading-snug">Your location and authorization answers are checked against this role&apos;s boundary.</p></div></aside></form></div></main>;
+}
+
+function LocationSummary({ job }: { job: PublicJob }) { return <div className="mt-8 border-t border-forest/12 pt-5 text-sm uppercase tracking-[.12em] text-olive">{job.work.mode === "REMOTE" ? `Remote · ${job.work.remote_scope ?? "stated boundary"}` : `${job.work.city ? `${job.work.city}, ` : ""}${job.work.state ? `${job.work.state}, ` : ""}${job.work.country}`}</div>; }
+function LocationFields({ country, state, city, countries, states, cities, onCountry, onState, onCity }: { country: string; state: string; city: string; countries: ReturnType<typeof Country.getAllCountries>; states: ReturnType<typeof State.getStatesOfCountry>; cities: ReturnType<typeof City.getCitiesOfState>; onCountry: (value: string) => void; onState: (value: string) => void; onCity: (value: string) => void }) { return <div className="grid gap-6 sm:grid-cols-3"><Select name="currentCountry" label="Country" value={country} onChange={onCountry} options={countries.map((item) => item.name)} required /><Select name="currentState" label="State / region" value={state} onChange={onState} options={states.map((item) => item.name)} required={states.length > 0} /><Select name="currentCity" label="City" value={city} onChange={onCity} options={cities.map((item) => item.name)} /></div>; }
+function Section({ title, children }: { title: string; children: React.ReactNode }) { return <section className="border-t border-forest/12 pt-8"><h2 className="font-mono text-sm uppercase tracking-[.16em] text-forest">{title}</h2><div className="mt-6">{children}</div></section>; }
+function Input({ name, label, type = "text", required = false }: { name: string; label: string; type?: string; required?: boolean }) { return <label className="block text-sm text-forest">{label}{required && <span className="ml-2 text-destructive">Required</span>}<input name={name} type={type} required={required} className="mt-2 w-full border-0 border-b border-forest/20 bg-transparent py-3 text-lg outline-none focus:border-forest" /></label>; }
+function TextArea({ name, label, required = false }: { name: string; label: string; required?: boolean }) { return <label className="block text-sm text-forest">{label}<textarea name={name} required={required} rows={4} className="mt-2 w-full border border-forest/20 bg-warm p-4 text-base outline-none focus:border-forest" /></label>; }
+function Select({ name, label, options, value, onChange, required = false }: { name: string; label: string; options: string[]; value?: string; onChange?: (value: string) => void; required?: boolean }) { return <label className="block text-sm text-forest">{label}{required && <span className="ml-2 text-destructive">Required</span>}<select name={name} value={value} onChange={(event) => onChange?.(event.target.value)} required={required} className="mt-2 w-full border-0 border-b border-forest/20 bg-transparent py-3 text-base outline-none focus:border-forest"><option value="">Select</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>; }
+function Warning({ children }: { children: React.ReactNode }) { return <p className="mt-5 border-l-2 border-conflict bg-conflict/5 px-5 py-4 text-sm leading-relaxed text-ink" role="alert">{children}</p>; }
+function StateMessage({ children }: { children: React.ReactNode }) { return <main className="grid min-h-screen place-items-center bg-paper px-6 text-center text-lg text-olive">{children}</main>; }
