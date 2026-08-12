@@ -255,7 +255,7 @@ export const createJobSchema = z.object({
     "NONE",
     "GLOBAL",
     "COUNTRY",
-    "REGIONAL"
+    "REGION"
   ]),
 
   country: z

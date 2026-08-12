@@ -8,6 +8,21 @@ import { createJob } from "./services/jobs.create.service";
 import { publishJob } from "./services/[jobId]/jobs.publish.service";
 import { getJob } from "./services/[jobId]/job.get.service";
 import { getActiveDraft, upsertDraft } from "./services/helpers/jobDraft";
+import { getJobPreview } from "./services/[jobId]/job.preview.service";
+
+function toDraftDto(draft: Awaited<ReturnType<typeof getActiveDraft>>) {
+  if (!draft) return null;
+
+  return {
+    id: draft.id,
+    formData: draft.form_data,
+    currentStep: draft.current_step,
+    status: draft.status,
+    jobId: draft.job_id,
+    createdAt: draft.created_at,
+    updatedAt: draft.updated_at,
+  };
+}
 export async function createJobController(
   req: Request,
   res: Response,
@@ -83,7 +98,7 @@ export async function getJobDraftController(
 
     const draft = await getActiveDraft(userId, orgId);
 
-    return res.status(200).json({ draft });
+    return res.status(200).json({ draft: toDraftDto(draft) });
   } catch (error) {
     next(error);
   }
@@ -118,7 +133,7 @@ export async function saveJobDraftController(
 
     const draft = await upsertDraft(userId, orgId, formData, currentStep);
 
-    return res.status(200).json({ draft });
+    return res.status(200).json({ draft: toDraftDto(draft) });
   } catch (error) {
     next(error);
   }
@@ -152,6 +167,21 @@ export async function publishJobController(
   } catch (error) {
     next(error);
   }
+}
+
+export async function getJobPreviewController(
+  req: Request, res: Response, next: NextFunction,
+) {
+  try {
+    const userId = req.user?.id;
+    const orgId = req.params.orgId;
+    const jobId = req.params.jobId;
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    if (typeof orgId !== "string" || typeof jobId !== "string") {
+      return res.status(400).json({ message: "Invalid route params" });
+    }
+    return res.status(200).json({ preview: await getJobPreview(jobId, orgId, userId) });
+  } catch (error) { next(error); }
 }
 export async function getJobController(
   req: Request,

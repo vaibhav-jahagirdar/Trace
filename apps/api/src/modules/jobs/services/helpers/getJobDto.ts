@@ -3,7 +3,7 @@ export function toGetJobDto(row: any) {
     id: row.id,
     title: row.title,
     department: row.department,
-    employement_type: row.employement_type,
+    employment_type: row.employment_type,
     work_mode: row.work_mode,
     remote_scope: row.remote_scope,
     country: row.country,
@@ -37,6 +37,52 @@ export function toGetJobDto(row: any) {
         row.project_explanation_required,
       feature_explanation_required:
         row.feature_explanation_required,
+    },
+  };
+}
+
+/** Candidate-facing contract. Deliberately excludes IDs, weights and scoring policy. */
+export function toPublicJobDto(row: any) {
+  return {
+    title: row.title,
+    department: row.department,
+    employment_type: row.employment_type,
+    role_category: row.role_category_name ?? null,
+    work: {
+      mode: row.work_mode,
+      remote_scope: row.remote_scope ?? null,
+      country: row.country,
+      state: row.state,
+      city: row.city,
+    },
+    open_positions: row.open_positions,
+    description: row.description,
+    published_at: row.published_at,
+    organization: {
+      name: row.organization_name,
+      slug: row.organization_slug,
+    },
+    eligibility: {
+      currency: row.currency,
+      salary_min: row.salary_min,
+      salary_max: row.salary_max,
+      experience_min_years: row.experience_min_years,
+      experience_max_years: row.experience_max_years,
+      notice_period_max_days: row.notice_period_max_days,
+      relocation_assistance: Boolean(row.relocation_assistance),
+      visa_sponsorship: Boolean(row.visa_sponsorship),
+      work_authorization_required: Boolean(row.work_authorization_required),
+      minimum_education_level: row.minimum_education_level,
+    },
+    submission_requirements: {
+      resume_required: true,
+      github_required: true,
+      portfolio_required: Boolean(row.portfolio_required),
+      problem_solving_profile_required: Boolean(row.problem_solving_profile_required),
+      linkedin_required: Boolean(row.linkedin_required),
+      project_explanation_required: Boolean(row.project_explanation_required),
+      feature_explanation_required: Boolean(row.feature_explanation_required),
+      zip_upload_allowed: false,
     },
   };
 }

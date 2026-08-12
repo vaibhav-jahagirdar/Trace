@@ -56,6 +56,10 @@ export function processJobRequirements(
   let mandatoryCount = 0;
   let preferredCount = 0;
   let bonusCount = 0;
+  const countsByType = {
+    TECHNOLOGY: { MANDATORY: 0, PREFERRED: 0, BONUS: 0 },
+    CONCEPT: { MANDATORY: 0, PREFERRED: 0, BONUS: 0 },
+  };
 
   const technologyIds = new Set<string>();
   const conceptIds = new Set<string>();
@@ -64,14 +68,17 @@ export function processJobRequirements(
     switch (requirement.priority_type) {
       case "MANDATORY":
         mandatoryCount++;
+        countsByType[requirement.requirement_type].MANDATORY++;
         break;
 
       case "PREFERRED":
         preferredCount++;
+        countsByType[requirement.requirement_type].PREFERRED++;
         break;
 
       case "BONUS":
         bonusCount++;
+        countsByType[requirement.requirement_type].BONUS++;
         break;
     }
 
@@ -103,33 +110,30 @@ export function processJobRequirements(
     );
   }
 
-  if (mandatoryCount > roleLimits.mandatory) {
-    throw new ValidationError(
-      `Maximum ${roleLimits.mandatory} mandatory requirements are allowed for ${role}.`,
-    );
-  }
+  const preferredLimit = mandatoryCount > 0
+    ? roleLimits.preferred
+    : roleLimits.preferredWithoutMandatory;
 
-  if (mandatoryCount > 0) {
-    if (preferredCount > roleLimits.preferred) {
+  for (const requirementType of ["TECHNOLOGY", "CONCEPT"] as const) {
+    const typeCounts = countsByType[requirementType];
+
+    if (typeCounts.MANDATORY > roleLimits.mandatory) {
       throw new ValidationError(
-        `Maximum ${roleLimits.preferred} preferred requirements are allowed for ${role}.`,
+        `Maximum ${roleLimits.mandatory} mandatory ${requirementType.toLowerCase()} requirements are allowed for ${role}.`,
       );
     }
-  } else {
-    if (
-      preferredCount >
-      roleLimits.preferredWithoutMandatory
-    ) {
+
+    if (typeCounts.PREFERRED > preferredLimit) {
       throw new ValidationError(
-        `Maximum ${roleLimits.preferredWithoutMandatory} preferred requirements are allowed when no mandatory requirements are selected.`,
+        `Maximum ${preferredLimit} preferred ${requirementType.toLowerCase()} requirements are allowed for ${role}.`,
       );
     }
-  }
 
-  if (bonusCount > roleLimits.bonus) {
-    throw new ValidationError(
-      `Maximum ${roleLimits.bonus} bonus requirements are allowed for ${role}.`,
-    );
+    if (typeCounts.BONUS > roleLimits.bonus) {
+      throw new ValidationError(
+        `Maximum ${roleLimits.bonus} bonus ${requirementType.toLowerCase()} requirements are allowed for ${role}.`,
+      );
+    }
   }
 
 

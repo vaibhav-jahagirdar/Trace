@@ -9,6 +9,7 @@ import {
   ValidationError,
 } from "../../../../middleware/errorHandler";
 import type { PoolClient } from "pg";
+import { getJobPreviewForClient } from "./job.preview.service";
 
 export async function publishJob(
   jobId: string,
@@ -137,6 +138,8 @@ export async function publishJob(
       );
     }
 
+    const preview = await getJobPreviewForClient(jobId, orgId, client);
+
     const publishResult = await client.query<{
       id: string;
       status: string;
@@ -166,6 +169,6 @@ export async function publishJob(
       );
     }
 
-    return publishResult.rows[0];
+    return { ...publishResult.rows[0], preview };
   });
 }

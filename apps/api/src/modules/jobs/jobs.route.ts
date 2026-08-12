@@ -5,6 +5,7 @@ import { validateParams } from "../../middleware/validateParams";
 import {
   createJobController,
   publishJobController,
+  getJobPreviewController,
   getJobController
 } from "./jobs.controller";
 import { getJobDraftController } from "./jobs.controller";
@@ -16,18 +17,25 @@ const router = Router({ mergeParams: true });
 router.post(
   "/",
   requireAuth,
-  requireMembership,
+  requireMembership(),
   validateParams(orgIdParamSchema),
   createJobController,
 );
 
 router.post(
   "/:jobId/publish",
-    requireAuth,
-    requireMembership,
+  requireAuth,
+  requireMembership(),
+  validateParams(orgIdParamSchema),
   publishJobController,
 );
-router.get("/draft", requireAuth, requireMembership, validateParams(orgIdParamSchema), getJobDraftController);
-router.put("/draft", requireAuth, requireMembership, validateParams(orgIdParamSchema), saveJobDraftController);
+router.get(
+  "/:jobId/publish-preview",
+  requireAuth,
+  requireMembership(),
+  getJobPreviewController,
+);
+router.get("/draft", requireAuth, requireMembership(), validateParams(orgIdParamSchema), getJobDraftController);
+router.put("/draft", requireAuth, requireMembership(), validateParams(orgIdParamSchema), saveJobDraftController);
 router.get("/:jobId", getJobController);
 export default router;   
