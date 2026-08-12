@@ -1,8 +1,41 @@
 "use client";
 
+import { useState } from "react";
 import { ArrowLeft, Check, Circle, FileCheck, Pencil } from "lucide-react";
 
 export type JobDefinitionDraft = Record<string, unknown>;
+export type SubmissionRequirements = {
+  resume_required: boolean;
+  github_required: boolean;
+  portfolio_required: boolean;
+  problem_solving_profile_required: boolean;
+  linkedin_required: boolean;
+  project_explanation_required: boolean;
+  feature_explanation_required: boolean;
+  zip_upload_allowed: boolean;
+};
+
+const DEFAULT_SUBMISSION_REQUIREMENTS: SubmissionRequirements = {
+  resume_required: true,
+  github_required: false,
+  portfolio_required: false,
+  problem_solving_profile_required: false,
+  linkedin_required: false,
+  project_explanation_required: false,
+  feature_explanation_required: false,
+  zip_upload_allowed: false,
+};
+
+const SUBMISSION_OPTIONS: { key: keyof SubmissionRequirements; label: string; description: string }[] = [
+  { key: "resume_required", label: "Resume", description: "Require a resume or CV." },
+  { key: "github_required", label: "GitHub profile", description: "Ask candidates to provide a GitHub profile." },
+  { key: "portfolio_required", label: "Portfolio", description: "Require a portfolio or work sample." },
+  { key: "problem_solving_profile_required", label: "Problem-solving profile", description: "Collect the candidate problem-solving profile." },
+  { key: "linkedin_required", label: "LinkedIn profile", description: "Ask candidates to provide LinkedIn." },
+  { key: "project_explanation_required", label: "Project explanation", description: "Require an explanation of a relevant project." },
+  { key: "feature_explanation_required", label: "Feature explanation", description: "Require an explanation of a feature they built." },
+  { key: "zip_upload_allowed", label: "ZIP upload allowed", description: "Allow candidates to attach a ZIP project archive." },
+];
 
 const SECTIONS = [
   { step: 1, label: "Role", key: "step1" },
@@ -22,10 +55,11 @@ export function CreateJobStep7({
 }: {
   formData: JobDefinitionDraft;
   onEdit: (step: number) => void;
-  onCreateJob: () => void;
+  onCreateJob: (submissionRequirements: SubmissionRequirements) => void;
   isCreating: boolean;
   created: boolean;
 }) {
+  const [submissionRequirements, setSubmissionRequirements] = useState<SubmissionRequirements>(DEFAULT_SUBMISSION_REQUIREMENTS);
   const title = getString(formData.step1, "title") ?? "Untitled role";
   const department = getString(formData.step1, "department");
   const requirements = getArray(formData.step3, "requirements").length;
@@ -82,9 +116,23 @@ export function CreateJobStep7({
                 <p className="mt-4 max-w-[65ch] text-base leading-relaxed text-olive">Trace will use the role, boundaries, technical bar, judgment, evidence plan, and success definition together when candidates arrive.</p>
               </section>
 
+              <section className="mt-12 border-t border-forest/12 pt-8" aria-labelledby="submission-heading">
+                <p className="font-mono text-sm uppercase tracking-[0.16em] text-forest">Application requirements</p>
+                <h2 id="submission-heading" className="mt-3 text-3xl font-light tracking-[-0.035em]" style={{ fontFamily: "var(--font-heading)" }}>What should every candidate provide?</h2>
+                <p className="mt-3 max-w-[62ch] text-base leading-relaxed text-olive">These choices become the submission standard attached to this role.</p>
+                <div className="mt-7 grid gap-3 sm:grid-cols-2">
+                  {SUBMISSION_OPTIONS.map((option) => (
+                    <label key={option.key} className="flex cursor-pointer items-start gap-4 border border-forest/15 bg-warm p-5 transition-colors has-[:checked]:border-forest has-[:checked]:bg-forest/5">
+                      <input type="checkbox" checked={submissionRequirements[option.key]} onChange={(event) => setSubmissionRequirements((current) => ({ ...current, [option.key]: event.target.checked }))} className="mt-1 size-4 accent-forest" />
+                      <span><span className="block text-base text-ink">{option.label}</span><span className="mt-1 block text-sm leading-relaxed text-olive">{option.description}</span></span>
+                    </label>
+                  ))}
+                </div>
+              </section>
+
               <footer className="mt-12 flex flex-wrap items-center justify-between gap-6 border-t border-forest pt-7">
                 <button type="button" onClick={() => onEdit(6)} className="inline-flex items-center gap-2 text-base text-olive transition-colors hover:text-forest"><ArrowLeft className="size-5" /> Success signals</button>
-                <div className="text-right"><button type="button" onClick={onCreateJob} disabled={isCreating || created} className="group inline-flex items-center gap-8 bg-forest px-6 py-4 font-mono text-sm uppercase tracking-[0.13em] text-paper transition-colors hover:bg-moss disabled:cursor-not-allowed disabled:opacity-45">{isCreating ? "Creating job" : created ? "Job created" : "Create job"}<FileCheck className="size-5" /></button><p className="mt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-olive">Creates the job as a draft</p></div>
+                <div className="text-right"><button type="button" onClick={() => onCreateJob(submissionRequirements)} disabled={isCreating || created} className="group inline-flex items-center gap-8 bg-forest px-6 py-4 font-mono text-sm uppercase tracking-[0.13em] text-paper transition-colors hover:bg-moss disabled:cursor-not-allowed disabled:opacity-45">{isCreating ? "Creating job" : created ? "Job created" : "Create job"}<FileCheck className="size-5" /></button><p className="mt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-olive">Creates the job as a draft</p></div>
               </footer>
             </div>
 

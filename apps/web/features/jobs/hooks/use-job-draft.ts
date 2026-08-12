@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getDraft, saveDraft, submitJob, type SubmitJobPayload } from "../api/create-job"
 import { queryKeys } from "@/lib/query/keys";
 
-// ── Get draft ──────────────────────────────────────
+
 export function useGetDraft(orgId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.jobs.draft(orgId!),

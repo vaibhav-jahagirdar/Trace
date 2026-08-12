@@ -9,7 +9,6 @@ import { ArrowLeft, ArrowRight, Check, Circle, Search, X } from "lucide-react";
 
 import { JOB_ROLE_POLICY, type JobRole } from "@trace/shared/contracts/jobpolicy";
 import { useAuth } from "@/providers/auth-provider";
-import { useGetDraft, useSaveDraft } from "@/features/jobs/hooks/use-job-draft";
 import { getRequirementLookups, type RequirementLookupItem } from "@/features/jobs/api/step3";
 
 const prioritySchema = z.enum(["MANDATORY", "PREFERRED", "BONUS"]);
@@ -54,15 +53,11 @@ export function CreateJobStep3({
   onBack?: () => void;
 }) {
   const { activeOrg } = useAuth();
-  const orgId = activeOrg?.orgId;
-  const { data: draft, isLoading: draftLoading } = useGetDraft(orgId);
-  const saveDraftMutation = useSaveDraft(orgId);
   const { data: lookups, isLoading: lookupsLoading, isError: lookupsError } = useQuery({
     queryKey: ["job-requirement-lookups"],
     queryFn: getRequirementLookups,
     staleTime: 5 * 60_000,
   });
-  const [autoSaveLabel, setAutoSaveLabel] = useState("Saved");
   const [activeType, setActiveType] = useState<RequirementType>("TECHNOLOGY");
   const [pickerPriority, setPickerPriority] = useState<Priority | null>(null);
   const [selectedItem, setSelectedItem] = useState<RequirementLookupItem | null>(null);
@@ -72,7 +67,7 @@ export function CreateJobStep3({
     handleSubmit,
     setValue,
     control,
-    formState: { errors, isDirty, isValid },
+    formState: { errors, isValid },
   } = useForm<Step3Input>({
     resolver: zodResolver(step3Schema),
     mode: "onChange",
@@ -93,27 +88,13 @@ export function CreateJobStep3({
   } as const;
 
   useEffect(() => {
-    const savedData = (initialData ?? draft?.formData?.step3 ?? draft?.formData) as Record<string, unknown> | undefined;
+    const savedData = initialData;
     const savedRequirements = savedData?.requirements;
     if (!Array.isArray(savedRequirements)) return;
 
     const parsed = z.array(requirementSchema).safeParse(savedRequirements);
     if (parsed.success) setValue("requirements", parsed.data, { shouldDirty: false, shouldValidate: true });
-  }, [draft, initialData, setValue]);
-
-  useEffect(() => {
-    if (!isDirty || !orgId) return;
-
-    const timeout = setTimeout(() => {
-      setAutoSaveLabel("Saving");
-      saveDraftMutation.mutate(
-        { formData: { step3: { requirements } }, currentStep: 3 },
-        { onSuccess: () => setAutoSaveLabel("Saved"), onError: () => setAutoSaveLabel("Not saved") },
-      );
-    }, 800);
-
-    return () => clearTimeout(timeout);
-  }, [requirements, isDirty, orgId, saveDraftMutation]);
+  }, [initialData, setValue]);
 
   const items = activeType === "TECHNOLOGY" ? lookups?.technologies ?? [] : lookups?.concepts ?? [];
   const availableItems = items.filter((item) => !hasRequirement(requirements, activeType, item.id));
@@ -132,7 +113,7 @@ export function CreateJobStep3({
   }
 
   function addRequirement() {
-    if (!selectedItem || !pickerPriority || counts[pickerPriority] >= limits[pickerPriority]) return;
+    if (!selectedItem || !pickerPriority || countByType(requirements, pickerPriority, activeType) >= limits[pickerPriority]) return;
 
     const next = activeType === "TECHNOLOGY"
       ? { requirement_type: "TECHNOLOGY" as const, technology_id: selectedItem.id, priority_type: pickerPriority }
@@ -147,18 +128,13 @@ export function CreateJobStep3({
 
   const onSubmit: SubmitHandler<Step3Input> = (data) => {
     onContinue?.(data);
-    saveDraftMutation.mutate({ formData: { step3: data }, currentStep: 4 });
   };
-
-  if (draftLoading) {
-    return <div className="grid min-h-svh place-items-center bg-paper font-mono text-[11px] uppercase tracking-[0.2em] text-olive">Opening technical bar</div>;
-  }
 
   return (
     <main className="min-h-svh bg-paper text-ink lg:grid lg:grid-cols-[4.5rem_minmax(0,1fr)]">
       <StepRail />
       <div className="min-w-0">
-        <WorkspaceHeader orgName={activeOrg?.orgName} saveLabel={autoSaveLabel} />
+        <WorkspaceHeader orgName={activeOrg?.orgName} saveLabel="Ready" />
         <main className="px-6 pb-28 md:px-10 lg:px-14">
           <div className="mx-auto max-w-7xl">
             <section className="border-b border-forest/12 py-16 md:py-20">
@@ -184,7 +160,7 @@ export function CreateJobStep3({
                   <div className="flex flex-wrap items-end justify-between gap-5 border-b border-forest/12 pb-5">
                     <div>
                       <p className="font-mono text-sm uppercase tracking-[0.16em] text-forest">Requirements workspace</p>
-                      <h2 id="bar-heading" className="mt-3 text-3xl font-light tracking-[-0.035em]" style={{ fontFamily: "var(--font-heading)" }}>What matters for this role?</h2>
+                      <h2 id="bar-heading" className="mt-3 text-3xl font-light tracking-tight" style={{ fontFamily: "var(--font-primary)" }}>What matters for this role?</h2>
                     </div>
                     <p className="font-mono text-sm uppercase tracking-[0.14em] text-olive">{rolePolicy.label} calibration</p>
                   </div>
@@ -205,7 +181,7 @@ export function CreateJobStep3({
                         type={activeType}
                         requirements={requirements}
                         items={items}
-                        count={counts[priority.value]}
+                        count={countByType(requirements, priority.value, activeType)}
                         limit={limits[priority.value]}
                         onAdd={() => openPicker(priority.value)}
                         onRemove={(id) => removeRequirement(activeType, id)}
@@ -225,7 +201,7 @@ export function CreateJobStep3({
                       selectedItem={selectedItem}
                       loading={lookupsLoading}
                       failed={lookupsError}
-                      atLimit={counts[pickerPriority] >= limits[pickerPriority]}
+                      atLimit={countByType(requirements, pickerPriority, activeType) >= limits[pickerPriority]}
                       onSearch={setSearch}
                       onSelect={setSelectedItem}
                       onPriority={setPickerPriority}

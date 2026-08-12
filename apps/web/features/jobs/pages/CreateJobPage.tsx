@@ -1,5 +1,11 @@
 import { JobDefinitionWizard } from "../components/JobDefinitionWizard";
 
-export default function CreateJobPage() {
-    return <JobDefinitionWizard />;
+type CreateJobPageProps = {
+  orgId: string;
+};
+
+export default function CreateJobPage({
+  orgId,
+}: CreateJobPageProps) {
+  return <JobDefinitionWizard orgId={orgId} />;
 }

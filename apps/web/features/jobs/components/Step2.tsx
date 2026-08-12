@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useForm, useWatch, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,7 +9,6 @@ import { ArrowLeft, ArrowRight, Check, Circle } from "lucide-react";
 import { JOB_ROLE_POLICY, type JobRole } from "@trace/shared/contracts/jobpolicy";
 
 import { useAuth } from "@/providers/auth-provider";
-import { useGetDraft, useSaveDraft } from "@/features/jobs/hooks/use-job-draft";
 
 
 export const step2Schema = z
@@ -88,19 +87,12 @@ export function CreateJobStep2({
   onBack?: () => void;
 }) {
   const { activeOrg } = useAuth();
-  const orgId = activeOrg?.orgId;
-
-  const { data: draft, isLoading: draftLoading } = useGetDraft(orgId);
-  const saveDraftMutation = useSaveDraft(orgId);
-
-  const [autoSaveLabel, setAutoSaveLabel] = useState("Saved");
-
   const {
     register,
     handleSubmit,
     control,
     setValue,
-    formState: { isValid, isDirty },
+    formState: { isValid },
   } = useForm<Step2Input>({
     resolver: zodResolver(step2Schema),
     mode: "onChange",
@@ -124,7 +116,7 @@ export function CreateJobStep2({
 
   // Pre‑fill from draft
   useEffect(() => {
-    const savedData = initialData ?? draft?.formData?.step2 ?? draft?.formData;
+    const savedData = initialData;
     if (savedData) {
       for (const [key, value] of Object.entries(savedData)) {
         if (key in step2Schema.shape) {
@@ -132,39 +124,11 @@ export function CreateJobStep2({
         }
       }
     }
-  }, [draft, initialData, setValue]);
-
-  // Auto‑save
-  useEffect(() => {
-    if (!isDirty || !orgId) return;
-    const timeout = setTimeout(() => {
-      setAutoSaveLabel("Saving");
-      saveDraftMutation.mutate(
-        { formData: { step2: { ...values } }, currentStep: 2 },
-        {
-          onSuccess: () => setAutoSaveLabel("Saved"),
-          onError: () => setAutoSaveLabel("Not saved"),
-        },
-      );
-    }, 800);
-    return () => clearTimeout(timeout);
-  }, [values, isDirty, orgId, saveDraftMutation]);
+  }, [initialData, setValue]);
 
   const onSubmit: SubmitHandler<Step2Input> = (data) => {
     onContinue?.(data);
-    saveDraftMutation.mutate(
-      { formData: { step2: data }, currentStep: 3 },
-      {},
-    );
   };
-
-  if (draftLoading) {
-    return (
-      <div className="flex min-h-svh items-center justify-center bg-paper">
-        <span className="text-sm text-olive">Loading draft…</span>
-      </div>
-    );
-  }
 
   return (
     <main className="min-h-svh bg-paper text-ink lg:grid lg:grid-cols-[4.5rem_minmax(0,1fr)]">
@@ -193,7 +157,7 @@ export function CreateJobStep2({
             </span>
             <span className="ml-auto flex items-center gap-2 font-mono text-[0.8125rem] uppercase tracking-[0.16em] text-olive">
               <Check className="size-3 text-forest" aria-hidden="true" />
-              {autoSaveLabel}
+              Ready
             </span>
           </div>
         </header>

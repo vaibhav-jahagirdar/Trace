@@ -2,14 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch, type SubmitHandler } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { ArrowLeft, ArrowRight, Check, Circle, Minus, Plus, Search } from "lucide-react";
 
 import { EVALUATION_WEIGHT_POLICY, JOB_ROLE_POLICY } from "@trace/shared/contracts/evaluationPolicy";
 import { useAuth } from "@/providers/auth-provider";
-import { useGetDraft, useSaveDraft } from "@/features/jobs/hooks/use-job-draft";
 import { getEvaluationDimensions, type EvaluationDimension } from "@/features/jobs/api/step4";
 
 const evaluationPrioritySchema = z.object({
@@ -38,15 +36,11 @@ export function CreateJobStep4({
     onBack?: () => void;
 }) {
     const { activeOrg } = useAuth();
-    const orgId = activeOrg?.orgId;
-    const { data: draft, isLoading: draftLoading } = useGetDraft(orgId);
-    const saveDraftMutation = useSaveDraft(orgId);
     const { data: dimensions = [], isLoading: dimensionsLoading, isError: dimensionsError } = useQuery({
         queryKey: ["evaluation-dimensions"],
         queryFn: getEvaluationDimensions,
         staleTime: 5 * 60_000,
     });
-    const [autoSaveLabel, setAutoSaveLabel] = useState("Saved");
     const [search, setSearch] = useState("");
 
     const policy = JOB_ROLE_POLICY[role];
@@ -54,9 +48,8 @@ export function CreateJobStep4({
         handleSubmit,
         setValue,
         control,
-        formState: { errors, isDirty, isValid },
+        formState: { errors },
     } = useForm<Step4Input>({
-        resolver: zodResolver(step4Schema),
         mode: "onChange",
         defaultValues: { evaluation_priorities: [] },
     });
@@ -70,26 +63,13 @@ export function CreateJobStep4({
     const totalValid = allocated === EVALUATION_WEIGHT_POLICY.REQUIRED_TOTAL;
 
     useEffect(() => {
-        const savedData = (initialData ?? draft?.formData?.step4 ?? draft?.formData) as Record<string, unknown> | undefined;
+        const savedData = initialData;
         const savedPriorities = savedData?.evaluation_priorities;
         if (!Array.isArray(savedPriorities)) return;
 
         const parsed = z.array(evaluationPrioritySchema).safeParse(savedPriorities);
         if (parsed.success) setValue("evaluation_priorities", parsed.data, { shouldDirty: false, shouldValidate: true });
-    }, [draft, initialData, setValue]);
-
-    useEffect(() => {
-        if (!isDirty || !orgId) return;
-
-        const timeout = setTimeout(() => {
-            setAutoSaveLabel("Saving");
-            saveDraftMutation.mutate(
-                { formData: { step4: { evaluation_priorities: priorities } }, currentStep: 4 },
-                { onSuccess: () => setAutoSaveLabel("Saved"), onError: () => setAutoSaveLabel("Not saved") },
-            );
-        }, 800);
-        return () => clearTimeout(timeout);
-    }, [priorities, isDirty, orgId, saveDraftMutation]);
+    }, [initialData, setValue]);
 
     const selectedIds = new Set(priorities.map((priority) => priority.evaluation_dimension_id));
     const selectedDimensions = priorities.map((priority) => ({
@@ -113,21 +93,26 @@ export function CreateJobStep4({
         if (adjusted) setValue("evaluation_priorities", adjusted, { shouldDirty: true, shouldValidate: true });
     }
 
-    const onSubmit: SubmitHandler<Step4Input> = (data) => {
+    const onSubmit: SubmitHandler<Step4Input> = () => {
         if (!countValid || !totalValid) return;
-        onContinue?.(data);
-        saveDraftMutation.mutate({ formData: { step4: data }, currentStep: 5 });
+
+        const parsed = step4Schema.safeParse({
+            evaluation_priorities: priorities,
+        });
+
+        if (parsed.success) {
+            onContinue?.(parsed.data);
+        }
     };
 
-    if (draftLoading) {
-        return <div className="grid min-h-svh place-items-center bg-paper font-mono text-sm uppercase tracking-[0.16em] text-olive">Opening hiring lens</div>;
-    }
+    const canContinue = countValid && totalValid;
+    const isValid = canContinue;
 
     return (
         <main className="min-h-svh bg-paper text-ink lg:grid lg:grid-cols-[4.5rem_minmax(0,1fr)]">
             <StepRail />
             <div className="min-w-0">
-                <WorkspaceHeader orgName={activeOrg?.orgName} saveLabel={autoSaveLabel} />
+                <WorkspaceHeader orgName={activeOrg?.orgName} saveLabel="Ready" />
                 <main className="px-6 pb-28 md:px-10 lg:px-14">
                     <div className="mx-auto max-w-7xl">
                         <section className="border-b border-forest/12 py-16 md:py-20">

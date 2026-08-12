@@ -1,36 +1,50 @@
 "use client";
 
 import { useAuth } from "@/providers/auth-provider";
-import { OrgSidebar } from "@/components/dashboard/org-sidebar";
+import { useParams } from "next/navigation";
+import { OrganizationSwitcher, OrgSidebar } from "@/components/dashboard/org-sidebar";
 import { ActiveJobs, DraftJobs, NeedsAttention, RecentActivity, RecentlyClosed, UpcomingInterviews } from "@/components/dashboard/org-panels";
 import { EMPTY_DASHBOARD_DATA, EMPTY_SUMMARY } from "@/components/dashboard/org-mock";
+import Link from "next/link";
 
 const TONE: Record<string, string> = { ink: "text-ink", olive: "text-olive", conflict: "text-destructive" };
 
 export default function OrganizationDashboardPage() {
-  const { activeOrg, user } = useAuth();
+  const { activeOrg, organizations, setActiveOrg, user } = useAuth();
+  const params = useParams<{ orgId: string }>();
+  const routeOrg = organizations.find((org) => org.orgId === params.orgId);
+  const displayedOrg = routeOrg ?? activeOrg;
   const data = EMPTY_DASHBOARD_DATA;
+  const orgId = displayedOrg?.orgId ?? params.orgId;
 
   return (
     <div className="flex min-h-screen w-full bg-paper">
-      <OrgSidebar />
+      <OrgSidebar orgId={params.orgId} organization={displayedOrg} organizations={organizations} onOrganizationChange={setActiveOrg} />
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-20 border-b border-forest/12 bg-paper/95 px-6 py-5 backdrop-blur md:px-10 lg:px-14">
           <div className="mx-auto flex max-w-6xl items-baseline justify-between gap-6">
             <span className="font-mono text-sm uppercase tracking-[0.18em] text-forest lg:hidden">Trace</span>
-            <span className="label-index hidden text-olive sm:block">{activeOrg?.orgName ?? "Organization"} · Hiring overview</span>
-            <span className="label-index text-forest">{user?.username ?? "Workspace"}</span>
+            <span className="label-index text-sm uppercase hidden tracking-[0.18em] font-mono text-olive sm:block">{displayedOrg?.orgName ?? "Organization"} · HIRING OVERVIEW</span>
+            <div className="ml-auto flex items-center gap-4">
+              <div className="lg:hidden"><OrganizationSwitcher className="mt-0" orgId={params.orgId} organization={displayedOrg} organizations={organizations} onOrganizationChange={setActiveOrg} /></div>
+              <span className="label-index text-forest">{user?.username ?? "Workspace"}</span>
+            </div>
           </div>
         </header>
 
         <main className="px-6 pb-32 md:px-10 lg:px-14">
           <div className="mx-auto max-w-6xl">
             <section className="border-b border-forest/10 pb-14 pt-16">
-              <p className="label-index text-olive">{activeOrg?.orgName ?? "Organization"}</p>
+              <p className="label-index font-mono uppercase text-sm tracking-[0.18em] text-forest">{displayedOrg?.orgName ?? "Organization"}</p>
               <div className="mt-5 flex flex-wrap items-end justify-between gap-8">
-                <h1 className="display-section max-w-[20ch] text-ink">Hiring at a glance</h1>
-                <div className="flex flex-wrap gap-3">
-                  <button type="button" className="inline-flex items-center gap-2 rounded-sm bg-forest px-5 py-3 text-sm font-medium text-paper transition-colors hover:bg-moss">Post a job</button>
+                <h1 className="display-section font-sans max-w-[20ch] text-ink">Hiring at a glance</h1>
+                <div className="flex w-full flex-wrap gap-3 lg:w-auto">
+                  <Link
+                    href={`/orgs/${orgId}/jobs/create`}
+                    className="inline-flex items-center gap-2 rounded-sm bg-forest px-5 py-3 text-sm font-medium text-paper transition-colors hover:bg-moss"
+                  >
+                    Post a job
+                  </Link>
                   <button type="button" className="inline-flex items-center gap-2 rounded-sm border border-forest/30 px-4 py-3 text-sm text-forest transition-colors hover:bg-warm">Use template</button>
                   <button type="button" className="inline-flex items-center gap-2 rounded-sm border border-forest/30 px-4 py-3 text-sm text-forest transition-colors hover:bg-warm">View interviews</button>
                 </div>

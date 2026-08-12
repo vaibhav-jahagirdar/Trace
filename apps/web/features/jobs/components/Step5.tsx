@@ -2,14 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch, type SubmitHandler } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { ArrowLeft, ArrowRight, Check, Circle, Minus, Plus, Search } from "lucide-react";
 
 import { EVALUATION_WEIGHT_POLICY, JOB_ROLE_POLICY } from "@trace/shared/contracts/evaluationPolicy";
 import { useAuth } from "@/providers/auth-provider";
-import { useGetDraft, useSaveDraft } from "@/features/jobs/hooks/use-job-draft";
 import { getEvidenceCategories, type EvidenceCategory } from "@/features/jobs/api/step5";
 
 const evidencePrioritySchema = z.object({
@@ -24,14 +22,12 @@ const WEIGHT_STEP = 5;
 
 export function CreateJobStep5({ role = "MID", initialData, onContinue, onBack }: { role?: EvaluationRole; initialData?: Record<string, unknown>; onContinue?: (data: Step5Input) => void; onBack?: () => void }) {
   const { activeOrg } = useAuth();
-  const orgId = activeOrg?.orgId;
-  const { data: draft, isLoading: draftLoading } = useGetDraft(orgId);
-  const saveDraftMutation = useSaveDraft(orgId);
+  const autoSaveLabel = "Ready";
+  const saveDraftMutation = { isPending: false };
   const { data: categories = [], isLoading: categoriesLoading, isError: categoriesError } = useQuery({ queryKey: ["evidence-categories"], queryFn: getEvidenceCategories, staleTime: 5 * 60_000 });
-  const [autoSaveLabel, setAutoSaveLabel] = useState("Saved");
   const [search, setSearch] = useState("");
   const policy = JOB_ROLE_POLICY[role];
-  const { handleSubmit, setValue, control, formState: { errors, isDirty, isValid } } = useForm<Step5Input>({ resolver: zodResolver(step5Schema), mode: "onChange", defaultValues: { evidence_priorities: [] } });
+  const { handleSubmit, setValue, control, formState: { errors } } = useForm<Step5Input>({ mode: "onChange", defaultValues: { evidence_priorities: [] } });
   const values = useWatch({ control });
   const priorities = useMemo(() => (values.evidence_priorities ?? []) as Step5Input["evidence_priorities"], [values.evidence_priorities]);
   const allocated = priorities.reduce((sum, priority) => sum + priority.weight, 0);
@@ -39,21 +35,12 @@ export function CreateJobStep5({ role = "MID", initialData, onContinue, onBack }
   const totalValid = allocated === EVALUATION_WEIGHT_POLICY.REQUIRED_TOTAL;
 
   useEffect(() => {
-    const savedData = (initialData ?? draft?.formData?.step5 ?? draft?.formData) as Record<string, unknown> | undefined;
+    const savedData = initialData;
     const savedPriorities = savedData?.evidence_priorities;
     if (!Array.isArray(savedPriorities)) return;
     const parsed = z.array(evidencePrioritySchema).safeParse(savedPriorities);
     if (parsed.success) setValue("evidence_priorities", parsed.data, { shouldDirty: false, shouldValidate: true });
-  }, [draft, initialData, setValue]);
-
-  useEffect(() => {
-    if (!isDirty || !orgId) return;
-    const timeout = setTimeout(() => {
-      setAutoSaveLabel("Saving");
-      saveDraftMutation.mutate({ formData: { step5: { evidence_priorities: priorities } }, currentStep: 5 }, { onSuccess: () => setAutoSaveLabel("Saved"), onError: () => setAutoSaveLabel("Not saved") });
-    }, 800);
-    return () => clearTimeout(timeout);
-  }, [priorities, isDirty, orgId, saveDraftMutation]);
+  }, [initialData, setValue]);
 
   const selectedIds = new Set(priorities.map((priority) => priority.evidence_category_id));
   const selected = priorities.map((priority) => ({ ...priority, category: categories.find((category) => category.id === priority.evidence_category_id) }));
@@ -66,9 +53,13 @@ export function CreateJobStep5({ role = "MID", initialData, onContinue, onBack }
   }
   function removeCategory(id: string) { setValue("evidence_priorities", distributeWeights(priorities.filter((priority) => priority.evidence_category_id !== id)), { shouldDirty: true, shouldValidate: true }); }
   function adjustWeight(id: string, direction: "increase" | "decrease") { const next = rebalanceWeight(priorities, id, direction === "increase" ? WEIGHT_STEP : -WEIGHT_STEP); if (next) setValue("evidence_priorities", next, { shouldDirty: true, shouldValidate: true }); }
-  const onSubmit: SubmitHandler<Step5Input> = (data) => { if (!countValid || !totalValid) return; onContinue?.(data); saveDraftMutation.mutate({ formData: { step5: data }, currentStep: 6 }); };
-
-  if (draftLoading) return <div className="grid min-h-svh place-items-center bg-paper font-mono text-sm uppercase tracking-[0.16em] text-olive">Opening evidence plan</div>;
+  const onSubmit: SubmitHandler<Step5Input> = () => {
+    if (!countValid || !totalValid) return;
+    const parsed = step5Schema.safeParse({ evidence_priorities: priorities });
+    if (parsed.success) onContinue?.(parsed.data);
+  };
+  const canContinue = countValid && totalValid;
+  const isValid = canContinue;
 
   return <main className="min-h-svh bg-paper text-ink lg:grid lg:grid-cols-[4.5rem_minmax(0,1fr)]"><StepRail /><div className="min-w-0"><WorkspaceHeader orgName={activeOrg?.orgName} saveLabel={autoSaveLabel} /><main className="px-6 pb-28 md:px-10 lg:px-14"><div className="mx-auto max-w-7xl"><section className="border-b border-forest/12 py-16 md:py-20"><p className="font-mono text-sm uppercase tracking-[0.16em] text-olive">05 · Evidence</p><div className="mt-6 grid gap-9 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-end"><div><h1 className="max-w-[19ch] text-5xl leading-[0.94] tracking-[-0.045em] md:text-6xl" style={{ fontFamily: "var(--font-primary)", fontWeight: 300 }}>Decide what evidence should convince you.</h1><p className="mt-5 max-w-[50ch] text-2xl font-light leading-snug text-olive" style={{ fontFamily: "var(--font-heading)" }}>A claim is easy to make. Tell Trace which kinds of evidence deserve the most trust for this role.</p></div><p className="border-l border-forest/25 pl-6 text-base leading-relaxed text-olive">Weight the evidence that would genuinely change your hiring decision. Trace applies that standard consistently to every candidate.</p></div><p className="mt-10 border-t border-forest/12 pt-5 font-mono text-sm uppercase tracking-[0.14em] text-olive">Your weights must total 100. Trace uses them consistently across candidates.</p></section><div className="mt-14 grid gap-14 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-20"><form onSubmit={handleSubmit(onSubmit)} noValidate><section aria-labelledby="evidence-heading"><div className="flex flex-wrap items-end justify-between gap-6 border-b border-forest/12 pb-6"><div><p className="font-mono text-sm uppercase tracking-[0.16em] text-forest">Your evidence standard</p><h2 id="evidence-heading" className="mt-3 text-3xl font-light tracking-[-0.035em]" style={{ fontFamily: "var(--font-primary)" }}>What should carry the most weight?</h2></div><AllocationStatus allocated={allocated} /></div><AllocationBar value={allocated} /><p className="mt-5 max-w-[62ch] text-base leading-relaxed text-olive"><strong className="font-medium text-ink">100 points. No ambiguity.</strong> Put weight behind the proof that makes a candidate&apos;s ability credible—not simply the keywords they mention.</p><div className="mt-12 space-y-5">{selected.map(({ category, ...priority }) => <WeightRow key={priority.evidence_category_id} name={category?.name ?? "Selected evidence category"} description={category?.description ?? "Evidence category selected for this role."} weight={priority.weight} onIncrease={() => adjustWeight(priority.evidence_category_id, "increase")} onDecrease={() => adjustWeight(priority.evidence_category_id, "decrease")} onRemove={() => removeCategory(priority.evidence_category_id)} canIncrease={priorities.some((item) => item.evidence_category_id !== priority.evidence_category_id && item.weight > EVALUATION_WEIGHT_POLICY.MIN_WEIGHT)} canDecrease={priority.weight > EVALUATION_WEIGHT_POLICY.MIN_WEIGHT} />)}</div>{priorities.length === 0 && <div className="mt-10 border-l-2 border-forest bg-warm px-6 py-6"><p className="text-xl font-light" style={{ fontFamily: "var(--font-heading)" }}>Start with the proof you would trust most.</p><p className="mt-2 max-w-[58ch] text-base leading-relaxed text-olive">What evidence would separate a candidate who can do the work from one who simply describes it well?</p></div>}<EvidenceLibrary categories={available} search={search} loading={categoriesLoading} failed={categoriesError} atLimit={priorities.length >= policy.maxDimensions} onSearch={setSearch} onAdd={addCategory} />{!countValid && priorities.length > 0 && <p className="mt-8 border-l-2 border-destructive bg-destructive/5 px-5 py-4 text-base text-destructive" role="alert">Choose between {policy.minDimensions} and {policy.maxDimensions} evidence categories for this {role.toLowerCase()} role.</p>}{!totalValid && priorities.length > 0 && <p className="mt-4 border-l-2 border-destructive bg-destructive/5 px-5 py-4 text-base text-destructive" role="alert">Weights must total {EVALUATION_WEIGHT_POLICY.REQUIRED_TOTAL} before continuing.</p>}{errors.evidence_priorities && <p className="mt-4 text-base text-destructive" role="alert">{errors.evidence_priorities.message}</p>}</section><section className="mt-16 border-t border-forest/12 pt-8"><p className="font-serif text-3xl font-semibold italic leading-snug text-forest">Evidence should earn trust, not merely signal it.</p><p className="mt-4 max-w-[65ch] text-base leading-relaxed text-olive">Trace uses this plan to give more attention to the proof that matters for this particular hiring decision.</p></section><footer className="mt-12 flex flex-wrap items-center justify-between gap-6 border-t border-forest pt-7"><button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-base text-olive transition-colors hover:text-forest"><ArrowLeft className="size-5" /> Hiring lens</button><div className="text-right"><button type="submit" disabled={!isValid || !countValid || !totalValid || saveDraftMutation.isPending} className="group inline-flex items-center gap-8 bg-forest px-6 py-4 font-mono text-sm uppercase tracking-[0.13em] text-paper transition-colors hover:bg-moss disabled:cursor-not-allowed disabled:opacity-45">{saveDraftMutation.isPending ? "Saving plan" : "Define the evidence plan"}<ArrowRight className="size-5 transition-transform group-hover:translate-x-1" /></button><p className="mt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-olive">04 / 06 completed</p></div></footer></form><aside className="lg:pt-[4.25rem]"><div className="bg-forest p-8 text-paper lg:sticky lg:top-24"><Circle className="size-4 fill-sage text-sage" /><p className="mt-9 font-mono text-sm uppercase tracking-[0.16em] text-sage">Evidence plan</p><p className="mt-4 text-2xl font-light leading-tight" style={{ fontFamily: "var(--font-heading)" }}>{policy.minDimensions}–{policy.maxDimensions} categories for this role.</p><div className="mt-9 border-t border-paper/20 pt-6"><p className="font-mono text-sm uppercase tracking-[0.14em] text-sage">Selected</p><p className="mt-2 text-4xl font-light" style={{ fontFamily: "var(--font-heading)" }}>{priorities.length}</p><p className="mt-5 text-base leading-relaxed text-paper/70">Trace will use these priorities when deciding what proof deserves close attention.</p></div></div></aside></div></div></main></div></main>;
 }

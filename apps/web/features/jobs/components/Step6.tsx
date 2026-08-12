@@ -10,7 +10,6 @@ import { ArrowLeft, Check, Circle, Minus, Plus, Search } from "lucide-react";
 import { EVALUATION_WEIGHT_POLICY } from "@trace/shared/contracts/evaluationPolicy";
 import { JOB_ROLE_SUCCESS_SIGNAL_POLICY } from "@trace/shared/contracts/successPolicy";
 import { useAuth } from "@/providers/auth-provider";
-import { useGetDraft, useSaveDraft } from "@/features/jobs/hooks/use-job-draft";
 import { getSuccessSignals, type SuccessSignal } from "@/features/jobs/api/step6";
 
 const successSignalSchema = z.object({ success_signal_id: z.string().uuid(), weight: z.number().int().min(1).max(100) });
@@ -21,14 +20,12 @@ const WEIGHT_STEP = 5;
 
 export function CreateJobStep6({ role = "MID", initialData, onComplete, onBack }: { role?: SuccessRole; initialData?: Record<string, unknown>; onComplete?: (data: Step6Input) => void; onBack?: () => void }) {
   const { activeOrg } = useAuth();
-  const orgId = activeOrg?.orgId;
-  const { data: draft, isLoading: draftLoading } = useGetDraft(orgId);
-  const saveDraftMutation = useSaveDraft(orgId);
+  const saveDraftMutation = { isPending: false };
   const { data: signals = [], isLoading: signalsLoading, isError: signalsError } = useQuery({ queryKey: ["success-signals"], queryFn: getSuccessSignals, staleTime: 5 * 60_000 });
-  const [autoSaveLabel, setAutoSaveLabel] = useState("Saved");
+  const autoSaveLabel = "Ready";
   const [search, setSearch] = useState("");
   const policy = JOB_ROLE_SUCCESS_SIGNAL_POLICY[role];
-  const { handleSubmit, setValue, control, formState: { errors, isDirty, isValid } } = useForm<Step6Input>({ resolver: zodResolver(step6Schema), mode: "onChange", defaultValues: { success_signals: [] } });
+  const { handleSubmit, setValue, control, formState: { errors, isValid } } = useForm<Step6Input>({ resolver: zodResolver(step6Schema), mode: "onChange", defaultValues: { success_signals: [] } });
   const values = useWatch({ control });
   const selected = useMemo(() => (values.success_signals ?? []) as Step6Input["success_signals"], [values.success_signals]);
   const allocated = selected.reduce((sum, signal) => sum + signal.weight, 0);
@@ -38,17 +35,12 @@ export function CreateJobStep6({ role = "MID", initialData, onComplete, onBack }
   const totalValid = allocated === EVALUATION_WEIGHT_POLICY.REQUIRED_TOTAL;
 
   useEffect(() => {
-    const savedData = (initialData ?? draft?.formData?.step6 ?? draft?.formData) as Record<string, unknown> | undefined;
+    const savedData = initialData;
     const savedSignals = savedData?.success_signals;
     if (!Array.isArray(savedSignals)) return;
     const parsed = z.array(successSignalSchema).safeParse(savedSignals);
     if (parsed.success) setValue("success_signals", parsed.data, { shouldDirty: false, shouldValidate: true });
-  }, [draft, initialData, setValue]);
-  useEffect(() => {
-    if (!isDirty || !orgId) return;
-    const timeout = setTimeout(() => { setAutoSaveLabel("Saving"); saveDraftMutation.mutate({ formData: { step6: { success_signals: selected } }, currentStep: 6 }, { onSuccess: () => setAutoSaveLabel("Saved"), onError: () => setAutoSaveLabel("Not saved") }); }, 800);
-    return () => clearTimeout(timeout);
-  }, [selected, isDirty, orgId, saveDraftMutation]);
+  }, [initialData, setValue]);
 
   const selectedIds = new Set(selected.map((signal) => signal.success_signal_id));
   const selectedSignals = selected.map((signal) => ({ ...signal, definition: signals.find((item) => item.id === signal.success_signal_id) }));
@@ -56,9 +48,7 @@ export function CreateJobStep6({ role = "MID", initialData, onComplete, onBack }
   function addSignal(signal: SuccessSignal) { if (selected.length >= policy.maxSelections) return; setValue("success_signals", distribute([...selected, { success_signal_id: signal.id, weight: 1 }]), { shouldDirty: true, shouldValidate: true }); setSearch(""); }
   function removeSignal(id: string) { setValue("success_signals", distribute(selected.filter((signal) => signal.success_signal_id !== id)), { shouldDirty: true, shouldValidate: true }); }
   function adjust(id: string, direction: "increase" | "decrease") { const next = rebalance(selected, id, direction === "increase" ? WEIGHT_STEP : -WEIGHT_STEP); if (next) setValue("success_signals", next, { shouldDirty: true, shouldValidate: true }); }
-  const onSubmit: SubmitHandler<Step6Input> = (data) => { if (!countValid || !totalValid) return; onComplete?.(data); saveDraftMutation.mutate({ formData: { step6: data }, currentStep: 7 }); };
-
-  if (draftLoading) return <div className="grid min-h-svh place-items-center bg-paper font-mono text-sm uppercase tracking-[0.16em] text-olive">Opening success definition</div>;
+  const onSubmit: SubmitHandler<Step6Input> = (data) => { if (!countValid || !totalValid) return; onComplete?.(data); };
 
   return <main className="min-h-svh bg-paper text-ink lg:grid lg:grid-cols-[4.5rem_minmax(0,1fr)]"><StepRail /><div className="min-w-0"><Header orgName={activeOrg?.orgName} saveLabel={autoSaveLabel} /><main className="px-6 pb-28 md:px-10 lg:px-14"><div className="mx-auto max-w-7xl"><section className="border-b border-forest/12 py-16 md:py-20"><p className="font-mono text-sm uppercase tracking-[0.16em] text-olive">06 · Success signals</p><div className="mt-6 grid gap-9 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-end"><div><h1 className="max-w-[19ch] text-5xl leading-[0.94] tracking-[-0.045em] md:text-6xl" style={{ fontFamily: "var(--font-primary)", fontWeight: 300 }}>Define what success should look like.</h1><p className="mt-5 max-w-[50ch] text-2xl font-light leading-snug text-olive" style={{ fontFamily: "var(--font-heading)" }}>Beyond capability, what outcomes would make you confident this hire is working?</p></div><p className="border-l border-forest/25 pl-6 text-base leading-relaxed text-olive">Success signals turn an abstract job brief into a shared standard for what the person should create, improve, or take ownership of.</p></div><p className="mt-10 border-t border-forest/12 pt-5 font-mono text-sm uppercase tracking-[0.14em] text-olive">Your weights must total 100. Trace uses them consistently across candidates.</p></section><div className="mt-14 grid gap-14 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-20"><form onSubmit={handleSubmit(onSubmit)} noValidate><section aria-labelledby="success-heading"><div className="flex flex-wrap items-end justify-between gap-6 border-b border-forest/12 pb-6"><div><p className="font-mono text-sm uppercase tracking-[0.16em] text-forest">Your definition of success</p><h2 id="success-heading" className="mt-3 text-3xl font-light tracking-[-0.035em]" style={{ fontFamily: "var(--font-heading)" }}>What should this person make possible?</h2></div><AllocationStatus allocated={allocated} /></div><AllocationBar value={allocated} /><p className="mt-5 max-w-[62ch] text-base leading-relaxed text-olive"><strong className="font-medium text-ink">100 points. No ambiguity.</strong> Weight the outcomes that would make this hire meaningfully successful—not just busy.</p><div className="mt-12 space-y-5">{selectedSignals.map(({ definition, ...signal }) => <SignalRow key={signal.success_signal_id} name={definition?.name ?? "Selected success signal"} description={definition?.description ?? "Success signal selected for this role."} weight={signal.weight} onIncrease={() => adjust(signal.success_signal_id, "increase")} onDecrease={() => adjust(signal.success_signal_id, "decrease")} onRemove={() => removeSignal(signal.success_signal_id)} canIncrease={selected.some((item) => item.success_signal_id !== signal.success_signal_id && item.weight > EVALUATION_WEIGHT_POLICY.MIN_WEIGHT)} canDecrease={signal.weight > EVALUATION_WEIGHT_POLICY.MIN_WEIGHT} />)}</div>{selected.length === 0 && <div className="mt-10 border-l-2 border-forest bg-warm px-6 py-6"><p className="text-xl font-light" style={{ fontFamily: "var(--font-heading)" }}>Start with the outcome you would celebrate six months from now.</p><p className="mt-2 max-w-[58ch] text-base leading-relaxed text-olive">What would tell you this person has improved the team, the product, or the work in a way that matters?</p></div>}<SignalLibrary signals={availableSignals} search={search} loading={signalsLoading} failed={signalsError} atLimit={selected.length >= policy.maxSelections} onSearch={setSearch} onAdd={addSignal} />{!countValid && <p className="mt-8 border-l-2 border-destructive bg-destructive/5 px-5 py-4 text-base text-destructive" role="alert">Choose between {Math.max(1, policy.minSelections)} and {policy.maxSelections} success signals for this {role.toLowerCase()} role.</p>}{!totalValid && selected.length > 0 && <p className="mt-4 border-l-2 border-destructive bg-destructive/5 px-5 py-4 text-base text-destructive" role="alert">Weights must total {EVALUATION_WEIGHT_POLICY.REQUIRED_TOTAL} before completing the job definition.</p>}{errors.success_signals && <p className="mt-4 text-base text-destructive" role="alert">{errors.success_signals.message}</p>}</section><section className="mt-16 border-t border-forest/12 pt-8"><p className="font-serif text-3xl font-semibold italic leading-snug text-forest">The standard is not a perfect candidate. It&apos;s a successful hire.</p><p className="mt-4 max-w-[65ch] text-base leading-relaxed text-olive">Trace will use this last definition to make the hiring decision concrete before the candidate arrives.</p></section><footer className="mt-12 flex flex-wrap items-center justify-between gap-6 border-t border-forest pt-7"><button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-base text-olive transition-colors hover:text-forest"><ArrowLeft className="size-5" /> Evidence plan</button><div className="text-right"><button type="submit" disabled={!isValid || !countValid || !totalValid || saveDraftMutation.isPending} className="group inline-flex items-center gap-8 bg-forest px-6 py-4 font-mono text-sm uppercase tracking-[0.13em] text-paper transition-colors hover:bg-moss disabled:cursor-not-allowed disabled:opacity-45">{saveDraftMutation.isPending ? "Saving definition" : "Complete hiring definition"}<Check className="size-5" /></button><p className="mt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-olive">05 / 06 completed</p></div></footer></form><aside className="lg:pt-[4.25rem]"><div className="bg-forest p-8 text-paper lg:sticky lg:top-24"><Circle className="size-4 fill-sage text-sage" /><p className="mt-9 font-mono text-sm uppercase tracking-[0.16em] text-sage">Success definition</p><p className="mt-4 text-2xl font-light leading-tight" style={{ fontFamily: "var(--font-heading)" }}>{Math.max(1, policy.minSelections)}–{policy.maxSelections} signals for this role.</p><div className="mt-9 border-t border-paper/20 pt-6"><p className="font-mono text-sm uppercase tracking-[0.14em] text-sage">Selected</p><p className="mt-2 text-4xl font-light" style={{ fontFamily: "var(--font-heading)" }}>{selected.length}</p><p className="mt-5 text-base leading-relaxed text-paper/70">A complete hiring definition gives every candidate the same destination to be measured against.</p></div></div></aside></div></div></main></div></main>;
 }

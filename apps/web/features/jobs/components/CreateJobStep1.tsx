@@ -23,10 +23,6 @@ import {
 import { Country, State, City } from "country-state-city";
 
 import { useAuth } from "@/providers/auth-provider";
-import {
-  useGetDraft,
-  useSaveDraft,
-} from "@/features/jobs/hooks/use-job-draft";
 
 
 const ROLE_CATEGORY_API = `${process.env.NEXT_PUBLIC_API_URL}/job-role-categories`;
@@ -264,19 +260,6 @@ export function CreateJobStep1({
   const { activeOrg } = useAuth();
   
 
-  const orgId = activeOrg?.orgId;
-  
-
-  const {
-    data: draft,
-    isLoading: draftLoading,
-  } = useGetDraft(orgId);
-
-  const saveDraftMutation = useSaveDraft(orgId);
-
-  const [autoSaveLabel, setAutoSaveLabel] =
-    useState("Saved");
-
   const [roleCategories, setRoleCategories] =
     useState<JobRoleCategory[]>([]);
 
@@ -303,7 +286,6 @@ export function CreateJobStep1({
     formState: {
       errors,
       isValid,
-      isDirty,
     },
   } = useForm<Step1Input>({
     resolver: zodResolver(step1Schema),
@@ -441,7 +423,7 @@ export function CreateJobStep1({
      ======================================================= */
 
   useEffect(() => {
-    const savedData = initialData ?? draft?.formData?.step1 ?? draft?.formData;
+    const savedData = initialData;
     if (!savedData) {
       return;
     }
@@ -465,52 +447,7 @@ export function CreateJobStep1({
         );
       }
     }
-  }, [draft, initialData, setValue]);
-
-  /* =======================================================
-     Auto-save
-     ======================================================= */
-
-  useEffect(() => {
-    if (!isDirty || !orgId) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      setAutoSaveLabel("Saving");
-
-      saveDraftMutation.mutate(
-        {
-          formData: {
-            step1: {
-              ...values,
-              role_category_code: selectedRoleCategory?.code,
-            },
-          },
-          currentStep: 1,
-        },
-        {
-          onSuccess: () => {
-            setAutoSaveLabel("Saved");
-          },
-
-          onError: () => {
-            setAutoSaveLabel("Not saved");
-          },
-        },
-      );
-    }, 800);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [
-    values,
-    isDirty,
-    orgId,
-    saveDraftMutation,
-    selectedRoleCategory?.code,
-  ]);
+  }, [initialData, setValue]);
 
   /* =======================================================
      Work mode semantics
@@ -687,31 +624,7 @@ export function CreateJobStep1({
       role_category_code: selectedRoleCategory?.code,
     });
 
-    saveDraftMutation.mutate(
-      {
-        formData: {
-          step1: {
-            ...data,
-            role_category_code: selectedRoleCategory?.code,
-          },
-        },
-        currentStep: 2,
-      },
-      {},
-    );
   };
-
-  /* =======================================================
-     Loading
-     ======================================================= */
-
-  if (draftLoading) {
-    return (
-      <div className="grid min-h-svh place-items-center bg-paper font-mono text-[0.8125rem] uppercase tracking-[0.2em] text-olive">
-        Opening role brief
-      </div>
-    );
-  }
 
   /* =======================================================
      Render
@@ -768,7 +681,7 @@ export function CreateJobStep1({
                 aria-hidden="true"
               />
 
-              {autoSaveLabel}
+              Ready
             </span>
           </div>
         </header>

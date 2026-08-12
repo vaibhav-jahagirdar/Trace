@@ -8,5 +8,5 @@ export function PanelHead({ label, count }: { label: string; count?: number }) {
 }
 
 export function EmptyPanel({ children }: { children: React.ReactNode }) {
-  return <p className="border-y border-forest/12 bg-warm px-5 py-6 text-sm leading-relaxed text-olive">{children}</p>;
+  return <div className="flex min-h-24 items-center border-y border-forest/12 bg-warm px-5 py-6 text-sm leading-relaxed text-olive"><span className="mr-3 size-1.5 shrink-0 rounded-full bg-olive/50" aria-hidden="true" />{children}</div>;
 }
