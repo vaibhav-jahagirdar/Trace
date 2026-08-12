@@ -1,0 +1,1 @@
+{"version":3,"file":"getApplicationConcepts.d.ts","sourceRoot":"","sources":["getApplicationConcepts.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,UAAU,EAAE,MAAM,IAAI,CAAC;AAEhC,MAAM,WAAW,qBAAqB;IACpC,IAAI,EAAE,MAAM,CAAC;IACb,QAAQ,EAAE,MAAM,GAAG,IAAI,CAAC;CACzB;AAED,wBAAsB,sBAAsB,CAC1C,MAAM,EAAE,UAAU,EAClB,aAAa,EAAE,MAAM,GACpB,OAAO,CAAC,qBAAqB,EAAE,CAAC,CAelC"}

@@ -11,6 +11,7 @@ import conceptRoutes from "./modules/concepts/concept.routes";
 import technologyRoutes from "./modules/technologies/technology.routes";
 import evaluationConfigRoutes from "./modules/evaluation-config/evaluation-config.routes";
 import jobsRouter from "./modules/jobs/jobs.route";
+import applicationsApplyRouter from "./modules/applications/apply/jobs.apply.route";
 const app = express();
 
 app.use(httpLogger);
@@ -32,6 +33,7 @@ app.use("/api/v1/concepts", conceptRoutes);
 app.use("/api/v1/technologies", technologyRoutes);
 app.use("/api/v1", evaluationConfigRoutes);
 app.use("/api/organizations/:orgId/jobs", jobsRouter);
+app.use("/api", applicationsApplyRouter);
 
 app.use(errorHandler);
 

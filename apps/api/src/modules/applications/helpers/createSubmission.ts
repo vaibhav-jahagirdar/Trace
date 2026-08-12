@@ -4,6 +4,8 @@ import { toGetJobDto } from "../../jobs/services/helpers/getJobDto";
 import { BadRequestError } from "../../../middleware/errorHandler";
 
 const requirementMap = {
+  // Public applications always require a resume (validated before the transaction)
+  // and a GitHub profile, regardless of the recruiter's stored toggles.
   github_required: "githubUrl",
   linkedin_required: "linkedinUrl",
   problem_solving_profile_required: "problemSolvingProfileUrl",
@@ -22,7 +24,7 @@ export async function createSubmissionRecord(
   fileSize: number,
   sha256: string,
 ) {
-  const mandatoryFields = Object.entries(requirementMap)
+  const configuredFields = Object.entries(requirementMap)
     .filter(
       ([requirement]) =>
         jobResult.submission_requirements[
@@ -30,6 +32,8 @@ export async function createSubmissionRecord(
         ],
     )
     .map(([, submissionField]) => submissionField);
+
+  const mandatoryFields = [...new Set(["githubUrl", ...configuredFields])] as Array<keyof ApplyJobBody["submission"]>;
 
   const missingFields = mandatoryFields.filter((field) => {
     const value = submissionData[field];

@@ -26,6 +26,13 @@ export const applyJobParamsSchema = z
   })
   .strict();
 
+export const publicApplyJobParamsSchema = z
+  .object({
+    orgSlug: z.string().trim().min(3).max(100),
+    jobSlug: z.string().trim().min(1).max(255),
+  })
+  .strict();
+
 export const applyJobBodySchema = z
   .object({
     firstName: z.string().trim().min(1).max(100),
@@ -127,5 +134,6 @@ export const applyJobResultSchema = z
   .strict();
 
 export type ApplyJobParams = z.infer<typeof applyJobParamsSchema>;
+export type PublicApplyJobParams = z.infer<typeof publicApplyJobParamsSchema>;
 export type ApplyJobBody = z.infer<typeof applyJobBodySchema>;
 export type ApplyJobResult = z.infer<typeof applyJobResultSchema>;
