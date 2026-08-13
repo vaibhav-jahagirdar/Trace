@@ -21,7 +21,11 @@ export type Confidence = z.infer<typeof ConfidenceSchema>;
 export const PriorityTypeSchema = z.enum(["MANDATORY", "PREFERRED", "BONUS"]);
 export type PriorityType = z.infer<typeof PriorityTypeSchema>;
 
-export const RequirementStatusSchema = z.enum(["CONFIRMED", "UNCONFIRMED", "MISSING"]);
+export const RequirementStatusSchema = z.enum([
+  "CONFIRMED",
+  "UNCONFIRMED",
+  "MISSING",
+]);
 export type RequirementStatus = z.infer<typeof RequirementStatusSchema>;
 
 export const ClaimTypeSchema = z.enum([
@@ -36,10 +40,15 @@ export type ClaimType = z.infer<typeof ClaimTypeSchema>;
 export const ImportanceSchema = z.enum(["CRITICAL", "HIGH", "MEDIUM"]);
 export type Importance = z.infer<typeof ImportanceSchema>;
 
-export const ExperienceSourceSchema = z.enum(["WORK", "PROJECT"]);
+export const ExperienceSourceSchema = z.enum(["WORK", "PROJECT", "NONE"]);
 export type ExperienceSource = z.infer<typeof ExperienceSourceSchema>;
 
-export const AlignmentRatingSchema = z.enum(["HIGH", "MEDIUM", "LOW", "UNDETERMINABLE"]);
+export const AlignmentRatingSchema = z.enum([
+  "HIGH",
+  "MEDIUM",
+  "LOW",
+  "UNDETERMINABLE",
+]);
 export type AlignmentRating = z.infer<typeof AlignmentRatingSchema>;
 
 export const OverallRoleFitSchema = z.enum([
@@ -52,7 +61,12 @@ export const OverallRoleFitSchema = z.enum([
 ]);
 export type OverallRoleFit = z.infer<typeof OverallRoleFitSchema>;
 
-export const RepositoryPrioritySchema = z.enum(["CRITICAL", "HIGH", "MEDIUM", "LOW"]);
+export const RepositoryPrioritySchema = z.enum([
+  "CRITICAL",
+  "HIGH",
+  "MEDIUM",
+  "LOW",
+]);
 export type RepositoryPriority = z.infer<typeof RepositoryPrioritySchema>;
 
 export const ImpactSchema = z.enum(["HIGH", "MEDIUM", "LOW"]);
@@ -95,7 +109,8 @@ export const ScoredFieldSchema = z
       if (data.supporting_claim_ids.length > 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "supporting_claim_ids must be empty when rating is UNDETERMINABLE",
+          message:
+            "supporting_claim_ids must be empty when rating is UNDETERMINABLE",
           path: ["supporting_claim_ids"],
         });
       }
@@ -123,14 +138,21 @@ export const ScoreRatingSchema = z
   })
   .strict()
   .superRefine((data, ctx) => {
-    if (data.rating === "UNDETERMINABLE" && data.score !== null && data.score !== undefined) {
+    if (
+      data.rating === "UNDETERMINABLE" &&
+      data.score !== null &&
+      data.score !== undefined
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "score must be null when rating is UNDETERMINABLE",
         path: ["score"],
       });
     }
-    if (data.rating !== "UNDETERMINABLE" && (data.score === null || data.score === undefined)) {
+    if (
+      data.rating !== "UNDETERMINABLE" &&
+      (data.score === null || data.score === undefined)
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "score is required unless rating is UNDETERMINABLE",
@@ -167,7 +189,8 @@ export const DualAxisScoredFieldSchema = z
     if (relevanceUnd !== qualityUnd) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "relevance and quality must both be UNDETERMINABLE or both be scored",
+        message:
+          "relevance and quality must both be UNDETERMINABLE or both be scored",
         path: ["quality", "rating"],
       });
       return;
@@ -177,7 +200,8 @@ export const DualAxisScoredFieldSchema = z
       if (data.rating !== "UNDETERMINABLE") {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "rating must be UNDETERMINABLE when both axes are UNDETERMINABLE",
+          message:
+            "rating must be UNDETERMINABLE when both axes are UNDETERMINABLE",
           path: ["rating"],
         });
       }
@@ -191,7 +215,8 @@ export const DualAxisScoredFieldSchema = z
       if (data.supporting_claim_ids.length > 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "supporting_claim_ids must be empty when axes are UNDETERMINABLE",
+          message:
+            "supporting_claim_ids must be empty when axes are UNDETERMINABLE",
           path: ["supporting_claim_ids"],
         });
       }
@@ -215,15 +240,26 @@ export const DualAxisScoredFieldSchema = z
 export type DualAxisScoredField = z.infer<typeof DualAxisScoredFieldSchema>;
 
 export const TechnologyAlignmentSchema = ScoredFieldSchema.and(
-  z.object({ mandatory_technologies_present: z.boolean() }).strict()
+  z.object({ mandatory_technologies_present: z.boolean() }).strict(),
 );
 export type TechnologyAlignment = z.infer<typeof TechnologyAlignmentSchema>;
 
 // pydantic QualificationAlignment — previously missing from the TS file.
 export const QualificationAlignmentSchema = ScoredFieldSchema.and(
-  z.object({ mandatory_qualifications_present: z.boolean() }).strict()
+  z
+    .object({
+      mandatory_qualifications_present: z.boolean().default(true),
+      minimum_education_present: z.boolean().optional(),
+    })
+    .transform((value) => ({
+      mandatory_qualifications_present:
+        value.mandatory_qualifications_present ?? value.minimum_education_present ?? true,
+    }))
+    .pipe(z.object({ mandatory_qualifications_present: z.boolean() }).strict()),
 );
-export type QualificationAlignment = z.infer<typeof QualificationAlignmentSchema>;
+export type QualificationAlignment = z.infer<
+  typeof QualificationAlignmentSchema
+>;
 
 // pydantic SupportingSignalItem — code/priority_type/rating/score/note/
 // supporting_claim_ids. No `confidence` field (unlike the old RubricItem).
@@ -249,7 +285,8 @@ export const SupportingSignalItemSchema = z
       if (data.supporting_claim_ids.length > 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "supporting_claim_ids must be empty when rating is UNDETERMINABLE",
+          message:
+            "supporting_claim_ids must be empty when rating is UNDETERMINABLE",
           path: ["supporting_claim_ids"],
         });
       }
@@ -265,7 +302,9 @@ export type SupportingSignalItem = z.infer<typeof SupportingSignalItemSchema>;
 
 // pydantic SupportingSignals(ScoredField) — ScoredField + signals list.
 export const SupportingSignalsSchema = ScoredFieldSchema.and(
-  z.object({ signals: z.array(SupportingSignalItemSchema).default([]) }).strict()
+  z
+    .object({ signals: z.array(SupportingSignalItemSchema).default([]) })
+    .strict(),
 );
 export type SupportingSignals = z.infer<typeof SupportingSignalsSchema>;
 
@@ -299,17 +338,27 @@ export const RequirementAssessmentSchema = z
   })
   .strict()
   .superRefine((data, ctx) => {
-    if (data.status === "MISSING" && data.supporting_claim_ids.length > 0) {
+    if (data.status === "MISSING") {
+      if (data.supporting_claim_ids.length > 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "supporting_claim_ids must be empty when status is MISSING",
+          path: ["supporting_claim_ids"],
+        });
+      }
+    } else if (data.status === "CONFIRMED") {
+      if (data.supporting_claim_ids.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "supporting_claim_ids required when status is CONFIRMED",
+          path: ["supporting_claim_ids"],
+        });
+      }
+    } else if (data.supporting_claim_ids.length > 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "supporting_claim_ids must be empty when status is MISSING",
-        path: ["supporting_claim_ids"],
-      });
-    }
-    if (data.status !== "MISSING" && data.supporting_claim_ids.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "supporting_claim_ids required unless status is MISSING",
+        message:
+          "supporting_claim_ids must be empty when status is UNCONFIRMED",
         path: ["supporting_claim_ids"],
       });
     }
@@ -320,7 +369,6 @@ export const RequirementCategorySchema = z
   .object({
     technologies: z.array(RequirementAssessmentSchema).default([]),
     concepts: z.array(RequirementAssessmentSchema).default([]),
-    qualifications: z.array(RequirementAssessmentSchema).default([]),
   })
   .strict();
 export type RequirementCategory = z.infer<typeof RequirementCategorySchema>;
@@ -330,6 +378,7 @@ export const RequirementAnalysisSchema = z
     mandatory: RequirementCategorySchema,
     preferred: RequirementCategorySchema,
     bonus: RequirementCategorySchema,
+    qualification: RequirementAssessmentSchema.nullable().optional().default(null),
   })
   .strict();
 export type RequirementAnalysis = z.infer<typeof RequirementAnalysisSchema>;
@@ -365,7 +414,8 @@ export const PrioritizedProjectSchema = z
       if (data.supporting_claim_ids.length > 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "supporting_claim_ids must be empty when rating is UNDETERMINABLE",
+          message:
+            "supporting_claim_ids must be empty when rating is UNDETERMINABLE",
           path: ["supporting_claim_ids"],
         });
       }
@@ -423,7 +473,10 @@ export const VerificationTargetSchema = z
     claim_type: ClaimTypeSchema,
     related_project_id: ClaimIdSchema.nullable().optional().default(null),
     importance: ImportanceSchema,
-    search_hints: z.array(z.string()).max(3).default([]),
+    search_hints: z
+  .array(z.string())
+  .min(3)
+  .max(6),
   })
   .strict();
 export type VerificationTarget = z.infer<typeof VerificationTargetSchema>;
@@ -453,7 +506,7 @@ export type ReportConfidence = z.infer<typeof ReportConfidenceSchema>;
 export const OverallEvaluationSchema = z
   .object({
     overall_role_fit: OverallRoleFitSchema,
-    overall_role_fit_score: z.number().int().min(0).max(100),
+    overall_role_fit_score: z.number().int().min(0).max(100).optional().default(0),
     repository_priority: RepositoryPrioritySchema,
   })
   .strict();
@@ -493,7 +546,6 @@ export const ComputedScoresSchema = z
   .strict();
 export type ComputedScores = z.infer<typeof ComputedScoresSchema>;
 
-
 export const ResumeEvaluationReportLLMOutputSchema = z
   .object({
     metadata: MetadataLLMOutputSchema,
@@ -525,9 +577,13 @@ export const ResumeEvaluationReportSchema = z
     overall: OverallEvaluationSchema,
   })
   .strict();
-export type ResumeEvaluationReport = z.infer<typeof ResumeEvaluationReportSchema>;
+export type ResumeEvaluationReport = z.infer<
+  typeof ResumeEvaluationReportSchema
+>;
 
-export function parseResumeEvaluationReport(json: unknown): ResumeEvaluationReport {
+export function parseResumeEvaluationReport(
+  json: unknown,
+): ResumeEvaluationReport {
   return ResumeEvaluationReportSchema.parse(json);
 }
 
