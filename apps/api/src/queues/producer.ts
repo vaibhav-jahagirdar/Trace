@@ -32,7 +32,8 @@ export async function enqueueResumeAnalysis(
   data: ResumeAnalysisJobData,
   options?: JobsOptions,
 ) {
-  return resumeAnalysisQueue.add(
+  console.log("[Queue][enqueue] Adding resume job", { taskId: data.taskId, applicationId: data.applicationId, jobId: data.jobId });
+  const job = await resumeAnalysisQueue.add(
     "resume-analysis",
     data,
     {
@@ -40,4 +41,6 @@ export async function enqueueResumeAnalysis(
       ...options,
     },
   );
+  console.log("[Queue][enqueue] Added resume job", { taskId: data.taskId, queueJobId: job.id });
+  return job;
 }
