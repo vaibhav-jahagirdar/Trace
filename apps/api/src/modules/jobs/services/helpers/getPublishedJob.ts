@@ -57,7 +57,7 @@ export async function getPublishedJob(
   );
 
   if (result.rowCount === 0) {
-    throw new NotFoundError("Job not found");
+    throw new NotFoundError("Job");
   }
 
   return result.rows[0];
@@ -126,7 +126,7 @@ export async function getPublishedJobByPublicSlug(
   );
 
   if (result.rowCount === 0) {
-    throw new NotFoundError("Job not found");
+    throw new NotFoundError("Job");
   }
 
   if ((result.rowCount ?? 0) > 1) {

@@ -4,13 +4,11 @@ import { JobEvaluationPriorityRow } from "./getJobEvaluationPriorities";
 import { JobEvidencePriorityRow } from "./getJobEvidencePriorities";
 import { JobSuccessSignalRow } from "./getJobSuccessSignals";
 
-
 export interface RubricItem {
   code: string;
   name: string;
   description: string | null;
   weight: number;
-  priority_type: "MANDATORY" | "PREFERRED" | "BONUS";
 }
 
 export interface RequirementItem {
@@ -18,6 +16,7 @@ export interface RequirementItem {
   type: "TECHNOLOGY" | "CONCEPT";
   category: string | null;
   weight: number;
+  priority_type: "MANDATORY" | "PREFERRED" | "BONUS";
 }
 
 export interface EvaluationContextDto {
@@ -31,24 +30,19 @@ export interface EvaluationContextDto {
       description: string | null;
     } | null;
   };
+
   qualifications: {
     experienceYearsMin: number | null;
     experienceYearsMax: number | null;
     minimumEducationLevel: string | null;
   };
-  submissionRequirements: {
-    resumeRequired: boolean;
-    githubRequired: boolean;
-    linkedinRequired: boolean;
-    problemSolvingProfileRequired: boolean;
-    projectExplanationRequired: boolean;
-    featureExplanationRequired: boolean;
-  };
+
   requirements: {
     mandatory: RequirementItem[];
     preferred: RequirementItem[];
     bonus: RequirementItem[];
   };
+
   evaluationPriorities: RubricItem[];
   evidencePriorities: RubricItem[];
   successSignals: RubricItem[];
@@ -60,13 +54,20 @@ function toRequirementItem(row: JobRequirementRow): RequirementItem {
     type: row.requirement_type,
     category: row.category,
     weight: Number(row.weight),
+    priority_type: row.priority_type as
+      | "MANDATORY"
+      | "PREFERRED"
+      | "BONUS",
   };
 }
 
 function groupRequirementsByPriority(
   rows: JobRequirementRow[],
 ): EvaluationContextDto["requirements"] {
-  const buckets: Record<"MANDATORY" | "PREFERRED" | "BONUS", JobRequirementRow[]> = {
+  const buckets: Record<
+    "MANDATORY" | "PREFERRED" | "BONUS",
+    JobRequirementRow[]
+  > = {
     MANDATORY: [],
     PREFERRED: [],
     BONUS: [],
@@ -88,14 +89,13 @@ function toRubricItem(row: {
   name: string;
   description: string | null;
   weight: number;
-  priority_type?: string 
+  priority_type?: string;
 }): RubricItem {
   return {
     code: row.code,
     name: row.name,
     description: row.description,
     weight: row.weight,
-    priority_type: row.priority_type as "MANDATORY" | "PREFERRED" | "BONUS"
   };
 }
 
@@ -119,20 +119,15 @@ export function toEvaluationContextDto(
           }
         : null,
     },
+
     qualifications: {
       experienceYearsMin: job.experience_min_years,
       experienceYearsMax: job.experience_max_years,
       minimumEducationLevel: job.minimum_education_level,
     },
-    submissionRequirements: {
-      resumeRequired: job.resume_required ?? false,
-      githubRequired: job.github_required ?? false,
-      linkedinRequired: job.linkedin_required ?? false,
-      problemSolvingProfileRequired: job.problem_solving_profile_required ?? false,
-      projectExplanationRequired: job.project_explanation_required ?? false,
-      featureExplanationRequired: job.feature_explanation_required ?? false,
-    },
+
     requirements: groupRequirementsByPriority(requirements),
+
     evaluationPriorities: evaluationPriorities.map(toRubricItem),
     evidencePriorities: evidencePriorities.map(toRubricItem),
     successSignals: successSignals.map(toRubricItem),

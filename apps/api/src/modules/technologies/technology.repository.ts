@@ -39,7 +39,11 @@ export async function listTechnologies(
   const conditions: string[] = [];
 
   if (search) {
-    values.push(`%${search}%`);
+    const normalizedSearch = search.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const searchTerm = normalizedSearch === "postgresql" || normalizedSearch === "postgres"
+      ? "postgres"
+      : search;
+    values.push(`%${searchTerm}%`);
     conditions.push(`name ILIKE $${values.length}`);
   }
 

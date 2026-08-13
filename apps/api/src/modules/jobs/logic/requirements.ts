@@ -110,12 +110,11 @@ export function processJobRequirements(
     );
   }
 
-  const preferredLimit = mandatoryCount > 0
-    ? roleLimits.preferred
-    : roleLimits.preferredWithoutMandatory;
-
   for (const requirementType of ["TECHNOLOGY", "CONCEPT"] as const) {
     const typeCounts = countsByType[requirementType];
+    const preferredLimit = typeCounts.MANDATORY > 0
+      ? roleLimits.preferred
+      : roleLimits.preferredWithoutMandatory;
 
     if (typeCounts.MANDATORY > roleLimits.mandatory) {
       throw new ValidationError(
