@@ -16,6 +16,8 @@ class ResumeAnalysisContext(BaseModel):
 
 class ResumeAnalysisRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    applicationId: str
+    taskId: str
     resumeObjectKey: str
     analysisContext: ResumeAnalysisContext   # ✅ now has both job and candidate
     raw_llm_response: Optional[str] = None

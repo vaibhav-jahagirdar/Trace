@@ -1,4 +1,5 @@
 import os
+
 from openai import OpenAI
 
 from app.core.config import settings
@@ -6,51 +7,73 @@ from app.core.config import settings
 
 class MultiProviderClient:
     """
-    Unified client supporting NVIDIA NIM and Azure OpenAI.
-    Uses the same `complete` method interface.
+    Unified client supporting DeepSeek and Azure OpenAI.
     """
-    _nvidia_instance = None
-    _azure_instance = None
 
-    @classmethod
-    def _get_nvidia_client(cls) -> OpenAI:
-        """Get or create NVIDIA NIM client."""
-        if cls._nvidia_instance is None:
-            api_key = settings.NVIDIA_API_KEY or os.getenv("NVIDIA_API_KEY")
-            if not api_key:
-                raise RuntimeError(
-                    "NVIDIA_API_KEY is not configured. "
-                    "Set it in your .env file or environment variables."
-                )
-            cls._nvidia_instance = OpenAI(
-                base_url="https://integrate.api.nvidia.com/v1",
-                api_key=api_key,
-            )
-        return cls._nvidia_instance
+    _azure_instance = None
+    _deepseek_instance = None
 
     @classmethod
     def _get_azure_client(cls) -> OpenAI:
         """Get or create Azure OpenAI client."""
         if cls._azure_instance is None:
-            endpoint = settings.AZURE_OPENAI_ENDPOINT or os.getenv("AZURE_OPENAI_ENDPOINT")
-            api_key = settings.AZURE_OPENAI_API_KEY or os.getenv("AZURE_OPENAI_API_KEY")
-            
+            endpoint = (
+                settings.AZURE_OPENAI_ENDPOINT
+                or os.getenv("AZURE_OPENAI_ENDPOINT")
+            )
+
+            api_key = (
+                settings.AZURE_OPENAI_API_KEY
+                or os.getenv("AZURE_OPENAI_API_KEY")
+            )
+
             if not endpoint or not api_key:
                 raise RuntimeError(
                     "AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY must be configured. "
                     "Set them in your .env file or environment variables."
                 )
-            
-            # Ensure endpoint doesn't have trailing /openai/v1
+
             base_url = endpoint.rstrip("/")
+
             if not base_url.endswith("/openai/v1"):
                 base_url = f"{base_url}/openai/v1"
-            
+
             cls._azure_instance = OpenAI(
                 base_url=base_url,
                 api_key=api_key,
             )
+
         return cls._azure_instance
+
+    @classmethod
+    def _get_deepseek_client(cls) -> OpenAI:
+        """Get or create DeepSeek client."""
+        if cls._deepseek_instance is None:
+            api_key = (
+                settings.DEEPSEEK_API_KEY
+                or os.getenv("DEEPSEEK_API_KEY")
+            )
+
+            if not api_key:
+                raise RuntimeError(
+                    "DEEPSEEK_API_KEY is not configured. "
+                    "Set it in your .env file or environment variables."
+                )
+
+            base_url = (
+                settings.DEEPSEEK_BASE_URL
+                or os.getenv(
+                    "DEEPSEEK_BASE_URL",
+                    "https://api.deepseek.com",
+                )
+            )
+
+            cls._deepseek_instance = OpenAI(
+                base_url=base_url,
+                api_key=api_key,
+            )
+
+        return cls._deepseek_instance
 
     def complete(
         self,
@@ -58,54 +81,78 @@ class MultiProviderClient:
         messages: list[dict],
         temperature: float = 1.0,
         top_p: float = 1.0,
-        max_tokens: int = 16384,
-        max_completion_tokens: int = None,  # 👈 NEW: Azure uses this
+        max_tokens: int = 65536,
+        max_completion_tokens: int | None = None,
         seed: int = 42,
         stream: bool = False,
-        provider: str = "nvidia",  # "nvidia" or "azure"
-        **kwargs
+        provider: str = "deepseek",
+        reasoning_effort: str = "max",
+        json_output: bool = True,
+        **kwargs,
     ):
         """
-        Unified completion method for both providers.
-        
-        Args:
-            provider: "nvidia" (default) or "azure"
-            model: Model name (NVIDIA NIM model or Azure deployment name)
-            messages: List of message dicts
-            temperature: Sampling temperature
-            top_p: Nucleus sampling parameter
-            max_tokens: Maximum tokens to generate (NVIDIA NIM)
-            max_completion_tokens: Maximum tokens for Azure (overrides max_tokens)
-            seed: Random seed for reproducibility
-            stream: Whether to stream the response
-            **kwargs: Additional arguments passed to the underlying client
+        Unified completion method.
+
+        provider:
+            - "deepseek"
+            - "azure"
+
+        DeepSeek:
+            - thinking enabled
+            - reasoning effort = max
+            - JSON output enabled
+            - sampling parameters are not sent
         """
+
+        if provider == "deepseek":
+            client = self._get_deepseek_client()
+
+            request_kwargs = {
+                "model": model,
+                "messages": messages,
+                "reasoning_effort": reasoning_effort,
+                "max_tokens": max_tokens,
+                "stream": stream,
+                "extra_body": {
+                    "thinking": {
+                        "type": "enabled",
+                    },
+                },
+                **kwargs,
+            }
+
+            if json_output:
+                request_kwargs["response_format"] = {
+                    "type": "json_object",
+                }
+
+            return client.chat.completions.create(
+                **request_kwargs
+            )
+
         if provider == "azure":
             client = self._get_azure_client()
-            # Azure uses max_completion_tokens
-            token_param = max_completion_tokens if max_completion_tokens is not None else max_tokens
+
+            token_param = (
+                max_completion_tokens
+                if max_completion_tokens is not None
+                else max_tokens
+            )
+
             return client.chat.completions.create(
                 model=model,
                 messages=messages,
                 temperature=temperature,
-                max_completion_tokens=token_param,  # 👈 Azure uses this
+                max_completion_tokens=token_param,
                 seed=seed,
                 stream=stream,
-                **kwargs
-            )
-        else:  # default to nvidia
-            client = self._get_nvidia_client()
-            return client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                top_p=top_p,
-                max_tokens=max_tokens,  # 👈 NVIDIA uses max_tokens
-                seed=seed,
-                stream=stream,
-                **kwargs
+                **kwargs,
             )
 
+        raise ValueError(
+            f"Unsupported provider: {provider}. "
+            "Use 'deepseek' or 'azure'."
+        )
 
-# Expose a singleton instance
+
 client = MultiProviderClient()

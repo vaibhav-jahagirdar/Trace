@@ -1,5 +1,5 @@
 from typing import Literal
-from typing import Optional
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -7,7 +7,7 @@ class TaggedItem(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str
-    category: str | None
+    category: str | None = None
 
 
 class CandidateProfile(BaseModel):
@@ -22,20 +22,20 @@ class SubmittedEvidence(BaseModel):
 
     resumeProvided: bool
 
-    githubUrl: str | None
-    portfolioUrl: str | None
-    linkedinUrl: str | None
-    problemSolvingProfileUrl: str | None
+    githubUrl: str | None = None
+    portfolioUrl: str | None = None
+    linkedinUrl: str | None = None
+    problemSolvingProfileUrl: str | None = None
 
-    featuredProjectName: str | None
-    featuredProjectUrl: str | None
+    featuredProjectName: str | None = None
+    featuredProjectUrl: str | None = None
 
-    projectDescription: str | None
-    featureDescription: str | None
+    projectDescription: str | None = None
+    featureDescription: str | None = None
 
-    engineeringHighlight: str | None
-    bestEvidenceNote: str | None
-    whyGoodFit: str | None
+    engineeringHighlight: str | None = None
+    bestEvidenceNote: str | None = None
+    whyGoodFit: str | None = None
 
 
 class ApplicationContextDto(BaseModel):
@@ -52,35 +52,24 @@ class RoleCategory(BaseModel):
 
     code: str
     name: str
-    description: str | None
+    description: str | None = None
 
 
 class JobInfo(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     title: str
-    department: str | None
+    department: str | None = None
     description: str
-    roleCategory: RoleCategory | None
+    roleCategory: RoleCategory | None = None
 
 
 class Qualifications(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    experienceYearsMin: int | None
-    experienceYearsMax: int | None
-    minimumEducationLevel: str | None
-
-
-class SubmissionRequirements(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    resumeRequired: bool
-    githubRequired: bool
-    linkedinRequired: bool
-    problemSolvingProfileRequired: bool
-    projectExplanationRequired: bool
-    featureExplanationRequired: bool
+    experienceYearsMin: int | None = None
+    experienceYearsMax: int | None = None
+    minimumEducationLevel: str | None = None
 
 
 class RequirementItem(BaseModel):
@@ -88,8 +77,13 @@ class RequirementItem(BaseModel):
 
     name: str
     type: Literal["TECHNOLOGY", "CONCEPT"]
-    category: str | None
+    category: str | None = None
     weight: float
+    priority_type: Literal[
+        "MANDATORY",
+        "PREFERRED",
+        "BONUS",
+    ]
 
 
 class Requirements(BaseModel):
@@ -105,9 +99,8 @@ class RubricItem(BaseModel):
 
     code: str
     name: str
-    description: str | None
+    description: str | None = None
     weight: float
-    priority_type: Literal["MANDATORY", "PREFERRED", "BONUS"] | None = None
 
 
 class EvaluationContextDto(BaseModel):
@@ -115,32 +108,11 @@ class EvaluationContextDto(BaseModel):
 
     job: JobInfo
     qualifications: Qualifications
-    submissionRequirements: SubmissionRequirements
-
     requirements: Requirements
 
     evaluationPriorities: list[RubricItem]
     evidencePriorities: list[RubricItem]
     successSignals: list[RubricItem]
-
-    def model_post_init(self, __context: object) -> None:
-        """Give unclassified recruiter rubric items a stable neutral tier."""
-        for field_name in (
-            "evaluationPriorities",
-            "evidencePriorities",
-            "successSignals",
-        ):
-            items = getattr(self, field_name)
-            setattr(
-                self,
-                field_name,
-                [
-                    item
-                    if item.priority_type is not None
-                    else item.model_copy(update={"priority_type": "PREFERRED"})
-                    for item in items
-                ],
-            )
 
 
 class ResumeAnalysisContext(BaseModel):
@@ -158,8 +130,4 @@ class ResumeAnalysisPayload(BaseModel):
     resumeObjectKey: str
     analysisContext: ResumeAnalysisContext
 
-
-class ResumeAnalysisPayload(BaseModel):
-    resumeObjectKey: str
-    analysisContext: EvaluationContextDto
-    raw_llm_response: Optional[str] = None  
+    raw_llm_response: str | None = None

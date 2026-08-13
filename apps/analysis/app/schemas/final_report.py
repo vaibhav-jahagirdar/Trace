@@ -103,7 +103,19 @@ class TechnologyAlignment(ScoredField):
 
 
 class QualificationAlignment(ScoredField):
-    minimum_education_present: bool
+    # LLMs may emit the legacy education field alongside the canonical one.
+    model_config = ConfigDict(extra="ignore")
+    mandatory_qualifications_present: bool = True
+
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_prompt_alias(cls, value):
+        if isinstance(value, dict) and "mandatory_qualifications_present" not in value:
+            value = dict(value)
+            value["mandatory_qualifications_present"] = value.pop(
+                "minimum_education_present", True
+            )
+        return value
 
 
 class SupportingSignalItem(BaseModel):
@@ -170,10 +182,10 @@ class RequirementCategory(BaseModel):
 
     technologies: list[RequirementAssessment] = Field(default_factory=list)
     concepts: list[RequirementAssessment] = Field(default_factory=list)
-
-
 class RequirementAnalysis(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    # Keep auxiliary requirement fields forward-compatible; the cleaner still
+    # enforces the configured requirement names and statuses.
+    model_config = ConfigDict(extra="ignore")
 
     mandatory: RequirementCategory
     preferred: RequirementCategory
@@ -275,9 +287,11 @@ class ReportConfidence(BaseModel):
 
 
 class OverallEvaluation(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     overall_role_fit: OverallRoleFit
+    # Backend-owned score; tolerate older/newer prompts that omit it.
+    overall_role_fit_score: int = Field(default=0, ge=0, le=100)
     repository_priority: RepositoryPriority
 
 

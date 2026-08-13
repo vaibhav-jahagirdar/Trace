@@ -1,9 +1,9 @@
 import asyncio
 import json
 import os
-import tempfile
-import re
 import random
+import re
+import tempfile
 from typing import Any, Tuple
 
 from app.core.config import settings
@@ -12,168 +12,367 @@ from app.llm.resumeAnalyzer.prompt.builder import (
     build_resume_analysis_system_instruction,
 )
 
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
-NVIDIA_MODEL = settings.NVIDIA_MODEL or "deepseek-ai/deepseek-v4-flash"
+DEEPSEEK_MODEL = (
+    settings.DEEPSEEK_MODEL
+    or os.getenv("DEEPSEEK_MODEL")
+    or "deepseek-v4-flash"
+)
 
+# Application-level concurrency.
+#
+# DeepSeek's account-level V4 Flash concurrency limit is much higher,
+# but your own service should still control how many requests it launches.
+#
+# Example:
+#   DEEPSEEK_MAX_CONCURRENCY=10
+#
+DEEPSEEK_MAX_CONCURRENCY = int(
+    settings.DEEPSEEK_MAX_CONCURRENCY
+    or os.getenv("DEEPSEEK_MAX_CONCURRENCY", "10")
+)
+
+# One shared semaphore for the Python process.
+_DEEPSEEK_SEMAPHORE = asyncio.Semaphore(DEEPSEEK_MAX_CONCURRENCY)
+
+
+# ---------------------------------------------------------------------------
+# JSON Extraction
+# ---------------------------------------------------------------------------
 
 def extract_json_from_response(text: str) -> str:
     """
-    Extracts the first valid JSON object or array from a string.
-    Removes any preamble (like "We", "I think", markdown fences).
+    Extract the first JSON object or array from a model response.
+
+    DeepSeek JSON mode should normally return clean JSON, but this keeps
+    the existing defensive parsing behavior.
     """
     text = text.strip()
+
     if text.startswith("```json"):
-        text = text[len("```json") :].strip()
+        text = text[len("```json"):].strip()
     elif text.startswith("```"):
-        text = text[len("```") :].strip()
+        text = text[len("```"):].strip()
+
     if text.endswith("```"):
         text = text[:-3].strip()
 
     match = re.search(r"[\[\{].*", text, re.DOTALL)
+
     if not match:
         return text
+
     return match.group(0)
 
+
+# ---------------------------------------------------------------------------
+# Retry
+# ---------------------------------------------------------------------------
 
 async def _call_with_retry(
     func,
     max_retries: int = 3,
-    base_delay: float = 1.0,
+    base_delay: float = 2.0,
     max_delay: float = 16.0,
     jitter: bool = True,
 ) -> Any:
     """
-    Call an async function with exponential backoff retry.
-    Retries on rate‑limit, server errors, and connection errors.
+    Call an async function with exponential backoff.
+
+    Retries:
+      - 429 rate limit
+      - 500/503 server errors
+      - connection errors
+      - timeout errors
     """
+
     for attempt in range(max_retries + 1):
         try:
             return await func()
+
         except Exception as e:
             should_retry = False
-            if hasattr(e, "status_code") and e.status_code in (429, 503, 500):
+
+            status_code = getattr(e, "status_code", None)
+
+            if status_code in (429, 500, 503):
                 should_retry = True
-            elif "ResourceExhausted" in str(e) or "rate limit" in str(e).lower():
+
+            error_text = str(e).lower()
+
+            if "rate limit" in error_text:
                 should_retry = True
-            elif "Connection error" in str(e) or "timeout" in str(e).lower():
+
+            if "connection error" in error_text:
+                should_retry = True
+
+            if "timeout" in error_text:
                 should_retry = True
 
             if not should_retry or attempt == max_retries:
                 raise
 
-            delay = min(base_delay * (2 ** attempt), max_delay)
+            delay = min(
+                base_delay * (2 ** attempt),
+                max_delay,
+            )
+
             if jitter:
                 delay *= random.uniform(0.8, 1.2)
-            print(f"[LLM] Retry {attempt+1}/{max_retries} after {delay:.2f}s due to: {e}")
+
+            print(
+                f"[LLM] Retry {attempt + 1}/{max_retries} "
+                f"after {delay:.2f}s due to: {e}"
+            )
+
             await asyncio.sleep(delay)
 
 
 # ---------------------------------------------------------------------------
-# Main Generate Function (NVIDIA NIM)
+# Main Generate Function
 # ---------------------------------------------------------------------------
 
 async def generate(prompt: str) -> Tuple[dict[str, Any] | None, str]:
     """
-    Generate structured JSON using NVIDIA NIM (DeepSeek V4 Flash).
-    Thinking mode is disabled for faster, deterministic JSON extraction.
+    Generate structured JSON using DeepSeek V4 Flash.
+
+    Configuration:
+      - DeepSeek V4 Flash
+      - Thinking mode enabled
+      - reasoning_effort = max
+      - JSON output enabled
+      - max_tokens = 16384
+      - application-level concurrency control
 
     Returns:
-        Tuple[dict | None, str]: (parsed JSON payload, raw response text)
-        If JSON parsing fails, payload is None but raw_text is still returned.
+        (parsed JSON payload, raw response text)
+
+    If JSON parsing fails:
+        payload = None
+        raw_text = still returned
     """
+
+    # -----------------------------------------------------------------------
     # Build system instruction
+    # -----------------------------------------------------------------------
+
     system_instruction = build_resume_analysis_system_instruction()
 
     messages = [
-        {"role": "system", "content": system_instruction},
-        {"role": "user", "content": prompt},
+        {
+            "role": "system",
+            "content": system_instruction,
+        },
+        {
+            "role": "user",
+            "content": prompt,
+        },
     ]
 
-    raw_text = None
+    raw_text: str | None = None
 
-    # Debug: write prompt to temp file
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as tmp:
+    # -----------------------------------------------------------------------
+    # Debug prompt file
+    # -----------------------------------------------------------------------
+
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".txt",
+        delete=False,
+        encoding="utf-8",
+    ) as tmp:
         tmp.write("=== SYSTEM INSTRUCTION ===\n")
         tmp.write(system_instruction)
+
         tmp.write("\n\n=== USER PROMPT ===\n")
         tmp.write(prompt)
+
         tmp_path = tmp.name
-    print(f"[LLM] Debug files (prompt) written to: {tmp_path}")
+
+    print(f"[LLM] Debug prompt written to: {tmp_path}")
 
     print("=" * 80)
-    print("[LLM] Calling NVIDIA NIM (DeepSeek V4 Flash)")
-    print(f"[LLM] Model: {NVIDIA_MODEL}")
+    print("[LLM] Calling DeepSeek")
+    print(f"[LLM] Model: {DEEPSEEK_MODEL}")
+    print("[LLM] Thinking: enabled")
+    print("[LLM] Reasoning effort: max")
+    print("[LLM] JSON output: enabled")
+    print(f"[LLM] Max concurrency: {DEEPSEEK_MAX_CONCURRENCY}")
     print(f"[LLM] Prompt chars: {len(prompt)}")
     print("=" * 80)
 
+    # -----------------------------------------------------------------------
+    # DeepSeek request
+    # -----------------------------------------------------------------------
+
+    async def call_deepseek():
+        return await asyncio.to_thread(
+            client.complete,
+            provider="deepseek",
+            model=DEEPSEEK_MODEL,
+            messages=messages,
+
+            # DeepSeek thinking configuration
+            reasoning_effort="max",
+
+            # JSON mode
+            json_output=True,
+
+            # Large enough for your evaluation object
+           max_tokens=65_536,
+
+            # Do NOT send temperature/top_p/seed.
+            # DeepSeek thinking mode does not use them.
+        )
+
     try:
-        # ── Correct parameters per NVIDIA NIM ──
-        # - extra_body={"chat_template_kwargs": {"thinking": False}} disables thinking mode.
-        # - temperature, top_p, seed work as expected when thinking is disabled.
-        # - NVIDIA does NOT support response_format; we rely on prompt + extraction.
-        async def call_nvidia():
-            return await asyncio.to_thread(
-                client.complete,
-                provider="nvidia",
-                model=NVIDIA_MODEL,
-                messages=messages,
-                temperature=0,           # Deterministic output
-                top_p=0.95,              # Default from NVIDIA docs
-                max_tokens=24576,        # Safe ceiling for large JSON
-                seed=42,                 # Reproducibility
-                extra_body={"chat_template_kwargs": {"thinking": False}},  # ✅ Disable thinking
+        # Application-level concurrency protection.
+        async with _DEEPSEEK_SEMAPHORE:
+
+            print(
+                "[LLM] Acquired DeepSeek concurrency slot "
+                f"({DEEPSEEK_MAX_CONCURRENCY} max)"
             )
 
-        response = await _call_with_retry(call_nvidia, max_retries=3, base_delay=2.0, max_delay=16.0, jitter=True)
+            response = await _call_with_retry(
+                call_deepseek,
+                max_retries=3,
+                base_delay=2.0,
+                max_delay=16.0,
+                jitter=True,
+            )
 
         if not response.choices:
-            raise RuntimeError("NVIDIA NIM returned no choices.")
+            raise RuntimeError(
+                "DeepSeek returned no choices."
+            )
 
-        raw_text = response.choices[0].message.content
+        message = response.choices[0].message
+
+        raw_text = message.content
+
+        # DeepSeek exposes reasoning separately.
+        #
+        # DO NOT persist reasoning_content as part of your evaluation.
+        #
+        # We only need the final model content.
         if isinstance(raw_text, list):
-            raw_text = "".join(getattr(part, "text", str(part)) for part in raw_text)
+            raw_text = "".join(
+                getattr(part, "text", str(part))
+                for part in raw_text
+            )
 
         if not raw_text:
-            raise RuntimeError("NVIDIA NIM returned an empty response.")
+            raise RuntimeError(
+                "DeepSeek returned an empty response."
+            )
+
+        # -------------------------------------------------------------------
+        # Usage / cache observability
+        # -------------------------------------------------------------------
+
+        usage = getattr(response, "usage", None)
+
+        if usage:
+            cache_hit_tokens = getattr(
+                usage,
+                "prompt_cache_hit_tokens",
+                0,
+            )
+
+            cache_miss_tokens = getattr(
+                usage,
+                "prompt_cache_miss_tokens",
+                0,
+            )
+
+            print(
+                "[LLM] Token usage:"
+                f" cache_hit={cache_hit_tokens},"
+                f" cache_miss={cache_miss_tokens}"
+            )
 
         print("=" * 80)
-        print("[LLM] NVIDIA NIM response received")
+        print("[LLM] DeepSeek response received")
         print("=" * 80)
 
-    except Exception as nvidia_error:
-        print("[LLM] NVIDIA NIM failed")
-        print(f"[LLM] NVIDIA error: {repr(nvidia_error)}")
-        raise RuntimeError("NVIDIA NIM provider failed.") from nvidia_error
+    except Exception as deepseek_error:
+        print("[LLM] DeepSeek failed")
+        print(f"[LLM] DeepSeek error: {repr(deepseek_error)}")
 
-    # ── Save raw response to a temp file (ALWAYS) ──
-    with tempfile.NamedTemporaryFile(mode="w", suffix="_raw.txt", delete=False) as f:
+        raise RuntimeError(
+            "DeepSeek provider failed."
+        ) from deepseek_error
+
+    # -----------------------------------------------------------------------
+    # Save raw response
+    # -----------------------------------------------------------------------
+
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix="_raw.txt",
+        delete=False,
+        encoding="utf-8",
+    ) as f:
         f.write(raw_text)
-        raw_response_path = f.name
-    print(f"[LLM] Raw response written to: {raw_response_path}")
 
-    # ── Clean and parse JSON ──
+        raw_response_path = f.name
+
+    print(
+        f"[LLM] Raw response written to: "
+        f"{raw_response_path}"
+    )
+
+    # -----------------------------------------------------------------------
+    # Debug raw response
+    # -----------------------------------------------------------------------
+
     print("=" * 80)
     print("[LLM] Raw response preview")
     print(raw_text[:3000])
     print("=" * 80)
 
-    cleaned_text = extract_json_from_response(raw_text)
+    # -----------------------------------------------------------------------
+    # Clean JSON
+    # -----------------------------------------------------------------------
+
+    cleaned_text = extract_json_from_response(
+        raw_text
+    )
 
     print("=" * 80)
     print("[LLM] Cleaned response preview")
     print(cleaned_text[:3000])
     print("=" * 80)
 
-    payload = None
+    # -----------------------------------------------------------------------
+    # Parse JSON
+    # -----------------------------------------------------------------------
+
+    payload: dict[str, Any] | None = None
+
     try:
         payload = json.loads(cleaned_text)
+
+        if not isinstance(payload, dict):
+            raise ValueError(
+                "DeepSeek JSON response is not a JSON object."
+            )
+
         print("[LLM] JSON parsed successfully")
-        print(f"[LLM] Top-level keys: {list(payload.keys())}")
-    except json.JSONDecodeError:
-        print("[LLM] JSON PARSE FAILED – raw response saved to", raw_response_path)
-        # Do not raise – we return payload=None and raw_text
+        print(
+            f"[LLM] Top-level keys: "
+            f"{list(payload.keys())}"
+        )
+
+    except (json.JSONDecodeError, ValueError):
+        print(
+            "[LLM] JSON PARSE FAILED – "
+            f"raw response saved to {raw_response_path}"
+        )
 
     return payload, raw_text

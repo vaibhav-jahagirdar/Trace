@@ -93,9 +93,14 @@ def validate_evaluation_claim_references(
     visit(report)
     unknown_claim_ids = sorted(referenced_claim_ids - known_claim_ids)
     if unknown_claim_ids:
-        raise ValueError(
-            "Evaluation references claim_ids absent from the candidate extraction: "
-            f"{unknown_claim_ids}"
+        # Claim references are advisory metadata for the current downstream
+        # pipeline. Keep the IDs structurally validated, but do not reject an
+        # otherwise usable evaluation when the model cites a claim that was
+        # normalized or omitted during extraction.
+        print(
+            "[ResumeAnalysis][warning] Evaluation references unknown claim IDs: "
+            f"{unknown_claim_ids}",
+            flush=True,
         )
 
 
