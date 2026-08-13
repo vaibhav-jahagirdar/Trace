@@ -1,6 +1,6 @@
-import { PoolClient } from "pg";
 import { createHash } from "crypto";
-import { claimResumeParseTask } from "./helpers/validateCvAnalysisRequest";
+import { getDb } from "../../../../../config/db";
+import { withTransaction } from "../../../../../config/transaction";
 import { analyzeResume } from "../client/analysis.client";
 import {
   getCheckpoint,
@@ -8,13 +8,15 @@ import {
   getPermanentResult,
   storePermanentResult,
 } from "./helpers/checkpoint";
+import { PoolClient } from "pg";
 import { getResumeAnalysisPayload } from "../evaluationContext/contextBuilder.service";
 import { getEvaluationContext } from "../../../../jobs/services/[jobId]/evaluationContext";
 import { CandidateExtractionOutputSchema } from "../../validators/candidateExtraction";
-import { ResumeEvaluationReportSchema } from "../../validators/evaluationReport";
+import { ResumeEvaluationReportLLMOutputSchema } from "../../validators/evaluationReport";
 import { computeResumeScores } from "../../../../scoring/resume";
 import type { ScoreResult } from "../../../../scoring/resume";
 import { persistCandidateAnalysis } from "./helpers/persistCandidateAnalysis";
+import { markTaskCompleted } from "./helpers/updateApplicationStatus";
 
 export interface ResumeAnalysisResult {
   candidate: any;
@@ -97,19 +99,20 @@ export async function resumeAnalysis(
   jobId: string,
   applicationId: string,
   taskId: string,
-  client: PoolClient,
 ): Promise<ResumeAnalysisResult> {
-  await claimResumeParseTask(client, taskId);
-
+  const startedAt = Date.now();
+  console.log("[ResumeAnalysis][1] Starting", { jobId, applicationId, taskId });
   const requestHash = await computeRequestHash(applicationId, taskId);
+  const db = getDb();
 
-  const permanent = await getPermanentResult(client, taskId);
+  const permanent = await getPermanentResult(db as any, taskId);
+  console.log("[ResumeAnalysis][2] Cache lookup complete", { taskId, hasPermanent: Boolean(permanent) });
   let result;
 
   if (permanent && permanent.request_hash === requestHash) {
     result = await analyzeResume(applicationId, taskId, permanent.raw_llm_response);
   } else {
-    const cachedRaw = await getCheckpoint(client, taskId);
+    const cachedRaw = await getCheckpoint(db as any, taskId);
     if (cachedRaw) {
       result = await analyzeResume(applicationId, taskId, cachedRaw);
     } else {
@@ -117,48 +120,48 @@ export async function resumeAnalysis(
     }
   }
 
+  if (result.raw_llm_response) {
+    await withTransaction(async (client) => {
+      await storeCheckpoint(client, taskId, result.raw_llm_response!);
+    });
+    console.log("[ResumeAnalysis][2b] Raw LLM response checkpointed", {
+      taskId,
+      elapsedMs: Date.now() - startedAt,
+    });
+  }
+
   const { candidate, evaluation } = result;
   const validatedCandidate = CandidateExtractionOutputSchema.parse(candidate);
-  const validatedEvaluation = ResumeEvaluationReportSchema.parse(evaluation);
+  // Python returns the model-owned Stage 1 report. Backend metadata and
+  // computed_scores are produced here, not required from the LLM response.
+  const validatedEvaluation = ResumeEvaluationReportLLMOutputSchema.parse(evaluation);
 
   const jobContext = await getEvaluationContext(jobId);
+  console.log("[ResumeAnalysis][3] Job context loaded and response validated", { taskId });
   const scoreResult = computeResumeScores(
     jobContext as any,
     { candidate: validatedCandidate, evaluation: validatedEvaluation },
     applicationId,
   );
-
-  if (result.raw_llm_response) {
-    const cleanedResponse = {
-      candidate: validatedCandidate,
-      evaluation: validatedEvaluation,
-    };
-    await storePermanentResult(
-      client,
-      taskId,
-      requestHash,
-      result.raw_llm_response,
-      cleanedResponse,
-    );
-    await storeCheckpoint(client, taskId, result.raw_llm_response);
-  }
-
-  const resumeAnalysisId = await storeResumeAnalysisSummary(
-    client,
-    applicationId,
+  console.log("[ResumeAnalysis][4] Resume score computed", {
     taskId,
-    validatedCandidate,
-    validatedEvaluation,
-    scoreResult,
-  );
+    resumeMatchScore: scoreResult.resume_match_score,
+    elapsedMs: Date.now() - startedAt,
+  });
 
-  await persistCandidateAnalysis(
-    client,
-    resumeAnalysisId,
-    applicationId,
-    validatedCandidate,
-    validatedEvaluation,
-  );
+  const resumeAnalysisId = await withTransaction(async (client) => {
+    if (result.raw_llm_response) {
+      const cleanedResponse = { candidate: validatedCandidate, evaluation: validatedEvaluation };
+      await storePermanentResult(client, taskId, requestHash, result.raw_llm_response, cleanedResponse);
+      await storeCheckpoint(client, taskId, result.raw_llm_response);
+    }
+    const id = await storeResumeAnalysisSummary(client, applicationId, taskId, validatedCandidate, validatedEvaluation, scoreResult);
+    await persistCandidateAnalysis(client, id, applicationId, validatedCandidate, validatedEvaluation);
+    await markTaskCompleted(client, taskId);
+    return id;
+  });
+
+  console.log("[ResumeAnalysis][5] Analysis persisted", { taskId, resumeAnalysisId, elapsedMs: Date.now() - startedAt });
 
   return {
     candidate: validatedCandidate,

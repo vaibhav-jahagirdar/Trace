@@ -1,6 +1,6 @@
 import { PoolClient } from "pg";
 import { CandidateExtractionOutput } from "../../../validators/candidateExtraction";
-import { ResumeEvaluationReport } from "../../../validators/evaluationReport";
+import { ResumeEvaluationReportLLMOutput } from "../../../validators/evaluationReport";
 import { normalizeTechnology } from "./normalizeTech";
 import { AppError } from "../../../../../../middleware/errorHandler";
 
@@ -9,7 +9,7 @@ export async function persistCandidateAnalysis(
   resumeAnalysisId: string,
   jobApplicationId: string,
   candidate: CandidateExtractionOutput,
-  evaluation: ResumeEvaluationReport,
+  evaluation: ResumeEvaluationReportLLMOutput,
 ): Promise<void> {
  
   const technologies = candidate.technologies ?? [];
@@ -46,6 +46,10 @@ export async function persistCandidateAnalysis(
     await persistConcepts(client, jobApplicationId, concepts);
   }
 
+  // application_claims.parent_project_id references application_projects.id,
+  // not application_claims.id. Create the project containers first so child
+  // claims can safely reference the real project row.
+  await persistProjectContainers(client, resumeAnalysisId, candidate);
   await persistClaims(client, resumeAnalysisId, candidate);
 
   
@@ -63,6 +67,26 @@ export async function persistCandidateAnalysis(
   await persistScoreRationale(client, resumeAnalysisId, evaluation);
 
   await persistVerificationTargets(client, resumeAnalysisId, evaluation);
+}
+
+async function persistProjectContainers(
+  client: PoolClient,
+  resumeAnalysisId: string,
+  candidate: CandidateExtractionOutput,
+): Promise<void> {
+  for (const project of candidate.projects ?? []) {
+    await client.query(
+      `INSERT INTO application_projects (resume_analysis_id, claim_id, title, description, role, domain, repository_url, confidence)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (resume_analysis_id, claim_id) DO UPDATE
+       SET title = EXCLUDED.title, description = EXCLUDED.description,
+           role = EXCLUDED.role, domain = EXCLUDED.domain,
+           repository_url = EXCLUDED.repository_url, confidence = EXCLUDED.confidence`,
+      [resumeAnalysisId, project.claim_id, project.title, project.description ?? null,
+        project.role ?? null, project.domain ?? null, project.repository_url ?? null,
+        project.confidence ?? null],
+    );
+  }
 }
 
 async function lookupTechnologies(
@@ -157,7 +181,15 @@ async function persistClaims(
 ): Promise<void> {
   const projectClaimIdMap = new Map<string, string>();
   for (const project of candidate.projects ?? []) {
-    const dbId = await insertClaim(
+    const projectRow = await client.query<{ id: string }>(
+      `SELECT id FROM application_projects
+       WHERE resume_analysis_id = $1 AND claim_id = $2`,
+      [resumeAnalysisId, project.claim_id],
+    );
+    if (!projectRow.rows[0]) {
+      throw new AppError("Project container was not persisted", 500);
+    }
+    await insertClaim(
       client,
       resumeAnalysisId,
       null,
@@ -165,15 +197,15 @@ async function persistClaims(
       "PROJECT_CONTAINER",
       project.title,
     );
-    projectClaimIdMap.set(project.claim_id, dbId);
+    const parentProjectId = projectRow.rows[0].id;
     for (const claim of project.implementation_claims ?? []) {
-      await insertClaim(client, resumeAnalysisId, dbId, claim.claim_id, "IMPLEMENTATION", claim.text);
+      await insertClaim(client, resumeAnalysisId, parentProjectId, claim.claim_id, "IMPLEMENTATION", claim.text);
     }
     for (const claim of project.architectural_claims ?? []) {
-      await insertClaim(client, resumeAnalysisId, dbId, claim.claim_id, "ARCHITECTURAL", claim.text);
+      await insertClaim(client, resumeAnalysisId, parentProjectId, claim.claim_id, "ARCHITECTURAL", claim.text);
     }
     for (const claim of project.major_features ?? []) {
-      await insertClaim(client, resumeAnalysisId, dbId, claim.claim_id, "MAJOR_FEATURE", claim.text);
+      await insertClaim(client, resumeAnalysisId, parentProjectId, claim.claim_id, "MAJOR_FEATURE", claim.text);
     }
   }
   for (const we of candidate.work_experience ?? []) {
@@ -212,28 +244,28 @@ async function insertClaim(
   claimType: string,
   claimText: string,
 ): Promise<string> {
-  const query = `
-    INSERT INTO application_claims (
-      resume_analysis_id,
-      parent_project_id,
-      claim_id,
-      claim_type,
-      claim_text
-    ) VALUES ($1, $2, $3, $4, $5)
-    ON CONFLICT (resume_analysis_id, claim_id) DO UPDATE
-    SET
-      parent_project_id = EXCLUDED.parent_project_id,
-      claim_type = EXCLUDED.claim_type,
-      claim_text = EXCLUDED.claim_text
-    RETURNING id
-  `;
-  const result = await client.query<{ id: string }>(query, [
-    resumeAnalysisId,
-    parentProjectId,
-    claimId,
-    claimType,
-    claimText,
-  ]);
+  const existing = await client.query<{ id: string }>(
+    `SELECT id FROM application_claims
+     WHERE resume_analysis_id = $1 AND claim_id = $2
+     LIMIT 1`,
+    [resumeAnalysisId, claimId],
+  );
+  if (existing.rows[0]) {
+    await client.query(
+      `UPDATE application_claims
+       SET parent_project_id = $2, claim_type = $3, claim_text = $4
+       WHERE id = $1`,
+      [existing.rows[0].id, parentProjectId, claimType, claimText],
+    );
+    return existing.rows[0].id;
+  }
+  const result = await client.query<{ id: string }>(
+    `INSERT INTO application_claims
+      (resume_analysis_id, parent_project_id, claim_id, claim_type, claim_text)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id`,
+    [resumeAnalysisId, parentProjectId, claimId, claimType, claimText],
+  );
   if (result.rowCount === 0 || !result.rows[0]) {
     throw new AppError("Failed to insert or update claim", 500);
   }
@@ -311,7 +343,7 @@ async function persistProjects(
   client: PoolClient,
   resumeAnalysisId: string,
   candidate: CandidateExtractionOutput,
-  evaluation: ResumeEvaluationReport,
+  evaluation: ResumeEvaluationReportLLMOutput,
 ): Promise<void> {
  
   const candidateProjectMap = new Map<string, any>();
@@ -324,7 +356,7 @@ async function persistProjects(
     const values = prioritized
       .map(
         (_, i) =>
-          `($1, $${i * 14 + 2}, $${i * 14 + 3}, $${i * 14 + 4}, $${i * 14 + 5}, $${i * 14 + 6}, $${i * 14 + 7}, $${i * 14 + 8}, $${i * 14 + 9}, $${i * 14 + 10}, $${i * 14 + 11}, $${i * 14 + 12}, $${i * 14 + 13}, $${i * 14 + 14}, $${i * 14 + 15})`,
+          `($1, $${i * 15 + 2}, $${i * 15 + 3}, $${i * 15 + 4}, $${i * 15 + 5}, $${i * 15 + 6}, $${i * 15 + 7}, $${i * 15 + 8}, $${i * 15 + 9}, $${i * 15 + 10}, $${i * 15 + 11}, $${i * 15 + 12}, $${i * 15 + 13}, $${i * 15 + 14}, $${i * 15 + 15}, $${i * 15 + 16})`,
       )
       .join(",");
 
@@ -431,7 +463,7 @@ async function persistProjects(
 async function persistRequirementResults(
   client: PoolClient,
   resumeAnalysisId: string,
-  evaluation: ResumeEvaluationReport,
+  evaluation: ResumeEvaluationReportLLMOutput,
 ): Promise<void> {
   const reqAnalysis = evaluation.requirement_analysis ?? {};
   const tiers = ["mandatory", "preferred", "bonus"];
@@ -500,58 +532,52 @@ async function persistRequirementResults(
 async function persistBucketScores(
   client: PoolClient,
   resumeAnalysisId: string,
-  evaluation: ResumeEvaluationReport,
+  evaluation: ResumeEvaluationReportLLMOutput,
 ): Promise<void> {
   const buckets = evaluation.bucket_scores ?? {};
   const entries = Object.entries(buckets);
   if (entries.length === 0) return;
 
-  const values = entries
-    .map(
-      (_, i) =>
-        `($1, $${i * 6 + 2}, $${i * 6 + 3}, $${i * 6 + 4}, $${i * 6 + 5}, $${i * 6 + 6}, $${i * 6 + 7})`,
-    )
-    .join(",");
-
-  const params: any[] = [resumeAnalysisId];
   for (const [bucketName, bucket] of entries) {
-    params.push(
+    const values = [
+      resumeAnalysisId,
       bucketName,
       bucket.score ?? null,
       bucket.rating ?? "UNDETERMINABLE",
       bucket.confidence ?? "LOW",
       bucket.summary ?? "",
       bucket.supporting_claim_ids ?? [],
+    ];
+    const existing = await client.query<{ id: string }>(
+      `SELECT id FROM application_bucket_scores
+       WHERE resume_analysis_id = $1 AND bucket_name = $2
+       LIMIT 1`,
+      [resumeAnalysisId, bucketName],
     );
+    if (existing.rowCount && existing.rows[0]) {
+      await client.query(
+        `UPDATE application_bucket_scores
+         SET score = $3, rating = $4, confidence = $5, summary = $6,
+             supporting_claim_ids = $7
+         WHERE id = $8`,
+        [...values.slice(2), existing.rows[0].id],
+      );
+    } else {
+      await client.query(
+        `INSERT INTO application_bucket_scores
+         (resume_analysis_id, bucket_name, score, rating, confidence, summary, supporting_claim_ids)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        values,
+      );
+    }
   }
-
-  const query = `
-    INSERT INTO application_bucket_scores (
-      resume_analysis_id,
-      bucket_name,
-      score,
-      rating,
-      confidence,
-      summary,
-      supporting_claim_ids
-    ) VALUES ${values}
-    ON CONFLICT (resume_analysis_id, bucket_name) DO UPDATE
-    SET
-      score = EXCLUDED.score,
-      rating = EXCLUDED.rating,
-      confidence = EXCLUDED.confidence,
-      summary = EXCLUDED.summary,
-      supporting_claim_ids = EXCLUDED.supporting_claim_ids
-  `;
-
-  await client.query(query, params);
 }
 
 
 async function persistScoreRationale(
   client: PoolClient,
   resumeAnalysisId: string,
-  evaluation: ResumeEvaluationReport,
+  evaluation: ResumeEvaluationReportLLMOutput,
 ): Promise<void> {
   const rationale = evaluation.score_rationale ?? {};
   const driversUp = rationale.drivers_up ?? [];
@@ -567,7 +593,7 @@ async function persistScoreRationale(
   const values = allDrivers
     .map(
       (_, i) =>
-        `($1, $${i * 5 + 2}, $${i * 5 + 3}, $${i * 5 + 4}, $${i * 5 + 5})`,
+        `($1, $${i * 4 + 2}, $${i * 4 + 3}, $${i * 4 + 4}, $${i * 4 + 5})`,
     )
     .join(",");
 
@@ -593,7 +619,7 @@ async function persistScoreRationale(
 async function persistVerificationTargets(
   client: PoolClient,
   resumeAnalysisId: string,
-  evaluation: ResumeEvaluationReport,
+  evaluation: ResumeEvaluationReportLLMOutput,
 ): Promise<void> {
   const targets = evaluation.verification_plan?.verification_targets ?? [];
   if (targets.length === 0) return;
@@ -616,7 +642,7 @@ async function persistVerificationTargets(
   const values = targets
     .map(
       (_, i) =>
-        `($1, $${i * 6 + 2}, $${i * 6 + 3}, $${i * 6 + 4}, $${i * 6 + 5}, $${i * 6 + 6})`,
+        `($1, $${i * 5 + 2}::text, $${i * 5 + 3}::uuid, $${i * 5 + 4}::text, $${i * 5 + 5}::text, $${i * 5 + 6}::text[])`,
     )
     .join(",");
 

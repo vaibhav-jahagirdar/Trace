@@ -6,7 +6,7 @@ export async function markTaskInProgress(
 ) {
   await client.query(
     `UPDATE application_tasks
-        SET status = 'IN_PROGRESS',
+        SET status = 'RUNNING',
             started_at = NOW(),
             updated_at = NOW()
       WHERE id = $1`,

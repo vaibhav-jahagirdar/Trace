@@ -635,12 +635,13 @@ export function normalizeTechnology(raw: string): string {
   return TECH_SYNONYMS[s] ?? s;
 }
 
-// ---------------------------------------------------------------------
-// Self-check against the spec's canonical synonym table. Run with e.g.
-// `npx ts-node normalizeTechnology.ts`
-// ---------------------------------------------------------------------
-if (require.main === module) {
-  const cases: [string, string][] = [
+/*
+ * The canonical synonym self-check used to run here behind
+ * `require.main === module`. This package is ESM, so importing this helper
+ * from the worker made Node throw before the worker could start. Keep the
+ * check in a separate script instead of executing CommonJS code on import.
+ */
+/* const cases: [string, string][] = [
     ["postgres", "postgresql"],
     ["postgresql", "postgresql"],
     ["pgsql", "postgresql"],
@@ -724,5 +725,4 @@ if (require.main === module) {
     if (!ok) failed++;
     console.log(`${ok ? "PASS" : "FAIL"}  ${JSON.stringify(input).padEnd(20)} -> ${actual}${ok ? "" : `  (expected ${expected})`}`);
   }
-  console.log(`\n${cases.length - failed}/${cases.length} passed`);
-}
+  console.log(`\n${cases.length - failed}/${cases.length} passed`); */

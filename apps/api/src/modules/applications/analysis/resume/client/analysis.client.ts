@@ -24,7 +24,10 @@ export async function analyzeResume(
   taskId: string,
   rawLlmResponse?: string,
 ): Promise<ResumeAnalysisResponse & { raw_llm_response?: string }> {
+  const startedAt = Date.now();
+  console.log("[AnalysisClient][1] Building analysis payload", { applicationId, taskId });
   const payload = await getResumeAnalysisPayload(applicationId, taskId);
+  console.log("[AnalysisClient][2] Calling Python analysis service", { taskId, url: `${ANALYSIS_SERVICE_URL}/resume/analyze`, elapsedMs: Date.now() - startedAt });
 
   if (rawLlmResponse) {
     (payload as any).raw_llm_response = rawLlmResponse;
@@ -34,16 +37,24 @@ export async function analyzeResume(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(Number(process.env.ANALYSIS_SERVICE_TIMEOUT_MS ?? 300_000)),
   });
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
+    console.error("[AnalysisClient][error] Python analysis request failed", {
+      taskId,
+      status: response.status,
+      body: body.slice(0, 2000),
+      elapsedMs: Date.now() - startedAt,
+    });
     throw new AnalysisServiceError(
-      `Analysis service returned ${response.status}`,
+      `Analysis service returned ${response.status}: ${body.slice(0, 500)}`,
       response.status,
       body,
     );
   }
+  console.log("[AnalysisClient][3] Python analysis response received", { taskId, status: response.status, elapsedMs: Date.now() - startedAt });
 
   let json: unknown;
   try {
@@ -64,6 +75,8 @@ export async function analyzeResume(
       parsed.error,
     );
   }
+
+  console.log("[AnalysisClient][4] Python response validated", { taskId, elapsedMs: Date.now() - startedAt });
 
   return {
     ...parsed.data,
