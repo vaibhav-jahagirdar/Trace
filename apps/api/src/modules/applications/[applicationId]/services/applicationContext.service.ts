@@ -8,10 +8,10 @@ export async function getApplicationContext(applicationId: string) {
   return withTransaction(async (client) => {
     const application = await getApplicationForEvaluation(client, applicationId);
 
-    const [technologies, concepts] = await Promise.all([
-      getApplicationTechnologies(client, applicationId),
-      getApplicationConcepts(client, applicationId),
-    ]);
+    // A single pg client cannot safely execute concurrent queries. Keep these
+    // lookups sequential so analysis payload construction is deterministic.
+    const technologies = await getApplicationTechnologies(client, applicationId);
+    const concepts = await getApplicationConcepts(client, applicationId);
 
     return {
       jobId: application.job_id,

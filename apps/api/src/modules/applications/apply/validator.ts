@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+const optionalUrlSchema = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    return trimmed === "" ? undefined : trimmed;
+  },
+  z.url().optional(),
+);
+
 const educationLevelSchema = z.enum([
   "NONE",
   "HIGH_SCHOOL",
@@ -77,17 +86,17 @@ export const applyJobBodySchema = z
   
     submission: z
       .object({
-        githubUrl: z.url().trim().optional(),
+        githubUrl: optionalUrlSchema,
 
-        portfolioUrl: z.url().trim().optional(),
+        portfolioUrl: optionalUrlSchema,
 
-        linkedinUrl: z.url().trim().optional(),
+        linkedinUrl: optionalUrlSchema,
 
-        problemSolvingProfileUrl: z.url().trim().optional(),
+        problemSolvingProfileUrl: optionalUrlSchema,
 
         featuredProjectName: z.string().trim().max(255).optional(),
 
-        featuredProjectUrl: z.url().trim().optional(),
+        featuredProjectUrl: optionalUrlSchema,
 
         projectDescription: z.string().trim().max(4000).optional(),
 

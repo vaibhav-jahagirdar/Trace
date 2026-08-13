@@ -4,8 +4,7 @@ import { toGetJobDto } from "../../jobs/services/helpers/getJobDto";
 import { BadRequestError } from "../../../middleware/errorHandler";
 
 const requirementMap = {
-  // Public applications always require a resume (validated before the transaction)
-  // and a GitHub profile, regardless of the recruiter's stored toggles.
+
   github_required: "githubUrl",
   linkedin_required: "linkedinUrl",
   problem_solving_profile_required: "problemSolvingProfileUrl",

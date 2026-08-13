@@ -40,6 +40,8 @@ export function evaluateHardGate(
     requiresVisaSponsorship,
     workAuthorized,
     currentCountry,
+    currentState,
+    currentCity,
   } = eligibilityData;
 
   const rejectionCodes: HardGateRejectionCode[] = [];
@@ -108,10 +110,18 @@ if (eligibility.work_authorization_required && !workAuthorized) {
 
  
 
+  const normalizePlace = (value: string | null | undefined) =>
+    (value ?? "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  const sameCity = normalizePlace(currentCity) !== "" && normalizePlace(currentCity) === normalizePlace(jobResult.city);
+  const sameState = normalizePlace(currentState) !== "" && normalizePlace(currentState) === normalizePlace(jobResult.state);
+  const sameCountry = normalizePlace(currentCountry) === normalizePlace(country);
+  const alreadyLocatedThere = sameCountry && (sameCity || sameState);
+
   if (
-  (work_mode === "ONSITE" || work_mode === "HYBRID") &&
-  !willingToRelocate
-) {
+    (work_mode === "ONSITE" || work_mode === "HYBRID") &&
+    !alreadyLocatedThere &&
+    !willingToRelocate
+  ) {
   rejectionCodes.push(
     HARD_GATE_REJECTION_CODES.RELOCATION_REQUIRED,
   );
@@ -120,11 +130,19 @@ if (eligibility.work_authorization_required && !workAuthorized) {
   if (
     work_mode === "REMOTE" &&
     remote_scope === "COUNTRY" &&
-    currentCountry !== country
+    !sameCountry
   ) {
     rejectionCodes.push(
       HARD_GATE_REJECTION_CODES.REMOTE_COUNTRY_RESTRICTION,
     );
+  }
+
+  if (
+    work_mode === "REMOTE" &&
+    remote_scope === "REGION" &&
+    !(sameCountry && sameState)
+  ) {
+    rejectionCodes.push(HARD_GATE_REJECTION_CODES.REMOTE_COUNTRY_RESTRICTION);
   }
 
   return {

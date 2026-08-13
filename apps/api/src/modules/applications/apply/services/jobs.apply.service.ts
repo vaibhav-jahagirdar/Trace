@@ -27,9 +27,12 @@ export async function applyJob(
   eligibilityData: ApplyJobBody["eligibility"],
   submissionData: ApplyJobBody["submission"],
 ) {
+  const startedAt = Date.now();
+  console.log("[Apply][1] Received application", { applicationId: "pending", jobId });
   validateResumeFile(file);
 
   const applicationId = randomUUID();
+  console.log("[Apply][2] Resume validated", { applicationId, jobId, fileName: file.originalname, fileSize: file.size });
 
   const { objectKey, fileName, mimeType, fileSize, sha256 } =
     await uploadResume({
@@ -52,8 +55,10 @@ export async function applyJob(
       jobId,
       applicationData,
     );
+    console.log("[Apply][3] Application record created", { applicationId, jobId });
 
     await createEligibilityRecord(client, applicationId, eligibilityData);
+    console.log("[Apply][4] Eligibility persisted", { applicationId });
 
     await createSubmissionRecord(
       submissionData,
@@ -66,6 +71,7 @@ export async function applyJob(
       fileSize,
       sha256,
     );
+    console.log("[Apply][5] Submission persisted", { applicationId, resumeObjectKey: objectKey });
 
     await insertApplicationConcepts(
       client,
@@ -80,6 +86,7 @@ export async function applyJob(
     );
 
     const hardGateResult = evaluateHardGate(jobResult, eligibilityData);
+    console.log("[Apply][6] Hard gate evaluated", { applicationId, passed: hardGateResult.passed, code: hardGateResult.primaryRejectionCode });
 
     if (!hardGateResult.passed) {
       await client.query(
@@ -122,6 +129,7 @@ export async function applyJob(
         taskType,
       ],
     );
+    console.log("[Apply][7] Resume task created", { applicationId, taskId, taskType });
 
     await client.query(
       `UPDATE job_applications
@@ -139,11 +147,9 @@ export async function applyJob(
   });
 
   if (result.passed) {
-    await enqueueResumeAnalysis({
-      taskId: result.taskId!,
-      applicationId: result.applicationId,
-      jobId,
-    });
+    console.log("[Apply][8] Enqueuing resume analysis", { applicationId: result.applicationId, taskId: result.taskId, jobId });
+    const queuedJob = await enqueueResumeAnalysis({ taskId: result.taskId!, applicationId: result.applicationId, jobId });
+    console.log("[Apply][9] Resume analysis enqueued", { applicationId: result.applicationId, taskId: result.taskId, queueJobId: queuedJob.id, elapsedMs: Date.now() - startedAt });
   }
 
   return result;

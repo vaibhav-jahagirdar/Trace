@@ -12,12 +12,11 @@ export async function getApplicationConcepts(
   const result = await client.query<ApplicationConceptRow>(
     `
       SELECT
-        c.name,
-        c.category
+        ac.concept AS name,
+        NULL::text AS category
       FROM application_concepts ac
-      JOIN concepts c ON ac.concept_id = c.id
       WHERE ac.job_application_id = $1
-      ORDER BY c.name
+      ORDER BY ac.concept
     `,
     [applicationId],
   );

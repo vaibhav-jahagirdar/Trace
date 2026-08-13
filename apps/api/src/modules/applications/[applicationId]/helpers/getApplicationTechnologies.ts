@@ -11,13 +11,18 @@ export async function getApplicationTechnologies(
 ): Promise<ApplicationTechnologyRow[]> {
   const result = await client.query<ApplicationTechnologyRow>(
     `
-      SELECT
-        t.name,
-        t.category
+      SELECT t.name, t.category
       FROM application_technologies at
       JOIN technologies t ON at.technology_id = t.id
       WHERE at.job_application_id = $1
-      ORDER BY t.name
+        AND at.technology_id IS NOT NULL
+      UNION ALL
+      SELECT at.raw_value AS name, NULL::text AS category
+      FROM application_technologies at
+      WHERE at.job_application_id = $1
+        AND at.technology_id IS NULL
+        AND at.raw_value IS NOT NULL
+      ORDER BY name
     `,
     [applicationId],
   );
