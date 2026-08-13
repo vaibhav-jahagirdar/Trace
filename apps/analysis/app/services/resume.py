@@ -1,5 +1,6 @@
 import json
 import tempfile
+import time
 
 from app.cleaners.candidate import normalize_candidate
 from app.cleaners.final_resume_report import (
@@ -16,6 +17,8 @@ from app.schemas.resume_report import ResumeAnalysisRequest
 
 
 async def analyze_resume(request: ResumeAnalysisRequest) -> dict:
+    started_at = time.perf_counter()
+    print("[PythonAnalysis][service] Starting pipeline", {"task_id": request.taskId}, flush=True)
     if request.raw_llm_response:
         try:
             payload = json.loads(request.raw_llm_response)
@@ -26,10 +29,13 @@ async def analyze_resume(request: ResumeAnalysisRequest) -> dict:
         raw_response = request.raw_llm_response
         candidate_raw = payload["candidate"]
         evaluation_raw = payload["evaluation"]
+        print("[PythonAnalysis][service] Using cached LLM response", {"task_id": request.taskId}, flush=True)
     else:
+        print("[PythonAnalysis][service] Downloading and parsing resume", {"task_id": request.taskId}, flush=True)
         pdf_bytes = download_resume(request.resumeObjectKey)
         parsed_resume = parse_resume_pdf(pdf_bytes)
         cleaned_resume = clean_text(parsed_resume.text)
+        print("[PythonAnalysis][service] Resume parsed", {"task_id": request.taskId, "text_length": len(cleaned_resume)}, flush=True)
 
         prompt = build_resume_analysis_prompt(
             job_context=request.analysisContext.job,
@@ -38,6 +44,7 @@ async def analyze_resume(request: ResumeAnalysisRequest) -> dict:
         )
 
         payload, raw_response = await generate(prompt)
+        print("[PythonAnalysis][service] LLM generation returned", {"task_id": request.taskId, "has_payload": payload is not None}, flush=True)
         if payload is None:
             raise RuntimeError("LLM returned invalid JSON – cannot proceed.")
         candidate_raw = payload["candidate"]
@@ -49,6 +56,7 @@ async def analyze_resume(request: ResumeAnalysisRequest) -> dict:
         request.analysisContext.job,
     )
     validate_evaluation_claim_references(evaluation, candidate)
+    print("[PythonAnalysis][service] Output normalized and validated", {"task_id": request.taskId, "elapsed_ms": round((time.perf_counter() - started_at) * 1000)}, flush=True)
 
     response = {
         "candidate": candidate,
