@@ -11,6 +11,7 @@ import {
 import { getJobDraftController } from "./jobs.controller";
 import { saveJobDraftController } from "./jobs.controller";
 import { orgIdParamSchema } from "../organizations/orgs.validator";
+import { manuallyPlanRepositoryController } from "./repositoryPlanner.controller";
 
 const router = Router({ mergeParams: true });
 
@@ -38,4 +39,10 @@ router.get(
 router.get("/draft", requireAuth, requireMembership(), validateParams(orgIdParamSchema), getJobDraftController);
 router.put("/draft", requireAuth, requireMembership(), validateParams(orgIdParamSchema), saveJobDraftController);
 router.get("/:jobId", getJobController);
+router.post(
+  "/:jobId/applications/:applicationId/repository-plan",
+  requireAuth,
+  requireMembership("RECRUITER"),
+  manuallyPlanRepositoryController,
+);
 export default router;   

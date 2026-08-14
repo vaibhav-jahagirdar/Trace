@@ -183,7 +183,7 @@ export const submissionRequirementsSchema = z.object({
 const technologyRequirementSchema = z.object({
   requirement_type: z.literal("TECHNOLOGY"),
 
-  technology_id: z.uuid(),
+  technology_id: z.guid(),
 
   priority_type: z.enum([
     "MANDATORY",
@@ -195,7 +195,7 @@ const technologyRequirementSchema = z.object({
 const conceptRequirementSchema = z.object({
   requirement_type: z.literal("CONCEPT"),
 
-  concept_id: z.uuid(),
+  concept_id: z.guid(),
 
   priority_type: z.enum([
     "MANDATORY",

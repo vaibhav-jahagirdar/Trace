@@ -11,13 +11,12 @@ export async function getEvaluationContext(jobId: string) {
 
     const job = await getJobForEvaluation(client, jobId);
 
-    const [requirements, evaluationPriorities, evidencePriorities, successSignals] =
-      await Promise.all([
-        getJobRequirements(client, jobId),
-        getJobEvaluationPriorities(client, jobId),
-        getJobEvidencePriorities(client, jobId),
-        getJobSuccessSignals(client, jobId),
-      ]);
+    // pg clients execute one query at a time; keep these lookups sequential
+    // rather than racing queries on the same transaction client.
+    const requirements = await getJobRequirements(client, jobId);
+    const evaluationPriorities = await getJobEvaluationPriorities(client, jobId);
+    const evidencePriorities = await getJobEvidencePriorities(client, jobId);
+    const successSignals = await getJobSuccessSignals(client, jobId);
 
     return toEvaluationContextDto(
       job,

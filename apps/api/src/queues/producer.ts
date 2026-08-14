@@ -44,3 +44,30 @@ export async function enqueueResumeAnalysis(
   console.log("[Queue][enqueue] Added resume job", { taskId: data.taskId, queueJobId: job.id });
   return job;
 }
+
+export interface RepositoryPlannerJobData {
+  jobId: string;
+  applicationId: string;
+  taskId: string;
+}
+
+export const repositoryPlannerQueue = new Queue<RepositoryPlannerJobData>(
+  env.BULLMQ_REPO_PLANNER_QUEUE,
+  {
+    connection: redisConnection,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: { type: "exponential", delay: 5000 },
+      removeOnComplete: 1000,
+      removeOnFail: 5000,
+    },
+  },
+);
+
+export async function enqueueRepositoryPlanner(
+  data: RepositoryPlannerJobData,
+  options?: JobsOptions,
+) {
+  console.log("[Queue][repo-planner] Adding job", data);
+  return repositoryPlannerQueue.add("repository-plan", data, { jobId: data.taskId, ...options });
+}

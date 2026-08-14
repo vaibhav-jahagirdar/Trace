@@ -17,6 +17,7 @@ import { computeResumeScores } from "../../../../scoring/resume";
 import type { ScoreResult } from "../../../../scoring/resume";
 import { persistCandidateAnalysis } from "./helpers/persistCandidateAnalysis";
 import { markTaskCompleted } from "./helpers/updateApplicationStatus";
+import { maybeEnqueueRepositoryPlanner } from "../../github/planner/services/repoPlannerTrigger.service";
 
 export interface ResumeAnalysisResult {
   candidate: any;
@@ -162,6 +163,13 @@ export async function resumeAnalysis(
   });
 
   console.log("[ResumeAnalysis][5] Analysis persisted", { taskId, resumeAnalysisId, elapsedMs: Date.now() - startedAt });
+  try {
+    await maybeEnqueueRepositoryPlanner(applicationId);
+  } catch (error) {
+    // Stage 2A is opportunistic; a planner enqueue failure must not turn a
+    // successfully completed Stage 1 analysis into a failed application.
+    console.error("[ResumeAnalysis][6] Failed to enqueue repository planner", { applicationId, error });
+  }
 
   return {
     candidate: validatedCandidate,
