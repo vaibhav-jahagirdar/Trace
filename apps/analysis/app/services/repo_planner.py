@@ -18,12 +18,12 @@ from __future__ import annotations
 
 import json
 import tempfile
+from urllib.parse import urlparse
 from dataclasses import asdict, is_dataclass
 from typing import Any
 
 from app.llm.repositoryPlanner.prompt.builder import build_full_repository_planner_prompt
 from app.llm.service import generate
-from app.schemas.planner import PlannerOutput
 from app.scrapers.github.profile import fetch_profile_basic
 from app.scrapers.github.tree_builder import enrich_profile_with_trees
 
@@ -64,7 +64,7 @@ def _normalize_repository_discovery(profile: dict[str, Any]) -> dict[str, Any]:
 
     for repo in normalized.get("repositories", []):
         repo_copy = dict(repo)
-        repo_copy["id"] = _repository_id(repo["owner"], repo["name"])
+        repo_copy["id"] = str(repo.get("github_repository_id") or _repository_id(repo["owner"], repo["name"]))
 
         tree = repo_copy.get("tree")
         if tree is not None and is_dataclass(tree):
@@ -255,9 +255,12 @@ async def plan_repository_evidence(
     *,
     job_context: Any,  # EvaluationContextDto
     stage_1: dict[str, Any],
+    candidate_context: dict[str, Any],
+    github_url: str | None = None,
     github_username: str | None = None,
     github_token: str | None = None,
     repository_discovery: dict[str, Any] | None = None,
+    raw_llm_response: str | None = None,
 ) -> dict:
     """
     Stage 2A entrypoint. Produces a validated retrieval plan for the
@@ -267,8 +270,12 @@ async def plan_repository_evidence(
     so this takes plain args rather than a pydantic request model.
     """
     if repository_discovery is None:
+        if not github_username and github_url:
+            parsed = urlparse(github_url.rstrip("/"))
+            parts = [part for part in parsed.path.split("/") if part]
+            github_username = parts[0] if parts else None
         if not github_username:
-            raise ValueError("Either repository_discovery or github_username must be provided.")
+            raise ValueError("Either repository_discovery, github_url, or github_username must be provided.")
         repository_discovery = await _discover_repositories(github_username, github_token)
     else:
         # Caller-supplied discovery may still contain raw dataclasses
@@ -280,22 +287,29 @@ async def plan_repository_evidence(
     prompt = build_full_repository_planner_prompt(
         job_context=job_context,
         stage_1=stage_1,
+        candidate_context=candidate_context,
         repository_discovery=repository_discovery,
     )
 
-    payload, raw_response = await generate(prompt)
+    if raw_llm_response:
+        try:
+            payload = json.loads(raw_llm_response)
+        except json.JSONDecodeError as exc:
+            raise RepositoryPlannerError("Cached planner response was not valid JSON") from exc
+        raw_response = raw_llm_response
+    else:
+        payload, raw_response = await generate(prompt)
     if payload is None:
         raise RuntimeError("LLM returned invalid JSON – cannot proceed.")
 
-    try:
-        plan = PlannerOutput.model_validate(payload)
-    except Exception as e:
-        raise RepositoryPlannerError(f"Planner output failed schema validation: {e}") from e
-
-    validate_planner_references(plan, repository_discovery, stage_1)
+    # Deliberately avoid strict PlannerOutput/Pydantic validation here. The
+    # planner is an LLM boundary and its descriptive strings may exceed
+    # prompt-era length limits; Node persistence performs defensive cleaning.
+    if not isinstance(payload, dict):
+        raise RepositoryPlannerError("Planner output must be a JSON object")
 
     response = {
-        "plan": plan.model_dump(mode="json"),
+        "plan": payload,
         "repository_discovery": repository_discovery,
         "raw_llm_response": raw_response,
     }

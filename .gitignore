@@ -121,3 +121,10 @@ lib-cov/
 # Vite timestamp files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+# TypeScript build output
+apps/api/src/**/*.js
+apps/api/src/**/*.d.ts
+apps/api/src/**/*.js.map
+apps/api/scripts/*.js
+apps/api/scripts/*.d.ts
+apps/api/scripts/*.js.map

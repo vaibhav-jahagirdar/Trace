@@ -43,6 +43,7 @@ async def fetch_profile_basic(
 
         for repo in repos:
             descriptor = {
+                "github_repository_id": repo["id"],
                 "name": repo["name"],
                 "owner": repo["owner"]["login"],
                 "default_branch": repo["default_branch"],
@@ -50,6 +51,10 @@ async def fetch_profile_basic(
                 "private": repo["private"],
                 "archived": repo["archived"],
                 "pushed_at": repo["pushed_at"],
+                "classification": _classify_repository(repo, username).upper(),
+                "description": repo.get("description"),
+                "topics": repo.get("topics") or [],
+                "repository_url": repo.get("html_url") or f"https://github.com/{repo['owner']['login']}/{repo['name']}",
             }
             descriptors.append(descriptor)
 

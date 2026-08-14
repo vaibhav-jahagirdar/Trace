@@ -4,8 +4,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.schemas.evaluation_context import EvaluationContextDto
-from app.schemas.planner import PlannerOutput
-from app.services.repository_planner import plan_repository_evidence
+from app.services.repo_planner import plan_repository_evidence
 
 router = APIRouter(
     prefix="/repository-planner",
@@ -18,11 +17,12 @@ class RepositoryPlannerRequest(BaseModel):
     stage_1: dict[str, Any]
     candidate_context: dict[str, Any]
     github_url: str
-    repository_discovery: dict[str, Any] | None = None  # internal replay/testing only — never populated by Node
+    repository_discovery: dict[str, Any] | None = None
+    raw_llm_response: str | None = None
 
 
 class RepositoryPlannerResponse(BaseModel):
-    plan: PlannerOutput
+    plan: dict[str, Any]
     repository_discovery: dict[str, Any]
     raw_llm_response: str
 
@@ -40,4 +40,5 @@ async def plan_repository_evidence_endpoint(
         candidate_context=request.candidate_context,
         github_url=request.github_url,
         repository_discovery=request.repository_discovery,
+        raw_llm_response=request.raw_llm_response,
     )

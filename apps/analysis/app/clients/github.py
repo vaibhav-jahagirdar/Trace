@@ -189,6 +189,10 @@ class GitHubClient:
 
         return repos
 
+    async def get_user_profile(self, username: str) -> Dict:
+        """Fetch the public profile used to describe a repository owner."""
+        return await self._request("GET", f"/users/{username}")
+
     async def get_repo_tree(
         self,
         owner: str,
