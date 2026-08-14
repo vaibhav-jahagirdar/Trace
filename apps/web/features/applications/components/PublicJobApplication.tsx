@@ -60,7 +60,7 @@ export function PublicJobApplication({ orgSlug, jobSlug }: Props) {
     const form = new FormData(event.currentTarget);
     const eligibility = {
       yearsOfProfessionalExperience: Number(form.get("yearsOfProfessionalExperience")),
-      highestEducationLevel: String(form.get("highestEducationLevel")),
+      highestEducationLevel: String(form.get("highestEducationLevel") || "NONE"),
       noticePeriodDays: Number(form.get("noticePeriodDays")),
       willingToRelocate: form.get("willingToRelocate") === "on",
       requiresVisaSponsorship: form.get("requiresVisaSponsorship") === "on",
