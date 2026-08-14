@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { logger } from "../lib/logger";
+import { ZodError } from "zod";
 
 export class AppError extends Error {
   constructor(
@@ -68,6 +69,17 @@ export function errorHandler(
   _next: NextFunction
 ) {
   const requestId = req.id ?? req.headers["x-request-id"] ?? null;
+
+  if (err instanceof ZodError) {
+    return res.status(400).json({
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: err.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join(", "),
+        requestId,
+      },
+    });
+  }
 
   if (err instanceof AppError && err.isOperational) {
     logger.warn(
