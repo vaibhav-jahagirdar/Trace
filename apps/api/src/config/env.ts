@@ -32,6 +32,7 @@ export const env = {
   REDIS_DB: Number(process.env.REDIS_DB ?? 0),
 
   BULLMQ_RESUME_QUEUE: process.env.BULLMQ_RESUME_QUEUE ?? "resume-analysis",
+  BULLMQ_REPO_PLANNER_QUEUE: process.env.BULLMQ_REPO_PLANNER_QUEUE ?? "repo planner",
 };
 
 export default env;
