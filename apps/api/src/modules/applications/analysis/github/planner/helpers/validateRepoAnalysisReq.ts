@@ -43,11 +43,10 @@ export async function claimRepositoryPlannerTask(
       updated_at = NOW()
     WHERE
       id = $1
-      AND task_type = 'REPOSITORY_PLANNING'
+      AND task_type = 'REPOSITORY_PLAN'
       AND status = 'PENDING'
       AND attempt_count < max_attempts
       AND human_intervention_required = FALSE
-      AND checkpoint IS NULL
     RETURNING job_application_id;
     `,
     [taskId],
@@ -92,11 +91,10 @@ export async function validateRepositoryPlannerRequest(
       AND t.job_application_id = $2
       AND a.job_id = $3
       AND j.organization_id = $4
-      AND t.task_type = 'REPOSITORY_PLANNING'
+      AND t.task_type = 'REPOSITORY_PLAN'
       AND t.status = 'PENDING'
       AND t.attempt_count < t.max_attempts
       AND t.human_intervention_required = FALSE
-      AND t.checkpoint IS NULL
     LIMIT 1;
     `,
     [taskId, applicationId, jobId, organizationId],

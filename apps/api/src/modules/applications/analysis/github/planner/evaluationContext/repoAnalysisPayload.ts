@@ -1,8 +1,7 @@
-import { application } from "express";
 import { getDb } from "../../../../../../config/db";
 import { getEvaluationContext } from "../../../../../jobs/services/[jobId]/evaluationContext";
 import { getApplicationContext } from "../../../../[applicationId]/services/applicationContext.service";
-interface RepositoryPlannerPayload {
+export interface RepositoryPlannerPayload {
   job_context: unknown; 
   candidate_context: unknown;
   stage_1: unknown; 
@@ -59,11 +58,11 @@ export async function getRepositoryPlannerPayload(
   jobId: string,
   taskId: string,
 ): Promise<RepositoryPlannerPayload> {
-  const [jobContext,candidateContext,  githubUrl, stage1] = await Promise.all([
+  const [jobContext, candidateContext, githubUrl, stage1] = await Promise.all([
     getEvaluationContext(jobId),
     getApplicationContext(applicationId),
     getGithubUrl(applicationId),
-    getStage1Report(taskId),
+    getStage1Report(applicationId),
   ]);
 
   return {

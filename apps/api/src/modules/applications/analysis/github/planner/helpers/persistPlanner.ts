@@ -225,18 +225,18 @@ export async function persistRepositoryAnalysis(
       discovery.default_branch,
       discovery.description,
       discovery.primary_language,
-      discovery.languages,
-      discovery.topics,
-      discovery.metadata,
-      discovery.architecture_tree,
-      discovery.repository_statistics,
+      JSON.stringify(discovery.languages ?? {}),
+      JSON.stringify(discovery.topics ?? []),
+      JSON.stringify(discovery.metadata ?? {}),
+      JSON.stringify(discovery.architecture_tree ?? {}),
+      JSON.stringify(discovery.repository_statistics ?? {}),
       dbDisposition,
       plan.candidate_attention_weight,
       plan.priority_rationale,
       plan.stage_1_relationship,
       plan.planning_confidence,
       plan.evidence_priority,
-      plan.linked_stage_1_project_ids,
+      JSON.stringify(plan.linked_stage_1_project_ids ?? []),
     ]);
     if(repoResult.rowCount === 0 || !repoResult.rows[0]) {
         throw new AppError(
@@ -297,10 +297,13 @@ export async function persistRepositoryAnalysis(
           domain,
           importance,
           verification_goal,
-          dependency_policy,
-          completion_condition,
-          planner_objective_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            dependency_policy,
+            completion_condition,
+            planner_objective_id,
+            source_claim_ids,
+            job_requirement_names,
+            include_related_configuration
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id
       `;
       const objResult = await client.query<{ id: string }>(objectiveInsertQuery, [
@@ -313,6 +316,9 @@ export async function persistRepositoryAnalysis(
         obj.dependency_closure_policy,
         obj.completion_condition,
         obj.objective_id,
+        JSON.stringify(obj.source_claim_ids ?? []),
+        JSON.stringify(obj.job_requirement_names ?? []),
+        obj.include_related_configuration ?? false,
       ]);
       if (objResult.rowCount === 0 || !objResult.rows[0]) {
         throw new AppError(
