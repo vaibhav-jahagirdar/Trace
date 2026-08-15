@@ -53,21 +53,49 @@ async function getStage1Report(jobApplicationId: string): Promise<unknown> {
   return rows[0].cleaned_response;
 }
 
-async function getStage2AReport(taskId: string): Promise<unknown> {
+export async function getCompletedRepositoryAnalysisId(
+  applicationId: string,
+): Promise<string> {
+  const { rows } = await getDb().query<{ id: string }>(
+    `
+    SELECT ara.id
+    FROM application_repository_analyses ara
+    JOIN application_tasks planner_task
+      ON planner_task.id = ara.application_task_id
+    WHERE planner_task.job_application_id = $1
+      AND planner_task.task_type = 'REPOSITORY_PLAN'
+      AND planner_task.status = 'COMPLETED'
+      AND ara.planning_status = 'COMPLETED'
+    ORDER BY ara.created_at DESC
+    LIMIT 1
+    `,
+    [applicationId],
+  );
+
+  if (!rows[0]?.id) {
+    throw new RepositoryVerifierContextError(
+      `No completed Stage 2A analysis found for application_id=${applicationId}`,
+    );
+  }
+
+  return rows[0].id;
+}
+
+async function getStage2AReport(repositoryAnalysisId: string): Promise<unknown> {
   const { rows } = await getDb().query(
     `
     SELECT planner_output
     FROM application_repository_analyses
-    WHERE application_task_id = $1
+    WHERE id = $1
       AND planning_status = 'COMPLETED'
     LIMIT 1
     `,
-    [taskId],
+    [repositoryAnalysisId],
   );
 
   if (!rows[0]?.planner_output) {
     throw new RepositoryVerifierContextError(
-      `No completed Stage 2A report found for task_id=${taskId}`,
+      `No completed Stage 2A report found for analysis_id=${repositoryAnalysisId}`,
     );
   }
 
@@ -75,7 +103,7 @@ async function getStage2AReport(taskId: string): Promise<unknown> {
 }
 
 async function getRepositoryFiles(
-  taskId: string,
+  repositoryAnalysisId: string,
 ): Promise<RepositoryVerifierPayload["repository_files"]> {
   const { rows } = await getDb().query(
     `
@@ -95,7 +123,7 @@ async function getRepositoryFiles(
       ON aro.application_repository_id = ar.id
     JOIN application_repository_paths arp
       ON arp.application_repository_objective_id = aro.id
-    WHERE ara.application_task_id = $1
+    WHERE ara.id = $1
       AND ar.retrieval_disposition IN ('ANALYZE', 'EXPLORE')
       AND arp.path_type = 'FILE'
     ORDER BY
@@ -103,12 +131,12 @@ async function getRepositoryFiles(
       aro.objective_order,
       arp.repository_path
     `,
-    [taskId],
+    [repositoryAnalysisId],
   );
 
   if (rows.length === 0) {
     throw new RepositoryVerifierContextError(
-      `No planner-selected files found for task_id=${taskId}`,
+      `No planner-selected files found for analysis_id=${repositoryAnalysisId}`,
     );
   }
 
@@ -154,8 +182,12 @@ async function getRepositoryFiles(
 export async function getRepositoryVerifierPayload(
   applicationId: string,
   jobId: string,
-  taskId: string,
+  repositoryAnalysisId?: string,
 ): Promise<RepositoryVerifierPayload> {
+  const analysisId =
+    repositoryAnalysisId ??
+    (await getCompletedRepositoryAnalysisId(applicationId));
+
   const [
     jobContext,
     candidateContext,
@@ -166,8 +198,8 @@ export async function getRepositoryVerifierPayload(
     getEvaluationContext(jobId),
     getApplicationContext(applicationId),
     getStage1Report(applicationId),
-    getStage2AReport(taskId),
-    getRepositoryFiles(taskId),
+    getStage2AReport(analysisId),
+    getRepositoryFiles(analysisId),
   ]);
 
   return {

@@ -29,6 +29,7 @@ export async function verifyRepositories(
   jobId: string,
   taskId: string,
   rawLlmResponse?: string,
+  repositoryAnalysisId?: string,
 ): Promise<RepositoryVerifierResponse> {
   const startedAt = Date.now();
 
@@ -41,7 +42,7 @@ export async function verifyRepositories(
   const payload = await getRepositoryVerifierPayload(
     applicationId,
     jobId,
-    taskId,
+    repositoryAnalysisId,
   );
 
   if (rawLlmResponse) {
