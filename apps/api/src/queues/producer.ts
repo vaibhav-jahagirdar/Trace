@@ -71,3 +71,33 @@ export async function enqueueRepositoryPlanner(
   console.log("[Queue][repo-planner] Adding job", data);
   return repositoryPlannerQueue.add("repository-plan", data, { jobId: data.taskId, ...options });
 }
+
+export interface RepositoryVerifierJobData {
+  jobId: string;
+  applicationId: string;
+  taskId: string;
+}
+
+export const repositoryVerifierQueue = new Queue<RepositoryVerifierJobData>(
+  env.BULLMQ_REPO_VERIFIER_QUEUE,
+  {
+    connection: redisConnection,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: { type: "exponential", delay: 5000 },
+      removeOnComplete: 1000,
+      removeOnFail: 5000,
+    },
+  },
+);
+
+export async function enqueueRepositoryVerifier(
+  data: RepositoryVerifierJobData,
+  options?: JobsOptions,
+) {
+  console.log("[Queue][repo-verifier] Adding job", data);
+  return repositoryVerifierQueue.add("repository-verify", data, {
+    jobId: data.taskId,
+    ...options,
+  });
+}

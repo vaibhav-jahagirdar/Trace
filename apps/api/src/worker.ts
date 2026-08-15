@@ -1,4 +1,8 @@
-import { resumeAnalysisWorker } from "./queues/worker";
+import {
+  repositoryPlannerWorker,
+  repositoryVerifierWorker,
+  resumeAnalysisWorker,
+} from "./queues/worker";
 
 console.log("[Worker] Resume Analysis Worker Started");
 
@@ -6,7 +10,11 @@ async function shutdown(signal: string) {
   console.log(`[Worker] Received ${signal}. Shutting down...`);
 
   try {
-    await resumeAnalysisWorker.close();
+    await Promise.all([
+      resumeAnalysisWorker.close(),
+      repositoryPlannerWorker.close(),
+      repositoryVerifierWorker.close(),
+    ]);
 
     console.log("[Worker] Shutdown complete");
     process.exit(0);
