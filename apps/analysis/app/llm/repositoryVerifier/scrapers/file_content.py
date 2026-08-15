@@ -6,6 +6,7 @@ import base64
 import hashlib
 import os
 from typing import Any
+from urllib.parse import quote
 
 import aiohttp
 
@@ -96,6 +97,7 @@ async def _fetch_one(
                         "start_line": 1,
                         "end_line": max(1, len(content.splitlines())),
                         "content": content,
+                        "content_hash": hashlib.sha256(content_bytes).hexdigest(),
                         "blob_sha": payload.get("sha"),
                     }
             except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
@@ -103,6 +105,31 @@ async def _fetch_one(
                     raise FileContentError(f"Failed to fetch {path}: {exc}") from exc
 
         raise FileContentError(f"Failed to fetch {path}")
+
+
+async def _resolve_commit_ref(
+    session: aiohttp.ClientSession,
+    item: dict[str, Any],
+) -> str:
+    owner = item.get("owner")
+    repository = item.get("repository_name")
+    ref = str(item.get("ref") or "HEAD")
+    if not isinstance(owner, str) or not isinstance(repository, str):
+        return ref
+
+    url = (
+        f"https://api.github.com/repos/{owner}/{repository}/commits/"
+        f"{quote(ref, safe='')}"
+    )
+    try:
+        async with session.get(url) as response:
+            if response.status != 200:
+                return ref
+            body = await response.json()
+            sha = body.get("sha")
+            return str(sha) if isinstance(sha, str) and sha else ref
+    except (aiohttp.ClientError, asyncio.TimeoutError):
+        return ref
 
 
 async def fetch_repository_evidence(
@@ -124,10 +151,29 @@ async def fetch_repository_evidence(
     headers = _api_headers(token or os.getenv("GITHUB_TOKEN"))
 
     async with aiohttp.ClientSession(headers=headers, timeout=timeout) as session:
+        refs: dict[str, str] = {}
+        for item in files:
+            key = f"{item.get('owner')}:{item.get('repository_name')}:{item.get('ref')}"
+            if key not in refs:
+                refs[key] = await _resolve_commit_ref(session, item)
+
+        resolved_files: list[dict[str, Any]] = []
+        for item in files:
+            key = f"{item.get('owner')}:{item.get('repository_name')}:{item.get('ref')}"
+            resolved_ref = refs[key]
+            resolved = dict(item)
+            resolved["ref"] = resolved_ref
+            file_url = resolved.get("file_url")
+            if isinstance(file_url, str):
+                resolved["file_url"] = file_url.split("?", 1)[0] + (
+                    f"?ref={quote(resolved_ref, safe='')}"
+                )
+            resolved_files.append(resolved)
+
         results = await asyncio.gather(
             *[
                 _fetch_one(session, item, semaphore, max_file_bytes, retries)
-                for item in files
+                for item in resolved_files
             ]
         )
 

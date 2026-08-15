@@ -136,7 +136,11 @@ async def _call_with_retry(
 # Main Generate Function
 # ---------------------------------------------------------------------------
 
-async def generate(prompt: str) -> Tuple[dict[str, Any] | None, str]:
+async def generate(
+    prompt: str,
+    *,
+    system_instruction: str | None = None,
+) -> Tuple[dict[str, Any] | None, str]:
     """
     Generate structured JSON using DeepSeek V4 Flash.
 
@@ -160,7 +164,10 @@ async def generate(prompt: str) -> Tuple[dict[str, Any] | None, str]:
     # Build system instruction
     # -----------------------------------------------------------------------
 
-    system_instruction = build_resume_analysis_system_instruction()
+    system_instruction = (
+        system_instruction
+        or build_resume_analysis_system_instruction()
+    )
 
     messages = [
         {
