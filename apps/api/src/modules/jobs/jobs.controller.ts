@@ -9,6 +9,10 @@ import { publishJob } from "./services/[jobId]/jobs.publish.service";
 import { getJob } from "./services/[jobId]/job.get.service";
 import { getActiveDraft, upsertDraft } from "./services/helpers/jobDraft";
 import { getJobPreview } from "./services/[jobId]/job.preview.service";
+import { listOrganizationJobs } from "./services/jobs.list.service";
+import { getJobControlRoom } from "./services/job.control-room.service";
+import { getJobApplicationAnalysisReports } from "./services/job.analysis-reports.service";
+import { getOrganizationDashboard } from "./services/organization-dashboard.service";
 
 function toDraftDto(draft: Awaited<ReturnType<typeof getActiveDraft>>) {
   if (!draft) return null;
@@ -196,6 +200,83 @@ export async function getJobController(
     }
 
     const result = await getJob(jobId);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getJobControlRoomController(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const orgId = req.params.orgId;
+    const jobId = req.params.jobId;
+    if (typeof orgId !== "string" || typeof jobId !== "string") {
+      return res.status(400).json({ message: "Invalid route params" });
+    }
+
+    return res.status(200).json(await getJobControlRoom(orgId, jobId));
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getJobApplicationAnalysisReportsController(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const { orgId, jobId, applicationId } = req.params;
+    if (typeof orgId !== "string" || typeof jobId !== "string" || typeof applicationId !== "string") {
+      return res.status(400).json({ message: "Invalid route params" });
+    }
+    return res.status(200).json(
+      await getJobApplicationAnalysisReports(orgId, jobId, applicationId),
+    );
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getOrganizationDashboardController(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const orgId = req.params.orgId;
+    if (typeof orgId !== "string") return res.status(400).json({ message: "Invalid orgId" });
+    return res.status(200).json(await getOrganizationDashboard(orgId));
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function listJobsController(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const orgId = req.params.orgId;
+    if (typeof orgId !== "string") {
+      return res.status(400).json({ message: "Invalid orgId" });
+    }
+
+    const result = await listOrganizationJobs(orgId, {
+      status: typeof req.query.status === "string" ? req.query.status as any : undefined,
+      search: typeof req.query.search === "string" ? req.query.search : undefined,
+      department: typeof req.query.department === "string" ? req.query.department : undefined,
+      role: typeof req.query.role === "string" ? req.query.role : undefined,
+      workMode: typeof req.query.workMode === "string" ? req.query.workMode : undefined,
+      employmentType: typeof req.query.employmentType === "string" ? req.query.employmentType : undefined,
+      sort: typeof req.query.sort === "string" ? req.query.sort as any : undefined,
+    });
 
     return res.status(200).json(result);
   } catch (error) {
