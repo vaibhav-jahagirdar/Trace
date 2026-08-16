@@ -1,3 +1,4 @@
+import { Agent } from "undici";
 import { getRepositoryVerifierPayload } from "../evaluationContext/repoVerifierPayload";
 
 const VERIFIER_SERVICE_URL =
@@ -6,6 +7,18 @@ const VERIFIER_SERVICE_URL =
 const VERIFIER_ENDPOINT =
   process.env.REPOSITORY_VERIFIER_ENDPOINT ??
   "/repository-verifier/verify";
+
+const VERIFIER_TIMEOUT_MS = Number(
+  process.env.REPOSITORY_VERIFIER_TIMEOUT_MS ??
+    process.env.ANALYSIS_SERVICE_TIMEOUT_MS ??
+    900_000,
+);
+
+const verifierDispatcher = new Agent({
+  connectTimeout: 30_000,
+  headersTimeout: VERIFIER_TIMEOUT_MS,
+  bodyTimeout: VERIFIER_TIMEOUT_MS,
+});
 
 export class RepositoryVerifierServiceError extends Error {
   constructor(
@@ -68,14 +81,9 @@ export async function verifyRepositories(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(
-        Number(
-          process.env.REPOSITORY_VERIFIER_TIMEOUT_MS ??
-            process.env.ANALYSIS_SERVICE_TIMEOUT_MS ??
-            300_000,
-        ),
-      ),
-    });
+      signal: AbortSignal.timeout(VERIFIER_TIMEOUT_MS),
+      dispatcher: verifierDispatcher,
+    } as RequestInit & { dispatcher: Agent });
   } catch (cause) {
     throw new RepositoryVerifierServiceError(
       "Repository verifier request failed",

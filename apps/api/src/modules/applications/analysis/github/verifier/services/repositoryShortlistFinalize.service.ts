@@ -201,6 +201,16 @@ export async function maybeFinalizeRepositoryShortlist(
             : null,
         ],
       );
+
+      if (disposition === "AUTOMATICALLY_RECOMMENDED") {
+        await client.query(
+          `UPDATE job_applications
+           SET status = 'SHORTLISTED', updated_at = NOW()
+           WHERE id = $1
+             AND status NOT IN ('INTERVIEW', 'OFFERED', 'HIRED', 'REJECTED', 'WITHDRAWN')`,
+          [candidate.applicationId],
+        );
+      }
     }
 
     return inserted.rows[0].id;

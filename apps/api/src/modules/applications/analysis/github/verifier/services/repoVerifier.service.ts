@@ -95,6 +95,35 @@ function asVerifierReport(value: Record<string, unknown>): RepositoryVerifierRep
   return value as unknown as RepositoryVerifierReport;
 }
 
+/**
+ * Keep malformed LLM negatives from becoming capability penalties. A
+ * complete-negative state is only meaningful with complete retrieval; when
+ * the model emits it with partial coverage, preserve the raw response but
+ * score the cleaned report as neutral/unassessable.
+ */
+function sanitizeVerifierReport(report: RepositoryVerifierReport): RepositoryVerifierReport {
+  const cleaned = structuredClone(report) as RepositoryVerifierReport;
+
+  for (const mapping of cleaned.requirement_mappings) {
+    const completeNegative =
+      mapping.evidence_state === "NOT_DEMONSTRATED_IN_COMPLETE_SCOPE" ||
+      mapping.evidence_state === "CONTRADICTED_BY_RETRIEVED_CODE";
+
+    if (
+      completeNegative &&
+      (mapping.assessment_scope !== "REPOSITORY_VERIFIABLE" ||
+        mapping.requirement_coverage_score < 90)
+    ) {
+      mapping.evidence_state = "UNASSESSABLE_FROM_REPOSITORY";
+      mapping.requirement_evidence_score = 50;
+      mapping.requirement_coverage_score = 0;
+      mapping.scope_note = `${mapping.scope_note} Complete-negative state was downgraded because retrieved coverage was below 90; no penalty was applied.`.trim();
+    }
+  }
+
+  return cleaned;
+}
+
 export async function repoVerifier(
   jobId: string,
   applicationId: string,
@@ -150,7 +179,7 @@ export async function repoVerifier(
       throw new Error("Verifier response did not include repository evidence");
     }
 
-    const report = asVerifierReport(response.report);
+    const report = sanitizeVerifierReport(asVerifierReport(response.report));
     const stage1Score = await getStage1Score(applicationId);
     const jobContext = payload.evaluation_context.job_context;
     const requirements = canonicalRequirements(jobContext);

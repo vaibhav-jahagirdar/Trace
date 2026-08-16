@@ -79,6 +79,31 @@ export async function enqueueRepositoryVerifierAfterPlanning(
  */
 export async function reconcileCompletedRepositoryPlans(): Promise<number> {
   const db = getDb();
+  // Repair application lifecycle state for work completed before the central
+  // task-status transition was introduced. Never downgrade recruiter or
+  // terminal decisions.
+  await db.query(
+    `UPDATE job_applications a
+     SET status = 'UNDER_REVIEW', updated_at = NOW()
+     WHERE a.status IN ('SUBMITTED', 'QUEUED')
+       AND EXISTS (
+         SELECT 1
+         FROM application_tasks t
+         WHERE t.job_application_id = a.id
+           AND t.task_type IN ('RESUME_PARSE', 'REPOSITORY_PLAN', 'REPOSITORY_VERIFY')
+           AND t.status = 'COMPLETED'
+       )`,
+  );
+
+  await db.query(
+    `UPDATE job_applications a
+     SET status = 'SHORTLISTED', updated_at = NOW()
+     FROM repository_shortlist_members m
+     WHERE m.application_id = a.id
+       AND m.disposition = 'AUTOMATICALLY_RECOMMENDED'
+       AND a.status IN ('SUBMITTED', 'QUEUED', 'UNDER_REVIEW')`,
+  );
+
   const result = await db.query<{
     job_id: string;
     application_id: string;
