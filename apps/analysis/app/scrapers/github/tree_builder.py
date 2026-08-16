@@ -24,6 +24,14 @@ class TreeBuilderError(Exception):
     pass
 
 
+# Large profiles can make repository discovery exceed the planner context
+# window. Once a candidate has 10 or more repositories, repository trees are
+# evidence-planning inputs only for self-owned repositories. Forks and
+# organization repositories remain in discovery metadata but do not carry
+# architecture trees or language payloads.
+SELF_OWNED_TREE_THRESHOLD = 10
+
+
 async def build_repository_metadata(
     client: GitHubClient,
     owner: str,
@@ -128,6 +136,7 @@ async def enrich_profile_with_trees(
 
     enriched = dict(profile)
     repositories = enriched["repositories"]
+    restrict_to_self_owned = len(repositories) >= SELF_OWNED_TREE_THRESHOLD
 
     async with GitHubClient(token=token) as client:
         sem = asyncio.Semaphore(concurrency)
@@ -136,6 +145,15 @@ async def enrich_profile_with_trees(
             async with sem:
                 owner = repo["owner"]
                 name = repo["name"]
+
+                if restrict_to_self_owned and repo.get("classification") != "SELF_OWNED":
+                    repo_copy = dict(repo)
+                    repo_copy["tree"] = None
+                    repo_copy["statistics"] = None
+                    repo_copy["languages"] = {}
+                    repo_copy["tree_retrieval_status"] = "SKIPPED_NON_SELF_OWNED_LARGE_PROFILE"
+                    return repo_copy
+
                 default_branch = repo["default_branch"]
                 try:
                     # Fetch tree and languages in parallel
@@ -154,6 +172,7 @@ async def enrich_profile_with_trees(
                     repo_copy["tree"] = None
                     repo_copy["statistics"] = None
                     repo_copy["languages"] = {}
+                    repo_copy["tree_retrieval_status"] = "FAILED"
                     return repo_copy
 
                 if not entries:
@@ -180,6 +199,7 @@ async def enrich_profile_with_trees(
                 repo_copy["tree"] = tree_node
                 repo_copy["statistics"] = stats
                 repo_copy["languages"] = languages  # bytes per language
+                repo_copy["tree_retrieval_status"] = "RETRIEVED"
                 return repo_copy
 
         tasks = [process_repo(repo) for repo in repositories]

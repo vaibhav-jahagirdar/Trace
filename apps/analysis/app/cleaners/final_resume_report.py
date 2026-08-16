@@ -1,9 +1,40 @@
 from copy import deepcopy
+import re
+import unicodedata
 from typing import Any
 
 from app.cleaners.base import validate_llm_output
 from app.schemas.evaluation_context import EvaluationContextDto
 from app.schemas.final_report import ResumeEvaluationReportLLMOutput
+
+
+def _canonical_education_name(value: Any) -> str:
+    """Compare education labels by meaning, while preserving the configured label."""
+    if not isinstance(value, str):
+        return ""
+    normalized = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    normalized = re.sub(r"[^a-z0-9]+", " ", normalized.lower()).strip()
+    aliases = {
+        "high school": "high_school",
+        "secondary school": "high_school",
+        "diploma": "diploma",
+        "associate": "diploma",
+        "associates degree": "diploma",
+        "undergraduate": "undergraduate",
+        "bachelor": "undergraduate",
+        "bachelors": "undergraduate",
+        "bachelors degree": "undergraduate",
+        "undergraduate degree": "undergraduate",
+        "postgraduate": "postgraduate",
+        "master": "postgraduate",
+        "masters": "postgraduate",
+        "masters degree": "postgraduate",
+        "postgraduate degree": "postgraduate",
+        "phd": "doctorate",
+        "doctorate": "doctorate",
+        "doctoral degree": "doctorate",
+    }
+    return aliases.get(normalized, normalized.replace(" ", "_"))
 
 
 def _validate_job_bound_sections(
@@ -34,14 +65,21 @@ def _validate_job_bound_sections(
                 "requirement_analysis.qualification must be null when no minimum "
                 "education requirement is configured."
             )
-    elif (
-        actual_qualification is None
-        or actual_qualification["name"] != expected_qualification
-    ):
+    elif actual_qualification is None:
         raise ValueError(
             "requirement_analysis.qualification must match the configured minimum "
             "education requirement."
         )
+    elif _canonical_education_name(actual_qualification.get("name")) != _canonical_education_name(expected_qualification):
+        raise ValueError(
+            "requirement_analysis.qualification must match the configured minimum "
+            "education requirement."
+        )
+    else:
+        # Downstream consumers rely on the job's canonical label. The model may
+        # say "Bachelor's degree" while the job stores "UNDERGRADUATE"; those
+        # are equivalent for validation, but the persisted report must be stable.
+        actual_qualification["name"] = expected_qualification
 
     # ❌ recruiter_rubric validation removed – no longer in the schema.
 

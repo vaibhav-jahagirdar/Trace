@@ -25,6 +25,42 @@ _FINAL_REMINDER = """
 🔴 FINAL REMINDER: Every objective_id must be unique. All paths must exist in the supplied discovery trees. Do not invent paths or repositories.
 """
 
+# The planner receives repository metadata and trees, not source contents. A
+# single unusually large GitHub tree can otherwise consume the entire model
+# context before the planner has produced any output. Keep the prompt bounded;
+# the full discovery object remains available to post-generation validation and
+# retrieval.
+_MAX_DISCOVERY_TREE_CHARS = 1_800_000
+
+
+def _compact_tree(node: Any, budget: int) -> tuple[dict[str, Any], int]:
+    """Return a deterministic, path-addressable tree prefix within budget."""
+    if not isinstance(node, dict) or budget <= 0:
+        return {}, 0
+
+    compact: dict[str, Any] = {
+        key: node[key]
+        for key in ("name", "type", "path")
+        if key in node
+    }
+    used = len(json.dumps(compact, ensure_ascii=False))
+    if used > budget:
+        return {}, 0
+
+    children: list[dict[str, Any]] = []
+    for child in node.get("children") or []:
+        remaining = budget - used
+        compact_child, child_used = _compact_tree(child, remaining)
+        if not compact_child:
+            break
+        children.append(compact_child)
+        used += child_used
+
+    if children:
+        compact["children"] = children
+        used = len(json.dumps(compact, ensure_ascii=False))
+    return compact, used
+
 
 @lru_cache(maxsize=1)
 def build_repository_planner_system_instruction() -> str:
@@ -107,10 +143,23 @@ def _filter_repository_discovery(
 
     repositories = data.get("repositories", [])
 
+    if repositories:
+        per_repo_budget = max(
+            50_000,
+            _MAX_DISCOVERY_TREE_CHARS // len(repositories),
+        )
+    else:
+        per_repo_budget = 0
+
     for repo in repositories:
         repo.pop("private", None)
         repo.pop("archived", None)
         repo.pop("pushed_at", None)
+
+        tree = repo.get("tree")
+        if tree is not None:
+            compact_tree, _ = _compact_tree(tree, per_repo_budget)
+            repo["tree"] = compact_tree
 
     return data
 

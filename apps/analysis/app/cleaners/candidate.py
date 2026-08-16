@@ -1,3 +1,4 @@
+import re
 from typing import Any, Set
 
 from app.cleaners.base import validate_llm_output
@@ -18,12 +19,36 @@ def _collect_all_claim_ids_from_dict(obj: Any) -> Set[str]:
     return ids
 
 
+_SHORT_CLAIM_ID = re.compile(r"^c(\d+)$")
+
+
+def _canonicalize_claim_ids(value: Any) -> Any:
+    """Normalize the compact IDs commonly emitted by the model.
+
+    The contract uses ``claim_0001`` identifiers, but models sometimes emit
+    ``c001``/``c1``. References occur in nested objects and in arrays (for
+    example ``technologies``), so this must be a single recursive pass to
+    keep every reference consistent before schema validation.
+    """
+    if isinstance(value, dict):
+        return {key: _canonicalize_claim_ids(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_canonicalize_claim_ids(item) for item in value]
+    if isinstance(value, str):
+        match = _SHORT_CLAIM_ID.fullmatch(value)
+        if match:
+            return f"claim_{int(match.group(1)):04d}"
+    return value
+
+
 def normalize_candidate(raw: dict) -> dict:
     """
     Clean and normalise the raw LLM candidate extraction so it
     always validates against CandidateExtractionLLMOutput.
     """
-    candidate = dict(raw)  # shallow copy
+    # Make a deep, JSON-shaped copy while canonicalizing IDs. This also
+    # prevents the cleaner from mutating the cached raw LLM response.
+    candidate = _canonicalize_claim_ids(raw)
 
     # 1. Strip system‑added metadata (they will be added later)
     if "metadata" in candidate and isinstance(candidate["metadata"], dict):
