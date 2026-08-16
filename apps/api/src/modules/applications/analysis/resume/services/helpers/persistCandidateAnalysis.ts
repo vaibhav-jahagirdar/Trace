@@ -210,15 +210,18 @@ async function persistClaims(
   }
   for (const we of candidate.work_experience ?? []) {
     const claimText = `${we.role || ""} at ${we.company || ""}`.trim() || "Work experience";
-    const dbId = await insertClaim(client, resumeAnalysisId, null, we.claim_id, "WORK_CONTAINER", claimText);
+    // parent_project_id is an FK to application_projects.id. A work
+    // experience is represented as a claim container, not a project, so its
+    // child claims must remain unparented rather than using application_claims.id.
+    await insertClaim(client, resumeAnalysisId, null, we.claim_id, "WORK_CONTAINER", claimText);
     for (const claim of we.responsibilities ?? []) {
-      await insertClaim(client, resumeAnalysisId, dbId, claim.claim_id, "RESPONSIBILITY", claim.text);
+      await insertClaim(client, resumeAnalysisId, null, claim.claim_id, "RESPONSIBILITY", claim.text);
     }
     for (const claim of we.achievements ?? []) {
-      await insertClaim(client, resumeAnalysisId, dbId, claim.claim_id, "ACHIEVEMENT", claim.text);
+      await insertClaim(client, resumeAnalysisId, null, claim.claim_id, "ACHIEVEMENT", claim.text);
     }
     for (const claim of we.implementation_claims ?? []) {
-      await insertClaim(client, resumeAnalysisId, dbId, claim.claim_id, "IMPLEMENTATION", claim.text);
+      await insertClaim(client, resumeAnalysisId, null, claim.claim_id, "IMPLEMENTATION", claim.text);
     }
   }
   if (candidate.candidate_profile?.summary_claim_id && candidate.candidate_profile?.summary) {
@@ -286,7 +289,7 @@ async function persistWorkExperiences(
   const values = workExperiences
     .map(
       (_, i) =>
-        `($1, $${i * 10 + 2}, $${i * 10 + 3}, $${i * 10 + 4}, $${i * 10 + 5}, $${i * 10 + 6}, $${i * 10 + 7}, $${i * 10 + 8}, $${i * 10 + 9}, $${i * 10 + 10}, $${i * 10 + 11})`,
+        `($1, $${i * 9 + 2}, $${i * 9 + 3}, $${i * 9 + 4}, $${i * 9 + 5}, $${i * 9 + 6}, $${i * 9 + 7}, $${i * 9 + 8}, $${i * 9 + 9}, $${i * 9 + 10})`,
     )
     .join(",");
 

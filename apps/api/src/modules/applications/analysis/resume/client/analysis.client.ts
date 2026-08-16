@@ -1,3 +1,4 @@
+import { Agent } from "undici";
 import { getResumeAnalysisPayload } from "../evaluationContext/contextBuilder.service";
 import {
   ResumeAnalysisResponseSchema,
@@ -6,6 +7,14 @@ import {
 
 const ANALYSIS_SERVICE_URL =
   process.env.ANALYSIS_SERVICE_URL ?? "http://localhost:8000";
+const ANALYSIS_TIMEOUT_MS = Number(
+  process.env.ANALYSIS_SERVICE_TIMEOUT_MS ?? 900_000,
+);
+const analysisDispatcher = new Agent({
+  connectTimeout: 30_000,
+  headersTimeout: ANALYSIS_TIMEOUT_MS,
+  bodyTimeout: ANALYSIS_TIMEOUT_MS,
+});
 
 export class AnalysisServiceError extends Error {
   constructor(
@@ -37,8 +46,9 @@ export async function analyzeResume(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(Number(process.env.ANALYSIS_SERVICE_TIMEOUT_MS ?? 300_000)),
-  });
+    signal: AbortSignal.timeout(ANALYSIS_TIMEOUT_MS),
+    dispatcher: analysisDispatcher,
+  } as RequestInit & { dispatcher: Agent });
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
