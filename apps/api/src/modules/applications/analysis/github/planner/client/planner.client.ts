@@ -1,6 +1,19 @@
+import { Agent } from "undici";
 import { getRepositoryPlannerPayload } from "../evaluationContext/repoAnalysisPayload";
 
 const PLANNER_SERVICE_URL = process.env.ANALYSIS_SERVICE_URL ?? "http://localhost:8000";
+const PLANNER_TIMEOUT_MS = Number(
+  process.env.ANALYSIS_SERVICE_TIMEOUT_MS ?? 900_000,
+);
+
+// Node's built-in fetch has a shorter Undici headers timeout than the overall
+// AbortSignal timeout. The planner may legitimately wait for the LLM, so both
+// limits must be configured explicitly.
+const plannerDispatcher = new Agent({
+  connectTimeout: 30_000,
+  headersTimeout: PLANNER_TIMEOUT_MS,
+  bodyTimeout: PLANNER_TIMEOUT_MS,
+});
 
 export class RepositoryPlannerServiceError extends Error {
   constructor(message: string, public readonly status?: number, public readonly cause?: unknown) {
@@ -30,8 +43,9 @@ export async function planRepositories(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(Number(process.env.ANALYSIS_SERVICE_TIMEOUT_MS ?? 300_000)),
-  });
+    signal: AbortSignal.timeout(PLANNER_TIMEOUT_MS),
+    dispatcher: plannerDispatcher,
+  } as RequestInit & { dispatcher: Agent });
   if (!response.ok) {
     const body = await response.text().catch(() => "");
     throw new RepositoryPlannerServiceError(`Repository planner returned ${response.status}: ${body.slice(0, 500)}`, response.status, body);

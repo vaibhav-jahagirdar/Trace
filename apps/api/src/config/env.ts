@@ -33,6 +33,7 @@ export const env = {
 
   BULLMQ_RESUME_QUEUE: process.env.BULLMQ_RESUME_QUEUE ?? "resume-analysis",
   BULLMQ_REPO_PLANNER_QUEUE: process.env.BULLMQ_REPO_PLANNER_QUEUE ?? "repo planner",
+  BULLMQ_REPO_VERIFIER_QUEUE: process.env.BULLMQ_REPO_VERIFIER_QUEUE ?? "repo verifier",
 };
 
 export default env;
