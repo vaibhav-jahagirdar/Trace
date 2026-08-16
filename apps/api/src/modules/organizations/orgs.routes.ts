@@ -4,6 +4,7 @@ import { requireMembership } from "../../middleware/requireMembership";
 import { validateParams } from "../../middleware/validateParams";
 import { orgIdParamSchema } from "./orgs.validator";
 import { createOrganizationHandler, getOrganizationHandler } from "./controller/orgs.controller";
+import { getOrganizationDashboardController } from "../jobs/jobs.controller";
 
 const router = Router();
 
@@ -13,8 +14,15 @@ router.get(
   "/:orgId",
   requireAuth,
   validateParams(orgIdParamSchema),
-  requireMembership,
+  requireMembership(),
   getOrganizationHandler,
+);
+router.get(
+  "/:orgId/dashboard",
+  requireAuth,
+  validateParams(orgIdParamSchema),
+  requireMembership(),
+  getOrganizationDashboardController,
 );
 
 export default router;

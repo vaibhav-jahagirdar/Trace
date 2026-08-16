@@ -1,8 +1,13 @@
 import { z } from "zod";
 
 const SLUG_REGEX = /^[a-zA-Z0-9_-]+$/;
-    export const orgIdParamSchema = z.object({
+export const orgIdParamSchema = z.object({
   orgId: z.string().uuid(),
+});
+
+export const orgJobIdParamSchema = z.object({
+  orgId: z.string().uuid(),
+  jobId: z.string().uuid(),
 });
 
 export const createOrganizationSchema = z.object({
