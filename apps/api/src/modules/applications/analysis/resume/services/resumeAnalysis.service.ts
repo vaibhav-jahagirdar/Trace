@@ -133,8 +133,7 @@ export async function resumeAnalysis(
 
   const { candidate, evaluation } = result;
   const validatedCandidate = CandidateExtractionOutputSchema.parse(candidate);
-  // Python returns the model-owned Stage 1 report. Backend metadata and
-  // computed_scores are produced here, not required from the LLM response.
+  
   const validatedEvaluation = ResumeEvaluationReportLLMOutputSchema.parse(evaluation);
 
   const jobContext = await getEvaluationContext(jobId);
@@ -166,8 +165,7 @@ export async function resumeAnalysis(
   try {
     await maybeEnqueueRepositoryPlanner(applicationId);
   } catch (error) {
-    // Stage 2A is opportunistic; a planner enqueue failure must not turn a
-    // successfully completed Stage 1 analysis into a failed application.
+   
     console.error("[ResumeAnalysis][6] Failed to enqueue repository planner", { applicationId, error });
   }
 
