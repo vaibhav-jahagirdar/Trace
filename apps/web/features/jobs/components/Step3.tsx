@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useForm, useWatch, type SubmitHandler } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useWatch } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { ArrowLeft, ArrowRight, Check, Circle, Search, X } from "lucide-react";
@@ -13,8 +12,8 @@ import { getRequirementLookups, type RequirementLookupItem } from "@/features/jo
 
 const prioritySchema = z.enum(["MANDATORY", "PREFERRED", "BONUS"]);
 const requirementSchema = z.discriminatedUnion("requirement_type", [
-  z.object({ requirement_type: z.literal("TECHNOLOGY"), technology_id: z.string().uuid(), priority_type: prioritySchema }),
-  z.object({ requirement_type: z.literal("CONCEPT"), concept_id: z.string().uuid(), priority_type: prioritySchema }),
+  z.object({ requirement_type: z.literal("TECHNOLOGY"), technology_id: z.guid(), priority_type: prioritySchema }),
+  z.object({ requirement_type: z.literal("CONCEPT"), concept_id: z.guid(), priority_type: prioritySchema }),
 ]);
 
 export const step3Schema = z
@@ -40,6 +39,7 @@ const PRIORITIES: { value: Priority; label: string; description: string }[] = [
 
 const typeLabel: Record<RequirementType, string> = { TECHNOLOGY: "Technology", CONCEPT: "Concept" };
 const typePlural: Record<RequirementType, string> = { TECHNOLOGY: "Technologies", CONCEPT: "Concepts" };
+const uuidSchema = z.guid();
 
 export function CreateJobStep3({
   role = "MID",
@@ -53,23 +53,22 @@ export function CreateJobStep3({
   onBack?: () => void;
 }) {
   const { activeOrg } = useAuth();
-  const { data: lookups, isLoading: lookupsLoading, isError: lookupsError } = useQuery({
-    queryKey: ["job-requirement-lookups"],
-    queryFn: getRequirementLookups,
-    staleTime: 5 * 60_000,
-  });
   const [activeType, setActiveType] = useState<RequirementType>("TECHNOLOGY");
   const [pickerPriority, setPickerPriority] = useState<Priority | null>(null);
   const [selectedItem, setSelectedItem] = useState<RequirementLookupItem | null>(null);
   const [search, setSearch] = useState("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const { data: lookups, isLoading: lookupsLoading, isError: lookupsError } = useQuery({
+    queryKey: ["job-requirement-lookups", search.trim().toLowerCase()],
+    queryFn: () => getRequirementLookups(search),
+    staleTime: 5 * 60_000,
+  });
 
   const {
-    handleSubmit,
     setValue,
     control,
-    formState: { errors, isValid },
+    formState: { errors },
   } = useForm<Step3Input>({
-    resolver: zodResolver(step3Schema),
     mode: "onChange",
     defaultValues: { requirements: [] },
   });
@@ -79,13 +78,16 @@ export function CreateJobStep3({
     [values.requirements],
   );
   const hasConcept = requirements.some((requirement) => requirement.requirement_type === "CONCEPT");
+  const hasPreferred = requirements.some((requirement) => requirement.priority_type === "PREFERRED");
   const rolePolicy = JOB_ROLE_POLICY[role];
-  const counts = useMemo(() => countPriorities(requirements), [requirements]);
-  const limits = {
-    MANDATORY: rolePolicy.requirements.mandatory,
-    PREFERRED: counts.MANDATORY > 0 ? rolePolicy.requirements.preferred : rolePolicy.requirements.preferredWithoutMandatory,
-    BONUS: rolePolicy.requirements.bonus,
-  } as const;
+  function limitFor(priority: Priority, type: RequirementType) {
+    const hasMandatoryForType = countByType(requirements, "MANDATORY", type) > 0;
+    if (priority === "MANDATORY") return rolePolicy.requirements.mandatory;
+    if (priority === "BONUS") return rolePolicy.requirements.bonus;
+    return hasMandatoryForType
+      ? rolePolicy.requirements.preferred
+      : rolePolicy.requirements.preferredWithoutMandatory;
+  }
 
   useEffect(() => {
     const savedData = initialData;
@@ -97,8 +99,12 @@ export function CreateJobStep3({
   }, [initialData, setValue]);
 
   const items = activeType === "TECHNOLOGY" ? lookups?.technologies ?? [] : lookups?.concepts ?? [];
-  const availableItems = items.filter((item) => !hasRequirement(requirements, activeType, item.id));
-  const matchingItems = availableItems.filter((item) => item.name.toLowerCase().includes(search.trim().toLowerCase()));
+  const availableItems = items.filter((item) => uuidSchema.safeParse(item.id).success && !hasRequirement(requirements, activeType, item.id));
+  const rawNormalizedSearch = search.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  const normalizedSearch = rawNormalizedSearch === "postgresql" ? "postgres" : rawNormalizedSearch;
+  const matchingItems = availableItems.filter((item) =>
+    item.name.toLowerCase().replace(/[^a-z0-9]/g, "").includes(normalizedSearch),
+  );
 
   function openPicker(priority: Priority) {
     setPickerPriority(priority);
@@ -113,7 +119,10 @@ export function CreateJobStep3({
   }
 
   function addRequirement() {
-    if (!selectedItem || !pickerPriority || countByType(requirements, pickerPriority, activeType) >= limits[pickerPriority]) return;
+    if (!selectedItem || !uuidSchema.safeParse(selectedItem.id).success || !pickerPriority || countByType(requirements, pickerPriority, activeType) >= limitFor(pickerPriority, activeType)) {
+      setSubmitError("This lookup option has an invalid ID. Refresh the page and choose it again.");
+      return;
+    }
 
     const next = activeType === "TECHNOLOGY"
       ? { requirement_type: "TECHNOLOGY" as const, technology_id: selectedItem.id, priority_type: pickerPriority }
@@ -126,9 +135,18 @@ export function CreateJobStep3({
     setValue("requirements", requirements.filter((requirement) => !matchesRequirement(requirement, type, id)), { shouldDirty: true, shouldValidate: true });
   }
 
-  const onSubmit: SubmitHandler<Step3Input> = (data) => {
-    onContinue?.(data);
+  const onSubmit = () => {
+    const parsed = step3Schema.safeParse({ requirements });
+    if (!parsed.success) {
+      setSubmitError(parsed.error.issues.map((issue) => issue.message).join(" "));
+      return;
+    }
+
+    setSubmitError(null);
+    onContinue?.(parsed.data);
   };
+
+  const canContinue = requirements.length > 0 && hasConcept && hasPreferred;
 
   return (
     <main className="min-h-svh bg-paper text-ink lg:grid lg:grid-cols-[4.5rem_minmax(0,1fr)]">
@@ -155,7 +173,7 @@ export function CreateJobStep3({
             </section>
 
             <div className="mt-14 grid gap-14 lg:grid-cols-[minmax(0,1fr)_14rem] lg:gap-20">
-              <form onSubmit={handleSubmit(onSubmit)} noValidate>
+              <form onSubmit={(event) => { event.preventDefault(); onSubmit(); }} noValidate>
                 <section aria-labelledby="bar-heading">
                   <div className="flex flex-wrap items-end justify-between gap-5 border-b border-forest/12 pb-5">
                     <div>
@@ -182,7 +200,7 @@ export function CreateJobStep3({
                         requirements={requirements}
                         items={items}
                         count={countByType(requirements, priority.value, activeType)}
-                        limit={limits[priority.value]}
+                        limit={limitFor(priority.value, activeType)}
                         onAdd={() => openPicker(priority.value)}
                         onRemove={(id) => removeRequirement(activeType, id)}
                       />
@@ -190,7 +208,9 @@ export function CreateJobStep3({
                   </div>
 
                   {!hasConcept && <p className="mt-8 border-l-2 border-destructive bg-destructive/5 px-5 py-4 text-base text-destructive" role="alert">Select at least one concept before continuing.</p>}
+                  {!hasPreferred && <p className="mt-4 border-l-2 border-destructive bg-destructive/5 px-5 py-4 text-base text-destructive" role="alert">Select at least one preferred requirement before continuing.</p>}
                   {errors.requirements && hasConcept && <p className="mt-8 border-l-2 border-destructive bg-destructive/5 px-5 py-4 text-base text-destructive" role="alert">{errors.requirements.message}</p>}
+                  {submitError && <p className="mt-4 border-l-2 border-destructive bg-destructive/5 px-5 py-4 text-base text-destructive" role="alert">{submitError}</p>}
 
                   {pickerPriority && (
                     <RequirementPicker
@@ -201,7 +221,7 @@ export function CreateJobStep3({
                       selectedItem={selectedItem}
                       loading={lookupsLoading}
                       failed={lookupsError}
-                      atLimit={countByType(requirements, pickerPriority, activeType) >= limits[pickerPriority]}
+                      atLimit={countByType(requirements, pickerPriority, activeType) >= limitFor(pickerPriority, activeType)}
                       onSearch={setSearch}
                       onSelect={setSelectedItem}
                       onPriority={setPickerPriority}
@@ -219,7 +239,7 @@ export function CreateJobStep3({
                 <footer className="mt-12 flex flex-wrap items-center justify-between gap-6 border-t border-forest pt-7">
                   <button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-base text-olive transition-colors hover:text-forest"><ArrowLeft className="size-5" /> Back</button>
                   <div className="text-right">
-                    <button type="submit" disabled={!isValid || !hasConcept} className="group inline-flex items-center gap-8 bg-forest px-6 py-4 font-mono text-sm uppercase tracking-[0.14em] text-paper transition-colors hover:bg-moss disabled:cursor-not-allowed disabled:opacity-45">
+                    <button type="button" onClick={() => onSubmit()} disabled={!canContinue} className="group inline-flex items-center gap-8 bg-forest px-6 py-4 font-mono text-sm uppercase tracking-[0.14em] text-paper transition-colors hover:bg-moss disabled:cursor-not-allowed disabled:opacity-45">
                       Continue<ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
                     </button>
                     <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-olive">Next: decide what evidence carries weight</p>
@@ -255,7 +275,6 @@ function StepRail() { return <aside className="hidden border-r border-forest/12 
 
 function WorkspaceHeader({ orgName, saveLabel }: { orgName?: string; saveLabel: string }) { return <header className="sticky top-0 z-20 border-b border-forest/12 bg-paper/95 px-6 py-6 backdrop-blur md:px-10 lg:px-14"><div className="mx-auto flex max-w-7xl items-baseline justify-between gap-6"><span className="font-mono text-sm font-medium uppercase tracking-[0.18em] text-forest lg:hidden">Trace</span><span className="hidden font-mono text-sm uppercase tracking-[0.15em] text-olive sm:block">{orgName ?? "Hiring workspace"} · Step 3 of 6</span><span className="ml-auto flex items-center gap-2 font-mono text-sm uppercase tracking-[0.14em] text-olive"><Check className="size-4 text-forest" />{saveLabel}</span></div></header>; }
 
-function countPriorities(requirements: Step3Input["requirements"]) { return { MANDATORY: requirements.filter((item) => item.priority_type === "MANDATORY").length, PREFERRED: requirements.filter((item) => item.priority_type === "PREFERRED").length, BONUS: requirements.filter((item) => item.priority_type === "BONUS").length }; }
 function countByType(requirements: Step3Input["requirements"], priority: Priority, type: RequirementType) { return requirements.filter((item) => item.priority_type === priority && item.requirement_type === type).length; }
 function matchesRequirement(requirement: Step3Input["requirements"][number], type: RequirementType, id: string) {
   if (requirement.requirement_type === "TECHNOLOGY") return type === "TECHNOLOGY" && requirement.technology_id === id;

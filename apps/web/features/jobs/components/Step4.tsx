@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch, type SubmitHandler } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { ArrowLeft, ArrowRight, Check, Circle, Minus, Plus, Search } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Circle, Search } from "lucide-react";
 
 import { EVALUATION_WEIGHT_POLICY, JOB_ROLE_POLICY } from "@trace/shared/contracts/evaluationPolicy";
 import { useAuth } from "@/providers/auth-provider";
@@ -22,7 +22,6 @@ export const step4Schema = z.object({
 export type Step4Input = z.infer<typeof step4Schema>;
 type EvaluationRole = keyof typeof JOB_ROLE_POLICY;
 
-const WEIGHT_STEP = 5;
 
 export function CreateJobStep4({
     role = "MID",
@@ -80,17 +79,12 @@ export function CreateJobStep4({
 
     function addDimension(dimension: EvaluationDimension) {
         if (priorities.length >= policy.maxDimensions) return;
-        setValue("evaluation_priorities", distributeWeights([...priorities, { evaluation_dimension_id: dimension.id, weight: 1 }]), { shouldDirty: true, shouldValidate: true });
+        setValue("evaluation_priorities", [...priorities, { evaluation_dimension_id: dimension.id, weight: 1 }], { shouldDirty: true, shouldValidate: true });
         setSearch("");
     }
 
     function removeDimension(id: string) {
-        setValue("evaluation_priorities", distributeWeights(priorities.filter((priority) => priority.evaluation_dimension_id !== id)), { shouldDirty: true, shouldValidate: true });
-    }
-
-    function adjustWeight(id: string, direction: "increase" | "decrease") {
-        const adjusted = rebalanceWeight(priorities, id, direction === "increase" ? WEIGHT_STEP : -WEIGHT_STEP);
-        if (adjusted) setValue("evaluation_priorities", adjusted, { shouldDirty: true, shouldValidate: true });
+        setValue("evaluation_priorities", priorities.filter((priority) => priority.evaluation_dimension_id !== id), { shouldDirty: true, shouldValidate: true });
     }
 
     const onSubmit: SubmitHandler<Step4Input> = () => {
@@ -154,11 +148,8 @@ export function CreateJobStep4({
                                                 name={dimension?.name ?? "Selected dimension"}
                                                 description={dimension?.description ?? "Evaluation dimension selected for this role."}
                                                 weight={priority.weight}
-                                                onIncrease={() => adjustWeight(priority.evaluation_dimension_id, "increase")}
-                                                onDecrease={() => adjustWeight(priority.evaluation_dimension_id, "decrease")}
                                                 onRemove={() => removeDimension(priority.evaluation_dimension_id)}
-                                                canIncrease={priorities.some((item) => item.evaluation_dimension_id !== priority.evaluation_dimension_id && item.weight > EVALUATION_WEIGHT_POLICY.MIN_WEIGHT)}
-                                                canDecrease={priority.weight > EVALUATION_WEIGHT_POLICY.MIN_WEIGHT}
+                                                onWeightChange={(weight) => setValue("evaluation_priorities", priorities.map((item) => item.evaluation_dimension_id === priority.evaluation_dimension_id ? { ...item, weight } : item), { shouldDirty: true, shouldValidate: true })}
                                             />
                                         ))}
                                     </div>
@@ -200,8 +191,8 @@ export function CreateJobStep4({
     );
 }
 
-function WeightRow({ name, description, weight, onIncrease, onDecrease, onRemove, canIncrease, canDecrease }: { name: string; description: string; weight: number; onIncrease: () => void; onDecrease: () => void; onRemove: () => void; canIncrease: boolean; canDecrease: boolean }) {
-    return <article className="border border-forest/15 bg-warm p-6 sm:p-7"><div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end"><div><h3 className="text-2xl font-light tracking-[-0.03em]" style={{ fontFamily: "var(--font-heading)" }}>{name}</h3><p className="mt-2 max-w-[52ch] text-base leading-relaxed text-olive">{description}</p></div><div className="flex items-center gap-3"><button type="button" disabled={!canDecrease} onClick={onDecrease} aria-label={`Decrease ${name} weight`} className="grid size-12 place-items-center border border-forest/25 text-forest transition-colors hover:bg-paper disabled:cursor-not-allowed disabled:opacity-30"><Minus className="size-5" /></button><span className="min-w-24 text-center font-mono text-3xl tabular-nums text-ink">{weight}%</span><button type="button" disabled={!canIncrease} onClick={onIncrease} aria-label={`Increase ${name} weight`} className="grid size-12 place-items-center border border-forest/25 text-forest transition-colors hover:bg-paper disabled:cursor-not-allowed disabled:opacity-30"><Plus className="size-5" /></button></div></div><div className="mt-6 flex items-center justify-between gap-6 border-t border-forest/12 pt-4"><div className="h-2 flex-1 bg-paper"><div className="h-full bg-forest transition-[width]" style={{ width: `${weight}%` }} /></div><button type="button" onClick={onRemove} className="text-sm text-olive transition-colors hover:text-destructive">Remove</button></div></article>;
+function WeightRow({ name, description, weight, onRemove, onWeightChange }: { name: string; description: string; weight: number; onRemove: () => void; onWeightChange: (weight: number) => void }) {
+    return <article className="border border-forest/15 bg-warm p-6 sm:p-7"><div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end"><div><h3 className="text-2xl font-light tracking-[-0.03em]" style={{ fontFamily: "var(--font-heading)" }}>{name}</h3><p className="mt-2 max-w-[52ch] text-base leading-relaxed text-olive">{description}</p></div><span className="font-mono text-3xl tabular-nums text-ink">{weight}%</span></div><input aria-label={`${name} weight`} type="range" min={EVALUATION_WEIGHT_POLICY.MIN_WEIGHT} max={EVALUATION_WEIGHT_POLICY.MAX_WEIGHT} value={weight} onChange={(event) => onWeightChange(Number(event.target.value))} className="mt-6 w-full accent-forest" /><div className="mt-3 flex items-center justify-between border-t border-forest/12 pt-4"><span className="text-sm text-olive">Choose this dimension&apos;s share. Total must equal 100%.</span><button type="button" onClick={onRemove} className="text-sm text-olive transition-colors hover:text-destructive">Remove</button></div></article>;
 }
 
 function DimensionLibrary({ dimensions, search, loading, failed, atLimit, onSearch, onAdd }: { dimensions: EvaluationDimension[]; search: string; loading: boolean; failed: boolean; atLimit: boolean; onSearch: (value: string) => void; onAdd: (dimension: EvaluationDimension) => void }) {
@@ -213,6 +204,3 @@ function AllocationBar({ value }: { value: number }) { return <div className="mt
 
 function WorkspaceHeader({ orgName, saveLabel }: { orgName?: string; saveLabel: string }) { return <header className="sticky top-0 z-20 border-b border-forest/12 bg-paper/95 px-6 py-6 backdrop-blur md:px-10 lg:px-14"><div className="mx-auto flex max-w-7xl items-baseline justify-between gap-6"><span className="font-mono text-sm font-medium uppercase tracking-[0.18em] text-forest lg:hidden">Trace</span><span className="hidden font-mono text-sm uppercase tracking-[0.15em] text-olive sm:block">{orgName ?? "Hiring workspace"} · Step 4 of 6</span><span className="ml-auto flex items-center gap-2 font-mono text-sm uppercase tracking-[0.14em] text-olive"><Check className="size-4 text-forest" />{saveLabel}</span></div></header>; }
 function StepRail() { return <aside className="hidden border-r border-forest/12 bg-warm lg:flex lg:flex-col lg:items-center lg:py-6"><span className="grid size-8 place-items-center border border-forest/30 font-mono text-xs text-forest">T</span><div className="mt-24 flex flex-1 flex-col items-center gap-4"><span className="font-mono text-[10px] text-olive/40">01</span><span className="font-mono text-[10px] text-olive/40">02</span><span className="font-mono text-[10px] text-olive/40">03</span><span className="h-14 w-px bg-forest" /><span className="font-mono text-[10px] text-forest">04</span><span className="font-mono text-[10px] text-olive/40">05</span><span className="font-mono text-[10px] text-olive/40">06</span></div><span className="[writing-mode:vertical-rl] font-mono text-[9px] uppercase tracking-[0.2em] text-olive">Hiring lens</span></aside>; }
-
-function distributeWeights(priorities: Step4Input["evaluation_priorities"]) { if (!priorities.length) return []; const base = Math.floor(EVALUATION_WEIGHT_POLICY.REQUIRED_TOTAL / priorities.length); const remainder = EVALUATION_WEIGHT_POLICY.REQUIRED_TOTAL % priorities.length; return priorities.map((priority, index) => ({ ...priority, weight: base + (index < remainder ? 1 : 0) })); }
-function rebalanceWeight(priorities: Step4Input["evaluation_priorities"], targetId: string, delta: number) { const target = priorities.find((priority) => priority.evaluation_dimension_id === targetId); if (!target || priorities.length < 2) return null; if (delta < 0 && target.weight + delta < EVALUATION_WEIGHT_POLICY.MIN_WEIGHT) return null; const donors = priorities.filter((priority) => priority.evaluation_dimension_id !== targetId).sort((a, b) => b.weight - a.weight); if (delta > 0 && donors.reduce((sum, priority) => sum + Math.max(0, priority.weight - EVALUATION_WEIGHT_POLICY.MIN_WEIGHT), 0) < delta) return null; let remaining = Math.abs(delta); const next = priorities.map((priority) => ({ ...priority })); if (delta > 0) { for (const donor of donors) { const item = next.find((priority) => priority.evaluation_dimension_id === donor.evaluation_dimension_id)!; const move = Math.min(remaining, item.weight - EVALUATION_WEIGHT_POLICY.MIN_WEIGHT); item.weight -= move; remaining -= move; if (!remaining) break; } } else { const recipients = next.filter((priority) => priority.evaluation_dimension_id !== targetId).sort((a, b) => a.weight - b.weight); recipients[0]!.weight += remaining; } next.find((priority) => priority.evaluation_dimension_id === targetId)!.weight += delta; return next; }

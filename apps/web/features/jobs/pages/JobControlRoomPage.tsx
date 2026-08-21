@@ -8,6 +8,7 @@ import { useAuth } from "@/providers/auth-provider";
 import { OrganizationSwitcher, OrgSidebar } from "@/components/dashboard/org-sidebar";
 import { getJobControlRoom, type JobControlRoomResponse } from "../api/control-room";
 import { queueRepositoryAnalysis } from "../api/analysis-reports";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 const EMPTY: JobControlRoomResponse | null = null;
 
@@ -17,6 +18,25 @@ function label(value: string): string {
 
 function StageStatus({ complete, running, waiting }: { complete: number; running: number; waiting: number }) {
   return <span className="font-mono text-xs text-olive">{complete} complete · {running} running · {waiting} waiting</span>;
+}
+
+function CandidateProcessing({ candidate }: { candidate: JobControlRoomResponse["candidates"][number] }) {
+  // Terminal application decisions must take precedence over analysis
+  // progress. A hard-gate rejection has no analysis task, so its stage
+  // fields are normally WAITING; checking those first incorrectly renders
+  // the candidate as "Candidate fit" loading.
+  if (candidate.status === "REJECTED") {
+    return <span className="font-mono text-xs uppercase tracking-[0.12em] text-destructive">Rejected</span>;
+  }
+  if (candidate.status === "WITHDRAWN") {
+    return <span className="font-mono text-xs uppercase tracking-[0.12em] text-olive">Withdrawn</span>;
+  }
+  if (candidate.stage2cStatus === "RUNNING") return <LoadingState label="Repository evidence" variant="Drive" />;
+  if (candidate.stage2cStatus === "COMPLETE") return <span className="font-mono text-xs uppercase tracking-[0.12em] text-forest">Evidence complete</span>;
+  if (candidate.stage2aStatus === "RUNNING") return <LoadingState label="Repository plan" variant="Dots" />;
+  if (candidate.stage1Status === "WAITING") return <LoadingState label="Candidate fit" variant="Orbit" />;
+  if (candidate.stage2cStatus === "WAITING" && candidate.stage2aStatus === "COMPLETE") return <span className="font-mono text-xs uppercase tracking-[0.12em] text-olive">Waiting for evidence</span>;
+  return <span className="font-mono text-xs uppercase tracking-[0.12em] text-forest">{label(candidate.status)}</span>;
 }
 
 export default function JobControlRoomPage() {
@@ -76,7 +96,7 @@ export default function JobControlRoomPage() {
                     <div className="flex flex-wrap items-center gap-3"><h1 className="font-sans text-5xl font-light leading-none tracking-[-0.05em] md:text-6xl">{data.job.title}</h1><span className="font-mono text-[11px] uppercase tracking-[0.15em] text-olive">● {label(data.job.status)}</span></div>
                     <p className="mt-5 text-sm text-olive">{data.job.department ?? data.job.role ?? "Role"} · {label(data.job.employmentType)} · {label(data.job.workMode)} · {data.job.openPositions} {data.job.openPositions === 1 ? "opening" : "openings"}</p>
                   </div>
-                  <div className="flex gap-3"><button type="button" className="border border-forest/30 px-4 py-3 text-sm text-forest hover:bg-warm">Edit role</button><button type="button" className="border border-destructive/30 px-4 py-3 text-sm text-destructive hover:bg-destructive/5">Close</button></div>
+                  <div className="flex flex-wrap gap-3"><Link href={`/orgs/${params.orgId}/jobs/${params.jobId}/publish`} className={`border px-4 py-3 text-sm transition-colors ${data.job.status === "DRAFT" ? "border-forest bg-forest text-paper hover:bg-moss" : "border-forest/30 text-forest hover:bg-warm"}`}>{data.job.status === "DRAFT" ? "Review & publish" : "Edit role"}</Link>{data.job.status !== "DRAFT" && <button type="button" className="border border-destructive/30 px-4 py-3 text-sm text-destructive hover:bg-destructive/5">Close</button>}</div>
                 </div>
               </section>
 
@@ -93,7 +113,7 @@ export default function JobControlRoomPage() {
 
               <section className="grid gap-12 border-b border-forest/12 py-12 lg:grid-cols-[1fr_1.35fr]">
                 <div><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="label-index font-mono text-xs uppercase tracking-[0.18em] text-olive">Analysis status</p><p className="mt-3 max-w-md text-base leading-relaxed text-moss">Trace keeps each investigation visible, with a clear path back to the source report.</p></div><button type="button" onClick={() => setManualOpen(true)} className="rounded-sm bg-forest px-4 py-3 text-sm text-paper hover:bg-moss">Analyze candidate</button></div><div className="mt-7 space-y-6"><div className="border-b border-forest/10 pb-5"><div className="flex items-center justify-between"><strong className="font-normal">Stage 1</strong><Link href={`/orgs/${params.orgId}/jobs/${params.jobId}/analysis/stage-1`} className="text-sm text-forest">View →</Link></div><p className="mt-2"><StageStatus {...data.analysis.stage1} /></p></div><div className="border-b border-forest/10 pb-5"><div className="flex items-center justify-between"><strong className="font-normal">Stage 2A</strong><Link href={`/orgs/${params.orgId}/jobs/${params.jobId}/analysis/stage-2a`} className="text-sm text-forest">View →</Link></div><p className="mt-2"><StageStatus {...data.analysis.stage2a} /></p></div><div><div className="flex items-center justify-between"><strong className="font-normal">Stage 2C</strong><Link href={`/orgs/${params.orgId}/jobs/${params.jobId}/analysis/stage-2c`} className="text-sm text-forest">View →</Link></div><p className="mt-2"><StageStatus {...data.analysis.stage2c} /></p></div></div>{queueMessage && <p className="mt-5 border-l-2 border-olive pl-4 text-sm text-moss">{queueMessage}</p>}</div>
-                <div><div className="flex items-end justify-between"><div><p className="label-index font-mono text-xs uppercase tracking-[0.18em] text-olive">Candidates</p><p className="mt-2 text-sm text-olive">The current evidence pipeline for this role.</p></div><Link href={`/orgs/${params.orgId}/jobs/${params.jobId}/applicants`} className="inline-flex items-center gap-2 text-sm text-forest">View all <ArrowRight className="size-4" /></Link></div><div className="mt-6 overflow-x-auto"><table className="w-full min-w-[620px] border-t border-forest/15 text-left text-sm"><thead className="font-mono text-[10px] uppercase tracking-[0.13em] text-olive"><tr><th className="py-3 font-normal">Candidate</th><th className="py-3 font-normal">Stage 1</th><th className="py-3 font-normal">Stage 2C</th><th className="py-3 font-normal">Final</th><th className="py-3 font-normal">State</th></tr></thead><tbody className="divide-y divide-forest/10">{data.candidates.slice(0, 8).map((candidate) => <tr key={candidate.id}><td className="py-4 text-ink">{candidate.name}</td><td className="py-4 font-mono tabular-nums">{candidate.stage1Score ?? "—"}</td><td className="py-4 font-mono tabular-nums">{candidate.stage2cScore ?? "—"}</td><td className="py-4 font-mono tabular-nums text-forest">{candidate.finalScore ?? "—"}</td><td className="py-4 text-olive">{label(candidate.status)}</td></tr>)}</tbody></table></div></div>
+                <div><div className="flex items-end justify-between"><div><p className="label-index font-mono text-xs uppercase tracking-[0.18em] text-olive">Candidates</p><p className="mt-2 text-sm text-olive">The current evidence pipeline for this role.</p></div><Link href={`/orgs/${params.orgId}/jobs/${params.jobId}/applicants`} className="inline-flex items-center gap-2 text-sm text-forest">View all <ArrowRight className="size-4" /></Link></div><div className="mt-6 overflow-x-auto"><table className="w-full min-w-[680px] border-t border-forest/15 text-left text-sm"><thead className="font-mono text-[10px] uppercase tracking-[0.13em] text-olive"><tr><th className="py-3 font-normal">Candidate</th><th className="py-3 font-normal">Stage 1</th><th className="py-3 font-normal">Stage 2C</th><th className="py-3 font-normal">Final</th><th className="py-3 font-normal">Pipeline state</th></tr></thead><tbody className="divide-y divide-forest/10">{data.candidates.slice(0, 8).map((candidate) => <tr key={candidate.id}><td className="py-5 text-lg text-ink">{candidate.name}</td><td className="py-5 font-mono tabular-nums">{candidate.stage1Score ?? "—"}</td><td className="py-5 font-mono tabular-nums">{candidate.stage2cScore ?? "—"}</td><td className="py-5 font-mono tabular-nums text-forest">{candidate.finalScore ?? "—"}</td><td className="py-5"><CandidateProcessing candidate={candidate} /></td></tr>)}</tbody></table></div></div>
               </section>
 
               <section className="border-b border-forest/12 py-12"><div className="flex flex-wrap items-end justify-between gap-6"><div><p className="label-index font-mono text-xs uppercase tracking-[0.18em] text-olive">Role configuration</p><p className="mt-3 max-w-[42ch] text-base leading-relaxed text-olive">Requirements, eligibility, evidence and evaluation priorities define what this role asks Trace to investigate.</p></div><Link href={`/orgs/${params.orgId}/jobs/${params.jobId}/publish`} className="inline-flex items-center gap-2 border-b border-forest pb-2 text-sm text-forest">Edit configuration <ArrowRight className="size-4" /></Link></div></section>
