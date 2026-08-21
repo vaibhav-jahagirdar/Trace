@@ -111,7 +111,7 @@ export const repositoryVerifierWorker = new Worker<RepositoryVerifierJobData>(
       try {
         await maybeFinalizeRepositoryShortlist(job.data.jobId);
       } catch (finalizationError) {
-        // Scoring remains complete; finalization can be retried operationally.
+       
         console.error("[RepoVerifierWorker][shortlist-finalization-error]", {
           jobId: job.data.jobId,
           error: finalizationError,
