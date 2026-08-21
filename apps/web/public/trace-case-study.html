@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Trace is an evidence pipeline for technical hiring: structured role definitions, source-grounded verification, and auditable human decisions."
+    />
+    <title>Trace — an evidence pipeline for technical hiring</title>
+    <style>
+      :root {
+        --paper: #f4f0e7;
+        --paper-deep: #e8e1d3;
+        --ink: #18352d;
+        --ink-soft: #456057;
+        --moss: #687c59;
+        --moss-pale: #dbe1d2;
+        --line: rgba(24, 53, 45, .18);
+        --line-soft: rgba(24, 53, 45, .09);
+        --oxide: #9a4c3d;
+        --cream: #fbf8f1;
+        --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        --serif: Iowan Old Style, Baskerville, "Times New Roman", serif;
+        --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image: radial-gradient(rgba(24, 53, 45, .11) .55px, transparent .55px);
+        background-size: 9px 9px;
+        font-family: var(--sans);
+        line-height: 1.45;
+      }
+      a { color: inherit; text-decoration: none; }
+      p, h1, h2, h3 { margin-top: 0; }
+      .shell { max-width: 1200px; margin: 0 auto; padding: 0 36px; }
+      .eyebrow, .index, .caption, .rail-label {
+        font: 700 10px/1.15 var(--mono);
+        letter-spacing: .16em;
+        text-transform: uppercase;
+      }
+      .eyebrow { color: var(--moss); }
+      .caption { color: var(--ink-soft); letter-spacing: .1em; }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 76px;
+        border-bottom: 1px solid var(--line);
+      }
+      .wordmark { display: flex; align-items: center; gap: 9px; font: 700 13px var(--mono); letter-spacing: .17em; }
+      .mark { width: 13px; height: 13px; border: 2px solid var(--ink); border-radius: 50%; position: relative; }
+      .mark::after { content: ""; position: absolute; height: 1px; width: 7px; background: var(--moss); right: -6px; top: 4px; transform: rotate(-39deg); }
+      .top-note { color: var(--ink-soft); }
+
+      .hero { padding: 112px 0 88px; border-bottom: 1px solid var(--line); position: relative; }
+      .hero-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(240px, .55fr); gap: 64px; align-items: end; }
+      .hero h1 { font: 400 clamp(3.5rem, 8vw, 7.35rem)/.88 var(--serif); letter-spacing: -.075em; max-width: 900px; margin: 23px 0 30px; }
+      .hero h1 em { font-style: italic; color: var(--moss); }
+      .lede { max-width: 640px; color: var(--ink-soft); font-size: 19px; line-height: 1.6; }
+      .hero-aside { border-left: 1px solid var(--line); padding-left: 22px; }
+      .hero-aside p { margin: 8px 0 0; font: 500 13px/1.65 var(--mono); color: var(--ink-soft); }
+      .hero-aside strong { color: var(--ink); font-weight: 700; }
+      .scroll-note { display: flex; align-items: center; gap: 9px; margin-top: 61px; color: var(--moss); }
+      .scroll-note i { width: 28px; height: 1px; background: currentColor; display: block; }
+
+      .chapter { padding: 104px 0; border-bottom: 1px solid var(--line); }
+      .chapter-head { display: grid; grid-template-columns: 150px 1fr; gap: 28px; margin-bottom: 48px; }
+      .chapter-head h2 { font: 400 clamp(2.2rem, 4vw, 4.15rem)/.95 var(--serif); letter-spacing: -.055em; margin: 0; max-width: 800px; }
+      .chapter-head .chapter-copy { max-width: 660px; color: var(--ink-soft); font-size: 16px; line-height: 1.65; margin-top: 18px; }
+      .index { color: var(--moss); padding-top: 7px; }
+
+      .failure-grid { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); }
+      .failure { min-height: 250px; padding: 25px 22px 12px 0; margin-right: 22px; border-right: 1px solid var(--line); }
+      .failure:last-child { border-right: none; margin-right: 0; }
+      .failure .num { font: 500 12px var(--mono); color: var(--moss); }
+      .failure h3 { font: 400 23px/1.03 var(--serif); letter-spacing: -.03em; margin: 39px 0 13px; }
+      .failure p { color: var(--ink-soft); font-size: 14px; line-height: 1.55; }
+
+      .thesis { background: var(--ink); color: var(--paper); padding: 86px 0 0; }
+      .thesis .eyebrow, .thesis .index { color: #b4c49e; }
+      .thesis-grid { display: grid; grid-template-columns: 150px 1fr; gap: 28px; }
+      .thesis h2 { font: 400 clamp(2.7rem, 5.5vw, 5.7rem)/.92 var(--serif); letter-spacing: -.065em; max-width: 950px; margin: 0 0 56px; }
+      .thesis h2 em { color: #b4c49e; }
+      .core-loop { margin-top: 8px; border-top: 1px solid rgba(244,240,231,.26); display: grid; grid-template-columns: repeat(6, 1fr); }
+      .loop-step { min-height: 145px; padding: 20px 17px 22px 0; border-right: 1px solid rgba(244,240,231,.17); margin-right: 17px; position: relative; }
+      .loop-step:last-child { border: none; }
+      .loop-step::after { content: "→"; position: absolute; right: -7px; top: 62px; color: #b4c49e; font-size: 17px; }
+      .loop-step:last-child::after { display: none; }
+      .loop-step b { display: block; font: 700 10px/1.2 var(--mono); letter-spacing: .11em; color: #b4c49e; text-transform: uppercase; }
+      .loop-step span { display: block; margin-top: 18px; font: 400 20px/1.08 var(--serif); }
+      .principles { display: flex; flex-wrap: wrap; gap: 8px; padding: 52px 0; }
+      .principle { border: 1px solid rgba(244,240,231,.3); padding: 11px 14px; font: 500 12px var(--mono); color: #dce4d1; }
+
+      .configuration { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+      .config-card { min-height: 223px; padding: 21px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: rgba(251,248,241,.34); }
+      .config-card .num { color: var(--moss); font: 700 10px var(--mono); }
+      .config-card h3 { font: 400 25px/1 var(--serif); letter-spacing: -.035em; margin: 37px 0 11px; }
+      .config-card p { color: var(--ink-soft); font-size: 13px; margin: 0; }
+      .gate-strip { margin-top: 28px; padding: 22px 25px; border-left: 3px solid var(--oxide); background: rgba(154,76,61,.07); display: flex; justify-content: space-between; gap: 24px; align-items: center; }
+      .gate-strip h3 { margin: 0 0 3px; font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .1em; }
+      .gate-strip p { margin: 0; color: var(--ink-soft); font-size: 14px; }
+      .gate-code { color: var(--oxide); white-space: nowrap; font: 700 11px var(--mono); }
+
+      .stage-rail { position: relative; display: grid; grid-template-columns: 1.2fr .8fr 1fr 1fr; border-top: 1px solid var(--line); }
+      .stage { position: relative; min-height: 353px; padding: 28px 22px 25px 0; margin-right: 22px; border-right: 1px solid var(--line); }
+      .stage:last-child { border: none; margin: 0; }
+      .stage .rail-label { color: var(--moss); }
+      .stage h3 { font: 400 30px/.98 var(--serif); letter-spacing: -.04em; margin: 30px 0 15px; }
+      .stage p { color: var(--ink-soft); font-size: 14px; max-width: 230px; }
+      .stage ul { list-style: none; padding: 0; margin: 24px 0 0; }
+      .stage li { border-top: 1px solid var(--line-soft); padding: 8px 0; font: 500 11px var(--mono); color: var(--ink-soft); }
+      .stage .arrow { color: var(--moss); font-size: 21px; position: absolute; right: -7px; top: 167px; background: var(--paper); }
+
+      .plan-board { background: var(--cream); border: 1px solid var(--line); padding: 26px; }
+      .plan-board > header { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 17px; }
+      .plan-board h3 { margin: 0; font: 400 25px/1 var(--serif); }
+      .repository-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 50px; padding-top: 28px; }
+      .repository-name { font: 700 11px var(--mono); letter-spacing: .08em; }
+      .meter { display: grid; grid-template-columns: 86px 1fr 28px; gap: 10px; align-items: center; margin: 13px 0; font: 11px var(--mono); color: var(--ink-soft); }
+      .bar { height: 5px; background: var(--paper-deep); position: relative; overflow: hidden; }
+      .bar i { display: block; height: 100%; background: var(--moss); }
+      .paths { padding-left: 18px; border-left: 1px solid var(--line); }
+      .paths p { font: 700 10px var(--mono); letter-spacing: .12em; color: var(--moss); margin: 0 0 11px; }
+      .path { display: block; padding: 8px 0; border-top: 1px solid var(--line-soft); font: 12px/1.35 var(--mono); color: var(--ink-soft); }
+      .fine-print { color: var(--ink-soft); font-size: 12px; margin: 22px 0 0; }
+
+      .evidence-stack { display: grid; grid-template-columns: 1fr 28px 1fr 28px 1fr 28px 1fr; align-items: stretch; }
+      .evidence-node { min-height: 216px; padding: 23px; border: 1px solid var(--line); background: rgba(251,248,241,.42); }
+      .evidence-node strong { display: block; font: 700 10px var(--mono); letter-spacing: .13em; color: var(--moss); }
+      .evidence-node h3 { font: 400 25px/1.04 var(--serif); letter-spacing: -.035em; margin: 33px 0 12px; }
+      .evidence-node p { margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.6; }
+      .evidence-arrow { display: grid; place-items: center; color: var(--moss); font-size: 21px; }
+      .source-snippet { margin-top: 17px; padding: 10px 11px; background: var(--ink); color: #dce4d1; font: 10px/1.55 var(--mono); }
+
+      .scope-grid { margin-top: 26px; display: grid; grid-template-columns: .85fr 1.15fr; gap: 55px; align-items: center; }
+      .matrix { aspect-ratio: 1.35; position: relative; border-left: 1px solid var(--ink); border-bottom: 1px solid var(--ink); background-image: linear-gradient(var(--line-soft) 1px, transparent 1px), linear-gradient(90deg, var(--line-soft) 1px, transparent 1px); background-size: 25% 25%; }
+      .matrix .axis-y { position: absolute; left: -27px; top: 46%; transform: rotate(-90deg); font: 700 9px var(--mono); letter-spacing: .1em; color: var(--moss); }
+      .matrix .axis-x { position: absolute; right: 4px; bottom: -25px; font: 700 9px var(--mono); letter-spacing: .1em; color: var(--moss); }
+      .dot { position: absolute; width: 13px; height: 13px; border-radius: 50%; background: var(--ink); border: 3px solid var(--paper); }
+      .dot b { position: absolute; left: 13px; top: -9px; width: 125px; font: 700 9px/1.25 var(--mono); letter-spacing: .04em; }
+      .dot.strong { left: 77%; top: 17%; background: var(--moss); }.dot.local { left: 36%; top: 27%; background: var(--ink); }.dot.weak { left: 76%; top: 75%; background: var(--oxide); }.dot.unknown { left: 12%; top: 83%; background: #a8aaa0; }
+      .scope-copy h3 { font: 400 34px/.98 var(--serif); letter-spacing: -.045em; margin: 0 0 17px; }
+      .scope-copy p { color: var(--ink-soft); font-size: 15px; line-height: 1.65; max-width: 440px; }
+      .rules { display: grid; grid-template-columns: 1fr 1fr; margin-top: 22px; }
+      .rules div { border-top: 1px solid var(--line); padding: 12px 14px 0 0; font-size: 12px; color: var(--ink-soft); }
+      .rules strong { display: block; color: var(--ink); font: 700 10px var(--mono); letter-spacing: .08em; margin-bottom: 5px; }
+
+      .score-case { border: 1px solid var(--line); background: var(--cream); display: grid; grid-template-columns: 1fr 1fr; }
+      .score-case > div { padding: 30px; }
+      .score-formula { background: var(--ink); color: var(--paper); }
+      .score-formula .eyebrow { color: #b4c49e; }
+      .formula { font: 400 clamp(1.8rem, 3.2vw, 3.25rem)/1.06 var(--serif); letter-spacing: -.05em; margin: 29px 0; }
+      .score-formula p { color: #d4ded0; max-width: 420px; font-size: 14px; }
+      .score-detail h3 { font: 400 30px/1 var(--serif); letter-spacing: -.04em; margin: 0 0 22px; }
+      .score-row { display: grid; grid-template-columns: 1fr 45px; gap: 10px; border-top: 1px solid var(--line); padding: 12px 0; font-size: 14px; color: var(--ink-soft); }
+      .score-row b { color: var(--ink); text-align: right; font: 700 12px var(--mono); }
+
+      .archive { background: var(--moss-pale); }
+      .provenance { display: grid; grid-template-columns: 1fr 38px 1fr 38px 1fr 38px 1fr; align-items: center; }
+      .record { border: 1px solid var(--line); min-height: 132px; padding: 18px; background: rgba(251,248,241,.42); }
+      .record span { color: var(--moss); font: 700 9px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+      .record b { display: block; margin-top: 20px; font: 400 21px/1.05 var(--serif); letter-spacing: -.025em; }
+      .record-arrow { text-align: center; color: var(--moss); }
+      .table-groups { display: grid; grid-template-columns: repeat(5, 1fr); margin-top: 58px; border-top: 1px solid var(--line); }
+      .table-group { padding: 20px 14px 0 0; border-right: 1px solid var(--line); margin-right: 14px; }
+      .table-group:last-child { border: none; }
+      .table-group h3 { margin: 0 0 13px; font: 700 10px var(--mono); color: var(--moss); letter-spacing: .13em; }
+      .table-group p { margin: 5px 0; color: var(--ink-soft); font: 11px/1.3 var(--mono); }
+
+      .architecture { background: var(--ink); color: var(--paper); }
+      .architecture .chapter-head h2 { color: var(--paper); }.architecture .chapter-copy { color: #d4ded0; }.architecture .index { color: #b4c49e; }
+      .arch { display: grid; grid-template-columns: 1fr 52px 1.25fr 52px .9fr; align-items: center; }
+      .arch-box { border: 1px solid rgba(244,240,231,.28); padding: 24px; min-height: 255px; }
+      .arch-box strong { display: block; color: #b4c49e; font: 700 10px var(--mono); letter-spacing: .13em; }
+      .arch-box h3 { font: 400 28px/1 var(--serif); letter-spacing: -.04em; margin: 22px 0; }
+      .arch-box ul { list-style: none; padding: 0; margin: 0; }.arch-box li { color: #d4ded0; border-top: 1px solid rgba(244,240,231,.15); padding: 8px 0; font: 12px var(--mono); }
+      .arch-arrow { text-align: center; color: #b4c49e; font-size: 25px; }
+      .worker-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 11px; }.worker { padding: 9px; border: 1px solid rgba(244,240,231,.2); color: #d4ded0; font: 10px/1.35 var(--mono); }
+
+      .boundary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; }
+      .boundary-grid h3 { font: 400 32px/1 var(--serif); letter-spacing: -.04em; margin: 0 0 25px; }
+      .claim-list { border-top: 1px solid var(--line); }
+      .claim-list div { display: grid; grid-template-columns: 30px 1fr; gap: 12px; border-bottom: 1px solid var(--line); padding: 14px 0; color: var(--ink-soft); font-size: 14px; }
+      .claim-list span { color: var(--moss); font: 700 10px var(--mono); }
+      .not-yet { border-left: 3px solid var(--oxide); padding: 4px 0 4px 18px; }.not-yet .claim-list span { color: var(--oxide); }
+
+      .closing { padding: 130px 0 60px; }
+      .closing .statement { max-width: 1080px; font: 400 clamp(2.5rem, 5.8vw, 5.6rem)/.95 var(--serif); letter-spacing: -.065em; }
+      .closing .statement em { color: var(--moss); font-style: italic; }
+      .pipeline { margin-top: 76px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 19px 0; }
+      .pipeline span { font: 700 10px var(--mono); color: var(--ink-soft); letter-spacing: .07em; text-transform: uppercase; }.pipeline i { color: var(--moss); font-style: normal; }
+      .footer { display: flex; justify-content: space-between; align-items: end; padding: 28px 0; color: var(--ink-soft); }.footer p { margin: 0; font-size: 12px; }.footer .wordmark { color: var(--ink); }
+
+      @media (max-width: 850px) {
+        .shell { padding: 0 21px; }.top-note { display: none; }.hero { padding: 75px 0 62px; }.hero-grid, .chapter-head, .thesis-grid { grid-template-columns: 1fr; gap: 15px; }.hero-aside { border-left: 0; border-top: 1px solid var(--line); padding: 18px 0 0; }.failure-grid, .configuration { grid-template-columns: 1fr 1fr; }.failure:nth-child(2) { border-right: none; }.failure:nth-child(n+3) { border-top: 1px solid var(--line); }.core-loop { grid-template-columns: 1fr 1fr; }.loop-step:nth-child(2n) { border-right: none; }.loop-step::after { display: none; }.stage-rail { grid-template-columns: 1fr 1fr; }.stage:nth-child(2) { border-right: none; }.stage:nth-child(n+3) { border-top: 1px solid var(--line); }.stage .arrow { display: none; }.repository-grid, .scope-grid, .score-case, .boundary-grid { grid-template-columns: 1fr; gap: 28px; }.evidence-stack, .provenance, .arch { grid-template-columns: 1fr; gap: 0; }.evidence-arrow, .record-arrow, .arch-arrow { height: 42px; transform: rotate(90deg); }.table-groups { grid-template-columns: 1fr 1fr; }.table-group:nth-child(2n) { border-right: none; }.arch-box { min-height: auto; }.matrix { margin: 10px 24px 35px; }.closing { padding-top: 76px; }
+      }
+      @media (max-width: 510px) { .failure-grid, .configuration, .stage-rail, .core-loop, .table-groups { grid-template-columns: 1fr; }.failure, .failure:nth-child(2), .failure:nth-child(n+3), .stage, .stage:nth-child(2), .stage:nth-child(n+3) { min-height: auto; margin-right: 0; padding-right: 0; border-right: none; border-top: 1px solid var(--line); }.failure:first-child, .stage:first-child { border-top: none; }.config-card { min-height: 180px; }.gate-strip, .footer { align-items: flex-start; flex-direction: column; }.gate-code { margin-top: 10px; }.rules { grid-template-columns: 1fr; }.table-group { border-right: none; border-bottom: 1px solid var(--line); margin: 0; padding-bottom: 14px; }.topbar { height: 62px; }.hero h1 { font-size: 3.45rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="shell">
+        <header class="topbar">
+          <a class="wordmark" href="#start"><span class="mark"></span>TRACE</a>
+          <span class="top-note eyebrow">Product &amp; engineering case study · 2026</span>
+        </header>
+
+        <section class="hero" id="start">
+          <div class="hero-grid">
+            <div>
+              <p class="eyebrow">An evidence pipeline for technical hiring</p>
+              <h1>Better hiring input.<br /><em>Stronger</em> evidence.</h1>
+              <p class="lede">Trace turns an ambiguous engineering hiring process into a structured, inspectable path from role definition to source-grounded interview decisions.</p>
+            </div>
+            <aside class="hero-aside">
+              <span class="eyebrow">The premise</span>
+              <p>Hiring signal becomes weak when the input is weak. A generic job description creates generic evidence and leaves humans to resolve the uncertainty late.</p>
+              <p><strong>Trace spends deeper computation only where stronger evidence is justified.</strong></p>
+            </aside>
+          </div>
+          <div class="scroll-note eyebrow"><i></i> Read the system from input to interview</div>
+        </section>
+      </div>
+
+      <section class="chapter">
+        <div class="shell">
+          <div class="chapter-head">
+            <div class="index">01 / The problem</div>
+            <div><h2>Technical hiring breaks long before the interview.</h2><p class="chapter-copy">The familiar resume-to-ATS flow makes it easy to collect applications and hard to compare real engineering evidence. Trace begins by making the hiring specification itself more precise.</p></div>
+          </div>
+          <div class="failure-grid">
+            <article class="failure"><span class="num">01</span><h3>Keyword saturation</h3><p>Job-description terms become resume terms. The system rewards candidates for learning its vocabulary, then confuses vocabulary with capability.</p></article>
+            <article class="failure"><span class="num">02</span><h3>Weak hiring input</h3><p>Generic job descriptions hide the actual trade-offs: what is mandatory, what evidence matters, and what success should look like.</p></article>
+            <article class="failure"><span class="num">03</span><h3>Claims outrun proof</h3><p>“Built scalable auth” can describe anything from a token tutorial to a deliberate security boundary. Neither deserves the same interpretation.</p></article>
+            <article class="failure"><span class="num">04</span><h3>Manual review does not scale</h3><p>Founders and senior engineers spend weekends reconstructing context across resumes, repositories, files, and half-remembered comparisons.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="thesis">
+        <div class="shell">
+          <div class="thesis-grid"><div class="index">02 / The thesis</div><div><h2>Do not make the model more confident.<br /><em>Make the evidence stronger.</em></h2></div></div>
+          <div class="core-loop">
+            <div class="loop-step"><b>01</b><span>Hiring requirement</span></div>
+            <div class="loop-step"><b>02</b><span>Candidate claim</span></div>
+            <div class="loop-step"><b>03</b><span>Targeted retrieval</span></div>
+            <div class="loop-step"><b>04</b><span>Observable source fact</span></div>
+            <div class="loop-step"><b>05</b><span>Requirement evidence</span></div>
+            <div class="loop-step"><b>06</b><span>Human interview</span></div>
+          </div>
+          <div class="principles"><span class="principle">UNKNOWN IS NOT NEGATIVE EVIDENCE</span><span class="principle">LLMS REASON ABOUT EVIDENCE</span><span class="principle">THE BACKEND OWNS POLICY</span><span class="principle">SOURCE DOES NOT PROVE AUTHORSHIP</span></div>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="shell">
+          <div class="chapter-head"><div class="index">03 / Define the role</div><div><h2>Before evaluating a person, constrain what the role actually asks for.</h2><p class="chapter-copy">Trace treats a job as an evaluation contract—not a block of prose. This makes the later scoring policy explainable because every requirement has an explicit origin.</p></div></div>
+          <div class="configuration">
+            <article class="config-card"><span class="num">01</span><h3>Eligibility</h3><p>Experience, education, notice period, authorization, visa, relocation, and geography.</p></article>
+            <article class="config-card"><span class="num">02</span><h3>Submission</h3><p>Resume, repository, portfolio, project explanation, and the evidence an applicant is expected to provide.</p></article>
+            <article class="config-card"><span class="num">03</span><h3>Requirements</h3><p>Technologies and concepts, divided into mandatory, preferred, and bonus.</p></article>
+            <article class="config-card"><span class="num">04</span><h3>Evaluation</h3><p>Recruiter-selected dimensions and weights that shape claim-based Stage 1 assessment.</p></article>
+            <article class="config-card"><span class="num">05</span><h3>Evidence</h3><p>Implementation, architecture, testing, domain, and other evidence categories worth deeper attention.</p></article>
+            <article class="config-card"><span class="num">06</span><h3>Success signals</h3><p>Observable role-specific signs that a candidate could do the work—not generic AI assumptions.</p></article>
+          </div>
+          <div class="gate-strip"><div><h3>Hard gates happen before expensive analysis</h3><p>Ineligible applications stop with an explicit reason code; capability claims do not override a role’s non-negotiable conditions.</p></div><span class="gate-code">EDUCATION_BELOW_MINIMUM</span></div>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="shell">
+          <div class="chapter-head"><div class="index">04 / Progressive evidence</div><div><h2>Each stage answers a narrower, more defensible question.</h2><p class="chapter-copy">The pipeline preserves the distinction between what a candidate says, what Trace chooses to inspect, and what the inspected source can actually demonstrate.</p></div></div>
+          <div class="stage-rail">
+            <article class="stage"><span class="rail-label">Application</span><h3>What was submitted?</h3><p>Resume, structured eligibility, repository links, portfolio, and candidate-provided context become a bounded evaluation input.</p><ul><li>FORM DATA</li><li>RESUME PDF</li><li>SUBMISSION EVIDENCE</li></ul><span class="arrow">→</span></article>
+            <article class="stage"><span class="rail-label">Stage 1</span><h3>What does the application claim?</h3><p>The resume is parsed into first-class claims, projects, technologies, concepts, requirement results, and a deterministic fit score.</p><ul><li>CLAIMED ≠ VERIFIED</li><li>CHEAP, STRUCTURED CONTEXT</li><li>POLICY-DRIVEN PROMOTION</li></ul><span class="arrow">→</span></article>
+            <article class="stage"><span class="rail-label">Stage 2A</span><h3>What should be inspected?</h3><p>Repository discovery becomes an investigation plan: priority, objectives, seed paths, dependencies, and completion conditions.</p><ul><li>RETRIEVAL PRIORITY ≠ QUALITY</li><li>SELF-OWNED CONTEXT FIRST</li><li>OBJECTIVE-LED PATHS</li></ul><span class="arrow">→</span></article>
+            <article class="stage"><span class="rail-label">Stage 2C</span><h3>What does the source show?</h3><p>Retrieved files become line-addressable facts, engineering mechanisms, requirement mappings, risks, and interview probes.</p><ul><li>SOURCE-GROUNDED</li><li>COVERAGE-AWARE</li><li>AUDITABLE OUTPUT</li></ul></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="shell">
+          <div class="chapter-head"><div class="index">05 / Stage 2A</div><div><h2>Repository discovery is not code verification. It is evidence-acquisition planning.</h2><p class="chapter-copy">The planner decides where attention belongs before the verifier sees source. A repository may be elevated even when it was not mentioned on a resume, but these priorities never become a quality score.</p></div></div>
+          <div class="plan-board">
+            <header><h3>Illustrative investigation plan</h3><span class="caption">Repository / attention allocation</span></header>
+            <div class="repository-grid">
+              <div><span class="repository-name">TRACE / SELF-OWNED / CRITICAL</span><div class="meter"><span>Backend</span><div class="bar"><i style="width:55%"></i></div><span>55</span></div><div class="meter"><span>Database</span><div class="bar"><i style="width:25%"></i></div><span>25</span></div><div class="meter"><span>Security</span><div class="bar"><i style="width:15%"></i></div><span>15</span></div><div class="meter"><span>Testing</span><div class="bar"><i style="width:5%"></i></div><span>05</span></div><p class="fine-print">For large profiles, full trees are limited to self-owned repositories. Forks and organizational repositories remain metadata-led unless they warrant specific investigation.</p></div>
+              <div class="paths"><p>Objective 003 / async jobs</p><span class="path">apps/api/src/queues/producer.ts</span><span class="path">apps/api/src/queues/worker.ts</span><span class="path">apps/api/src/queues/connection.ts</span><span class="path">dependency policy: DIRECT_LOCAL_IMPORTS</span><span class="path">completion: queue lifecycle is observable</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="shell">
+          <div class="chapter-head"><div class="index">06 / Stage 2C</div><div><h2>Observe before evaluating.</h2><p class="chapter-copy">Stage 2C never leaps from code to “candidate quality.” It records what is visible, identifies a mechanism, maps that mechanism to the job contract, and retains the boundary of what remains unknown.</p></div></div>
+          <div class="evidence-stack">
+            <article class="evidence-node"><strong>01 / Source fact</strong><h3>Line-addressable evidence</h3><p>Repository, snapshot reference, blob SHA, path, lines, content hash.</p><div class="source-snippet">task.status.service.ts:41–52<br />SELECT ... FOR UPDATE</div></article><div class="evidence-arrow">→</div>
+            <article class="evidence-node"><strong>02 / Mechanism</strong><h3>Transactional state change</h3><p>A job-neutral engineering card describes the observable sequence without claiming who authored it.</p></article><div class="evidence-arrow">→</div>
+            <article class="evidence-node"><strong>03 / Requirement</strong><h3>PostgreSQL evidence</h3><p>Transaction boundaries and row locking are mapped only to the configured requirement they can support.</p></article><div class="evidence-arrow">→</div>
+            <article class="evidence-node"><strong>04 / Interview</strong><h3>A bounded probe</h3><p>“What race condition was this lock intended to prevent?” tests understanding of visible evidence.</p></article>
+          </div>
+          <div class="scope-grid">
+            <div class="matrix"><span class="axis-y">EVIDENCE STRENGTH</span><span class="axis-x">ASSESSMENT COVERAGE</span><i class="dot strong"><b>strong / coherent</b></i><i class="dot local"><b>strong / local</b></i><i class="dot weak"><b>weak / complete</b></i><i class="dot unknown"><b>unknown / neutral</b></i></div>
+            <div class="scope-copy"><h3>Strength and coverage are separate facts.</h3><p>Strong local source is not broad proof. A complete scope may still reveal weak implementation. Private or unavailable work is represented as neutral—not silently translated into a negative score.</p><div class="rules"><div><strong>NOT SUFFICIENT</strong>Imports, dependencies, README text, file names, stars, or repository size.</div><div><strong>NOT ESTABLISHED</strong>Authorship, production use, scale, uptime, business impact, or runtime behavior.</div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="shell">
+          <div class="chapter-head"><div class="index">07 / Scoring policy</div><div><h2>The model produces structured evidence. The backend applies the decision policy.</h2><p class="chapter-copy">Only canonical requirement mappings affect the numeric score. Engineering cards, claim verification, and material risks are retained for explanation, not double-counted as hidden penalties.</p></div></div>
+          <div class="score-case">
+            <div class="score-formula"><span class="eyebrow">Current V2 shadow policy</span><div class="formula">Final score<br />= <em>75%</em> repository evidence<br />+ <em>25%</em> Stage 1 context</div><p>When repository evidence is assessable, it is the dominant engineering signal. If it is unavailable or unassessable, the Stage 1 score remains unchanged.</p></div>
+            <div class="score-detail"><h3>Coverage dampens evidence.</h3><div class="score-row"><span>90 evidence / 100 coverage</span><b>90 effective</b></div><div class="score-row"><span>90 evidence / 40 coverage</span><b>66 effective</b></div><div class="score-row"><span>50 evidence / 0 coverage</span><b>neutral</b></div><div class="score-row"><span>Backend requirement weights</span><b>canonical</b></div><div class="score-row"><span>Score runs and policy snapshots</span><b>append-only</b></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="chapter archive">
+        <div class="shell">
+          <div class="chapter-head"><div class="index">08 / Provenance</div><div><h2>A conclusion is only useful if its path can be reconstructed.</h2><p class="chapter-copy">Trace stores evidence lineage beside the result: source reports, retrieval manifests, scoring policy, and shortlist disposition all remain inspectable after a run.</p></div></div>
+          <div class="provenance"><div class="record"><span>Stage 1</span><b>Report hash</b></div><div class="record-arrow">→</div><div class="record"><span>Stage 2A</span><b>Plan + paths</b></div><div class="record-arrow">→</div><div class="record"><span>Stage 2C</span><b>Snapshot + verifier run</b></div><div class="record-arrow">→</div><div class="record"><span>Policy</span><b>Score + shortlist run</b></div></div>
+          <div class="table-groups"><div class="table-group"><h3>Job contract</h3><p>jobs</p><p>job_requirements</p><p>job_eligibility_criteria</p></div><div class="table-group"><h3>Application</h3><p>job_applications</p><p>application_submissions</p><p>application_eligibility</p></div><div class="table-group"><h3>Stage 1</h3><p>application_claims</p><p>application_projects</p><p>application_resume_analyses</p></div><div class="table-group"><h3>Stage 2</h3><p>repository_analyses</p><p>objectives + paths</p><p>evidence_units</p></div><div class="table-group"><h3>Decision</h3><p>repository_score_runs</p><p>shortlist_runs</p><p>shortlist_members</p></div></div>
+        </div>
+      </section>
+
+      <section class="chapter architecture">
+        <div class="shell">
+          <div class="chapter-head"><div class="index">09 / System design</div><div><h2>The product shape follows the failure boundaries.</h2><p class="chapter-copy">Expensive model calls are treated as external, retryable computations. Raw responses are checkpointed before downstream validation and persistence, allowing recovery without automatically repeating expensive work.</p></div></div>
+          <div class="arch">
+            <article class="arch-box"><strong>Product surface</strong><h3>Next.js frontend</h3><ul><li>Job definition</li><li>Applicants + analysis</li><li>Evidence reports</li><li>Score audit</li></ul></article><div class="arch-arrow">→</div>
+            <article class="arch-box"><strong>Control plane</strong><h3>Node API</h3><ul><li>Auth / organisation boundaries</li><li>Application orchestration</li><li>Canonical job weights</li><li>Deterministic scorer</li></ul><div class="worker-row"><span class="worker">RESUME<br />WORKER</span><span class="worker">PLANNER<br />WORKER</span><span class="worker">VERIFIER<br />WORKER</span></div></article><div class="arch-arrow">→</div>
+            <article class="arch-box"><strong>Evidence plane</strong><h3>Python analysis</h3><ul><li>PDF parsing</li><li>Resume analysis</li><li>Repository planning</li><li>Source verification</li></ul></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="chapter">
+        <div class="shell">
+          <div class="chapter-head"><div class="index">10 / Honest boundary</div><div><h2>Trace is designed to make an interview decision more defensible—not to replace the interview.</h2><p class="chapter-copy">The system’s value is in making uncertainty explicit, focusing technical review on evidence, and turning visible source into better questions for a human reviewer.</p></div></div>
+          <div class="boundary-grid">
+            <div><h3>Built in V1</h3><div class="claim-list"><div><span>01</span>Structured six-part role definition and hard eligibility gates</div><div><span>02</span>Claim-based Stage 1 analysis with checkpointed LLM output</div><div><span>03</span>Repository discovery, targeted retrieval, and source-level verification</div><div><span>04</span>Versioned scoring, provenance, and auditable shortlist records</div></div></div>
+            <div class="not-yet"><h3>Not claimed yet</h3><div class="claim-list"><div><span>01</span>Empirically calibrated hiring predictions</div><div><span>02</span>Proof of source authorship or production ownership</div><div><span>03</span>Large-scale reliability, privacy, compliance, or SLA guarantees</div><div><span>04</span>A replacement for recruiter judgment or technical interviews</div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="shell">
+        <section class="closing">
+          <p class="eyebrow">Trace’s hypothesis</p>
+          <div class="statement">Hiring decisions improve when roles are defined precisely and evaluation moves from cheap self-reported claims toward <em>expensive, source-grounded evidence.</em></div>
+          <div class="pipeline"><span>Employer</span><i>→</i><span>Role contract</span><i>→</i><span>Eligibility</span><i>→</i><span>Claims</span><i>→</i><span>Evidence plan</span><i>→</i><span>Source verification</span><i>→</i><span>Audit</span><i>→</i><span>Human interview</span></div>
+        </section>
+        <footer class="footer"><a class="wordmark" href="#start"><span class="mark"></span>TRACE</a><p>Built to test a product hypothesis, not to declare hiring solved.</p></footer>
+      </div>
+    </main>
+  </body>
+</html>
