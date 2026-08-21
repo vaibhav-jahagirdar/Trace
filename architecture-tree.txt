@@ -1,0 +1,1188 @@
+.
+├── apps
+│   ├── analysis
+│   │   ├── app
+│   │   │   ├── analyzers
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── __pycache__
+│   │   │   │       └── __init__.cpython-312.pyc
+│   │   │   ├── api
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── repo_planner.cpython-312.pyc
+│   │   │   │   │   └── resume.cpython-312.pyc
+│   │   │   │   ├── repo_planner.py
+│   │   │   │   └── resume.py
+│   │   │   ├── cleaners
+│   │   │   │   ├── base.py
+│   │   │   │   ├── candidate.py
+│   │   │   │   ├── final_resume_report.py
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── base.cpython-312.pyc
+│   │   │   │   │   ├── candidate.cpython-312.pyc
+│   │   │   │   │   ├── final_resume_report.cpython-312.pyc
+│   │   │   │   │   └── text.cpython-312.pyc
+│   │   │   │   └── text.py
+│   │   │   ├── clients
+│   │   │   │   ├── github.py
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── github.cpython-312.pyc
+│   │   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   │   └── r2.cpython-312.pyc
+│   │   │   │   └── r2.py
+│   │   │   ├── core
+│   │   │   │   └── config.py
+│   │   │   ├── llm
+│   │   │   │   ├── client.py
+│   │   │   │   ├── repositoryPlanner
+│   │   │   │   │   ├── context
+│   │   │   │   │   │   └── planner.md
+│   │   │   │   │   └── prompt
+│   │   │   │   │       └── builder.py
+│   │   │   │   ├── repositoryVerifier
+│   │   │   │   │   └── context
+│   │   │   │   │       └── system.md
+│   │   │   │   ├── resumeAnalyzer
+│   │   │   │   │   ├── context
+│   │   │   │   │   │   └── system.md
+│   │   │   │   │   └── prompt
+│   │   │   │   │       └── builder.py
+│   │   │   │   └── service.py
+│   │   │   ├── main.py
+│   │   │   ├── models
+│   │   │   │   ├── enums.py
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── enums.cpython-312.pyc
+│   │   │   │   │   └── responses.cpython-312.pyc
+│   │   │   │   └── responses.py
+│   │   │   ├── parsers
+│   │   │   │   ├── pdf.py
+│   │   │   │   └── __pycache__
+│   │   │   │       ├── __init__.cpython-312.pyc
+│   │   │   │       └── pdf.cpython-312.pyc
+│   │   │   ├── __pycache__
+│   │   │   │   ├── main.cpython-312.pyc
+│   │   │   │   └── test_gemini.cpython-312.pyc
+│   │   │   ├── schemas
+│   │   │   │   ├── candidate.py
+│   │   │   │   ├── evaluation_context.py
+│   │   │   │   ├── final_report.py
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── planner.py
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── candidate.cpython-312.pyc
+│   │   │   │   │   ├── evaluation_context.cpython-312.pyc
+│   │   │   │   │   ├── final_report.cpython-312.pyc
+│   │   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   │   ├── planner.cpython-312.pyc
+│   │   │   │   │   ├── resume.cpython-312.pyc
+│   │   │   │   │   └── resume_report.cpython-312.pyc
+│   │   │   │   ├── resume.py
+│   │   │   │   └── resume_report.py
+│   │   │   ├── scrapers
+│   │   │   │   └── github
+│   │   │   │       ├── metadata.py
+│   │   │   │       ├── profile.py
+│   │   │   │       ├── __pycache__
+│   │   │   │       │   ├── metadata.cpython-312.pyc
+│   │   │   │       │   ├── profile.cpython-312.pyc
+│   │   │   │       │   ├── tree_builder.cpython-312.pyc
+│   │   │   │       │   └── treeBuilder.cpython-312.pyc
+│   │   │   │       └── tree_builder.py
+│   │   │   ├── scripts
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── scan_profile.cpython-312.pyc
+│   │   │   │   │   └── test_repo_tree.cpython-312.pyc
+│   │   │   │   ├── scan_profile.py
+│   │   │   │   └── test_repo_tree.py
+│   │   │   ├── services
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── repo_planner.cpython-312.pyc
+│   │   │   │   │   └── resume.cpython-312.pyc
+│   │   │   │   ├── repo_planner.py
+│   │   │   │   └── resume.py
+│   │   │   └── test_gemini.py
+│   │   └── requirements.txt
+│   ├── api
+│   │   ├── package.json
+│   │   ├── package-lock.json
+│   │   ├── scripts
+│   │   │   ├── debug-analyze.d.ts
+│   │   │   ├── debug-analyze.d.ts.map
+│   │   │   ├── debug-analyze.js
+│   │   │   ├── debug-analyze.js.map
+│   │   │   ├── debug-analyze.ts
+│   │   │   ├── demo-response.json
+│   │   │   ├── test-logger.d.ts
+│   │   │   ├── test-logger.d.ts.map
+│   │   │   ├── test-logger.js
+│   │   │   ├── test-logger.js.map
+│   │   │   └── test-logger.ts
+│   │   ├── src
+│   │   │   ├── app.d.ts
+│   │   │   ├── app.d.ts.map
+│   │   │   ├── app.js
+│   │   │   ├── app.js.map
+│   │   │   ├── app.ts
+│   │   │   ├── config
+│   │   │   │   ├── db.d.ts
+│   │   │   │   ├── db.d.ts.map
+│   │   │   │   ├── db.js
+│   │   │   │   ├── db.js.map
+│   │   │   │   ├── db.ts
+│   │   │   │   ├── env.d.ts
+│   │   │   │   ├── env.d.ts.map
+│   │   │   │   ├── env.js
+│   │   │   │   ├── env.js.map
+│   │   │   │   ├── env.ts
+│   │   │   │   ├── transaction.d.ts
+│   │   │   │   ├── transaction.d.ts.map
+│   │   │   │   ├── transaction.js
+│   │   │   │   ├── transaction.js.map
+│   │   │   │   └── transaction.ts
+│   │   │   ├── helpers
+│   │   │   │   ├── evaluationContext.d.ts
+│   │   │   │   ├── evaluationContext.d.ts.map
+│   │   │   │   ├── evaluationContext.js
+│   │   │   │   ├── evaluationContext.js.map
+│   │   │   │   ├── evaluationContext.ts
+│   │   │   │   ├── fileValidation.d.ts
+│   │   │   │   ├── fileValidation.d.ts.map
+│   │   │   │   ├── fileValidation.js
+│   │   │   │   ├── fileValidation.js.map
+│   │   │   │   ├── fileValidation.ts
+│   │   │   │   ├── membershipCheck.d.ts
+│   │   │   │   ├── membershipCheck.d.ts.map
+│   │   │   │   ├── membershipCheck.js
+│   │   │   │   ├── membershipCheck.js.map
+│   │   │   │   └── membershipCheck.ts
+│   │   │   ├── lib
+│   │   │   │   ├── logger.d.ts
+│   │   │   │   ├── logger.d.ts.map
+│   │   │   │   ├── logger.js
+│   │   │   │   ├── logger.js.map
+│   │   │   │   └── logger.ts
+│   │   │   ├── middleware
+│   │   │   │   ├── asyncHandler.d.ts
+│   │   │   │   ├── asyncHandler.d.ts.map
+│   │   │   │   ├── asyncHandler.js
+│   │   │   │   ├── asyncHandler.js.map
+│   │   │   │   ├── asyncHandler.ts
+│   │   │   │   ├── errorHandler.d.ts
+│   │   │   │   ├── errorHandler.d.ts.map
+│   │   │   │   ├── errorHandler.js
+│   │   │   │   ├── errorHandler.js.map
+│   │   │   │   ├── errorHandler.ts
+│   │   │   │   ├── logger.d.ts
+│   │   │   │   ├── logger.d.ts.map
+│   │   │   │   ├── logger.js
+│   │   │   │   ├── logger.js.map
+│   │   │   │   ├── logger.ts
+│   │   │   │   ├── requireAuth.d.ts
+│   │   │   │   ├── requireAuth.d.ts.map
+│   │   │   │   ├── requireAuth.js
+│   │   │   │   ├── requireAuth.js.map
+│   │   │   │   ├── requireAuth.ts
+│   │   │   │   ├── requireMembership.d.ts
+│   │   │   │   ├── requireMembership.d.ts.map
+│   │   │   │   ├── requireMembership.js
+│   │   │   │   ├── requireMembership.js.map
+│   │   │   │   ├── requireMembership.ts
+│   │   │   │   ├── upload.d.ts
+│   │   │   │   ├── upload.d.ts.map
+│   │   │   │   ├── upload.js
+│   │   │   │   ├── upload.js.map
+│   │   │   │   ├── upload.ts
+│   │   │   │   ├── validateParams.d.ts
+│   │   │   │   ├── validateParams.d.ts.map
+│   │   │   │   ├── validateParams.js
+│   │   │   │   ├── validateParams.js.map
+│   │   │   │   └── validateParams.ts
+│   │   │   ├── modules
+│   │   │   │   ├── applications
+│   │   │   │   │   ├── analysis
+│   │   │   │   │   │   ├── github
+│   │   │   │   │   │   │   └── planner
+│   │   │   │   │   │   │       ├── client
+│   │   │   │   │   │   │       │   └── planner.client.ts
+│   │   │   │   │   │   │       ├── evaluationContext
+│   │   │   │   │   │   │       │   └── repoAnalysisPayload.ts
+│   │   │   │   │   │   │       ├── helpers
+│   │   │   │   │   │   │       │   ├── checkpoint.d.ts
+│   │   │   │   │   │   │       │   ├── checkpoint.ts
+│   │   │   │   │   │   │       │   ├── cleanPlannerOutput.ts
+│   │   │   │   │   │   │       │   ├── persistPlanner.ts
+│   │   │   │   │   │   │       │   ├── updatePlannerStatus.ts
+│   │   │   │   │   │   │       │   └── validateRepoAnalysisReq.ts
+│   │   │   │   │   │   │       └── services
+│   │   │   │   │   │   │           └── repoPlanner.service.ts
+│   │   │   │   │   │   ├── resume
+│   │   │   │   │   │   │   ├── client
+│   │   │   │   │   │   │   │   └── analysis.client.ts
+│   │   │   │   │   │   │   ├── dto
+│   │   │   │   │   │   │   │   ├── resumeEvaluationReport.d.ts
+│   │   │   │   │   │   │   │   ├── resumeEvaluationReport.d.ts.map
+│   │   │   │   │   │   │   │   ├── resumeEvaluationReport.js
+│   │   │   │   │   │   │   │   ├── resumeEvaluationReport.js.map
+│   │   │   │   │   │   │   │   └── resumeEvaluationReport.ts
+│   │   │   │   │   │   │   ├── evaluationContext
+│   │   │   │   │   │   │   │   ├── contextBuilder.service.d.ts
+│   │   │   │   │   │   │   │   ├── contextBuilder.service.d.ts.map
+│   │   │   │   │   │   │   │   ├── contextBuilder.service.js
+│   │   │   │   │   │   │   │   ├── contextBuilder.service.js.map
+│   │   │   │   │   │   │   │   └── contextBuilder.service.ts
+│   │   │   │   │   │   │   └── services
+│   │   │   │   │   │   │       ├── helpers
+│   │   │   │   │   │   │       │   ├── checkpoint.ts
+│   │   │   │   │   │   │       │   ├── normalizeTech.d.ts
+│   │   │   │   │   │   │       │   ├── normalizeTech.d.ts.map
+│   │   │   │   │   │   │       │   ├── normalizeTech.js
+│   │   │   │   │   │   │       │   ├── normalizeTech.js.map
+│   │   │   │   │   │   │       │   ├── normalizeTech.ts
+│   │   │   │   │   │   │       │   ├── persistCandidateAnalysis.d.ts
+│   │   │   │   │   │   │       │   ├── persistCandidateAnalysis.d.ts.map
+│   │   │   │   │   │   │       │   ├── persistCandidateAnalysis.js
+│   │   │   │   │   │   │       │   ├── persistCandidateAnalysis.js.map
+│   │   │   │   │   │   │       │   ├── persistCandidateAnalysis.ts
+│   │   │   │   │   │   │       │   ├── updateApplicationStatus.d.ts
+│   │   │   │   │   │   │       │   ├── updateApplicationStatus.d.ts.map
+│   │   │   │   │   │   │       │   ├── updateApplicationStatus.js
+│   │   │   │   │   │   │       │   ├── updateApplicationStatus.js.map
+│   │   │   │   │   │   │       │   ├── updateApplicationStatus.ts
+│   │   │   │   │   │   │       │   └── validateCvAnalysisRequest.ts
+│   │   │   │   │   │   │       └── resumeAnalysis.service.ts
+│   │   │   │   │   │   └── validators
+│   │   │   │   │   │       ├── candidateExtraction.ts
+│   │   │   │   │   │       ├── evaluationReport.ts
+│   │   │   │   │   │       └── resumeEvaluation.ts
+│   │   │   │   │   ├── [applicationId]
+│   │   │   │   │   │   ├── helpers
+│   │   │   │   │   │   │   ├── getApplicationConcepts.d.ts
+│   │   │   │   │   │   │   ├── getApplicationConcepts.d.ts.map
+│   │   │   │   │   │   │   ├── getApplicationConcepts.js
+│   │   │   │   │   │   │   ├── getApplicationConcepts.js.map
+│   │   │   │   │   │   │   ├── getApplicationConcepts.ts
+│   │   │   │   │   │   │   ├── getApplicationForEvaluation.d.ts
+│   │   │   │   │   │   │   ├── getApplicationForEvaluation.d.ts.map
+│   │   │   │   │   │   │   ├── getApplicationForEvaluation.js
+│   │   │   │   │   │   │   ├── getApplicationForEvaluation.js.map
+│   │   │   │   │   │   │   ├── getApplicationForEvaluation.ts
+│   │   │   │   │   │   │   ├── getApplicationTechnologies.d.ts
+│   │   │   │   │   │   │   ├── getApplicationTechnologies.d.ts.map
+│   │   │   │   │   │   │   ├── getApplicationTechnologies.js
+│   │   │   │   │   │   │   ├── getApplicationTechnologies.js.map
+│   │   │   │   │   │   │   ├── getApplicationTechnologies.ts
+│   │   │   │   │   │   │   ├── toApplicationContextDto.d.ts
+│   │   │   │   │   │   │   ├── toApplicationContextDto.d.ts.map
+│   │   │   │   │   │   │   ├── toApplicationContextDto.js
+│   │   │   │   │   │   │   ├── toApplicationContextDto.js.map
+│   │   │   │   │   │   │   └── toApplicationContextDto.ts
+│   │   │   │   │   │   └── services
+│   │   │   │   │   │       ├── applicationContext.service.d.ts
+│   │   │   │   │   │       ├── applicationContext.service.d.ts.map
+│   │   │   │   │   │       ├── applicationContext.service.js
+│   │   │   │   │   │       ├── applicationContext.service.js.map
+│   │   │   │   │   │       └── applicationContext.service.ts
+│   │   │   │   │   ├── apply
+│   │   │   │   │   │   ├── jobs.apply.controller.ts
+│   │   │   │   │   │   ├── jobs.apply.route.d.ts.map
+│   │   │   │   │   │   ├── jobs.apply.route.js
+│   │   │   │   │   │   ├── jobs.apply.route.js.map
+│   │   │   │   │   │   ├── jobs.apply.route.ts
+│   │   │   │   │   │   ├── logic
+│   │   │   │   │   │   │   ├── evaluation.d.ts
+│   │   │   │   │   │   │   ├── evaluation.d.ts.map
+│   │   │   │   │   │   │   ├── evaluation.js
+│   │   │   │   │   │   │   ├── evaluation.js.map
+│   │   │   │   │   │   │   └── evaluation.ts
+│   │   │   │   │   │   ├── services
+│   │   │   │   │   │   │   └── jobs.apply.service.ts
+│   │   │   │   │   │   ├── validator.d.ts
+│   │   │   │   │   │   ├── validator.d.ts.map
+│   │   │   │   │   │   ├── validator.js
+│   │   │   │   │   │   ├── validator.js.map
+│   │   │   │   │   │   └── validator.ts
+│   │   │   │   │   └── helpers
+│   │   │   │   │       ├── createApplication.d.ts
+│   │   │   │   │       ├── createApplication.d.ts.map
+│   │   │   │   │       ├── createApplication.js
+│   │   │   │   │       ├── createApplication.js.map
+│   │   │   │   │       ├── createApplication.ts
+│   │   │   │   │       ├── createEligibility.d.ts
+│   │   │   │   │       ├── createEligibility.d.ts.map
+│   │   │   │   │       ├── createEligibility.js
+│   │   │   │   │       ├── createEligibility.js.map
+│   │   │   │   │       ├── createEligibility.ts
+│   │   │   │   │       ├── createSubmission.d.ts
+│   │   │   │   │       ├── createSubmission.d.ts.map
+│   │   │   │   │       ├── createSubmission.js
+│   │   │   │   │       ├── createSubmission.js.map
+│   │   │   │   │       ├── createSubmission.ts
+│   │   │   │   │       ├── createTechAndConcepts.d.ts
+│   │   │   │   │       ├── createTechAndConcepts.d.ts.map
+│   │   │   │   │       ├── createTechAndConcepts.js
+│   │   │   │   │       ├── createTechAndConcepts.js.map
+│   │   │   │   │       └── createTechAndConcepts.ts
+│   │   │   │   ├── auth
+│   │   │   │   │   ├── auth.controller.d.ts
+│   │   │   │   │   ├── auth.controller.d.ts.map
+│   │   │   │   │   ├── auth.controller.js
+│   │   │   │   │   ├── auth.controller.js.map
+│   │   │   │   │   ├── auth.controller.ts
+│   │   │   │   │   ├── auth.logout.controller.d.ts
+│   │   │   │   │   ├── auth.logout.controller.d.ts.map
+│   │   │   │   │   ├── auth.logout.controller.js
+│   │   │   │   │   ├── auth.logout.controller.js.map
+│   │   │   │   │   ├── auth.logout.controller.ts
+│   │   │   │   │   ├── auth.logout.service.d.ts
+│   │   │   │   │   ├── auth.logout.service.d.ts.map
+│   │   │   │   │   ├── auth.logout.service.js
+│   │   │   │   │   ├── auth.logout.service.js.map
+│   │   │   │   │   ├── auth.logout.service.ts
+│   │   │   │   │   ├── auth.refresh.controller.d.ts
+│   │   │   │   │   ├── auth.refresh.controller.d.ts.map
+│   │   │   │   │   ├── auth.refresh.controller.js
+│   │   │   │   │   ├── auth.refresh.controller.js.map
+│   │   │   │   │   ├── auth.refresh.controller.ts
+│   │   │   │   │   ├── auth.refresh.service.d.ts
+│   │   │   │   │   ├── auth.refresh.service.d.ts.map
+│   │   │   │   │   ├── auth.refresh.service.js
+│   │   │   │   │   ├── auth.refresh.service.js.map
+│   │   │   │   │   ├── auth.refresh.service.ts
+│   │   │   │   │   ├── auth.routes.d.ts
+│   │   │   │   │   ├── auth.routes.d.ts.map
+│   │   │   │   │   ├── auth.routes.js
+│   │   │   │   │   ├── auth.routes.js.map
+│   │   │   │   │   ├── auth.routes.ts
+│   │   │   │   │   ├── auth.service.d.ts
+│   │   │   │   │   ├── auth.service.d.ts.map
+│   │   │   │   │   ├── auth.service.js
+│   │   │   │   │   ├── auth.service.js.map
+│   │   │   │   │   ├── auth.service.ts
+│   │   │   │   │   ├── auth.types.d.ts
+│   │   │   │   │   ├── auth.types.d.ts.map
+│   │   │   │   │   ├── auth.types.js
+│   │   │   │   │   ├── auth.types.js.map
+│   │   │   │   │   ├── auth.types.ts
+│   │   │   │   │   ├── auth.validator.d.ts
+│   │   │   │   │   ├── auth.validator.d.ts.map
+│   │   │   │   │   ├── auth.validator.js
+│   │   │   │   │   ├── auth.validator.js.map
+│   │   │   │   │   └── auth.validator.ts
+│   │   │   │   ├── concepts
+│   │   │   │   │   ├── concept.controller.d.ts
+│   │   │   │   │   ├── concept.controller.d.ts.map
+│   │   │   │   │   ├── concept.controller.js
+│   │   │   │   │   ├── concept.controller.js.map
+│   │   │   │   │   ├── concept.controller.ts
+│   │   │   │   │   ├── concept.repository.d.ts
+│   │   │   │   │   ├── concept.repository.d.ts.map
+│   │   │   │   │   ├── concept.repository.js
+│   │   │   │   │   ├── concept.repository.js.map
+│   │   │   │   │   ├── concept.repository.ts
+│   │   │   │   │   ├── concept.routes.d.ts
+│   │   │   │   │   ├── concept.routes.d.ts.map
+│   │   │   │   │   ├── concept.routes.js
+│   │   │   │   │   ├── concept.routes.js.map
+│   │   │   │   │   ├── concept.routes.ts
+│   │   │   │   │   ├── concept.schema.d.ts
+│   │   │   │   │   ├── concept.schema.d.ts.map
+│   │   │   │   │   ├── concept.schema.js
+│   │   │   │   │   ├── concept.schema.js.map
+│   │   │   │   │   ├── concept.schema.ts
+│   │   │   │   │   ├── concept.service.d.ts
+│   │   │   │   │   ├── concept.service.d.ts.map
+│   │   │   │   │   ├── concept.service.js
+│   │   │   │   │   ├── concept.service.js.map
+│   │   │   │   │   └── concept.service.ts
+│   │   │   │   ├── evaluation-config
+│   │   │   │   │   ├── evaluation-config.controller.d.ts
+│   │   │   │   │   ├── evaluation-config.controller.d.ts.map
+│   │   │   │   │   ├── evaluation-config.controller.js
+│   │   │   │   │   ├── evaluation-config.controller.js.map
+│   │   │   │   │   ├── evaluation-config.controller.ts
+│   │   │   │   │   ├── evaluation-config.repository.d.ts
+│   │   │   │   │   ├── evaluation-config.repository.d.ts.map
+│   │   │   │   │   ├── evaluation-config.repository.js
+│   │   │   │   │   ├── evaluation-config.repository.js.map
+│   │   │   │   │   ├── evaluation-config.repository.ts
+│   │   │   │   │   ├── evaluation-config.routes.d.ts
+│   │   │   │   │   ├── evaluation-config.routes.d.ts.map
+│   │   │   │   │   ├── evaluation-config.routes.js
+│   │   │   │   │   ├── evaluation-config.routes.js.map
+│   │   │   │   │   ├── evaluation-config.routes.ts
+│   │   │   │   │   ├── evaluation-config.schema.d.ts
+│   │   │   │   │   ├── evaluation-config.schema.d.ts.map
+│   │   │   │   │   ├── evaluation-config.schema.js
+│   │   │   │   │   ├── evaluation-config.schema.js.map
+│   │   │   │   │   ├── evaluation-config.schema.ts
+│   │   │   │   │   ├── evaluation-config.service.d.ts
+│   │   │   │   │   ├── evaluation-config.service.d.ts.map
+│   │   │   │   │   ├── evaluation-config.service.js
+│   │   │   │   │   ├── evaluation-config.service.js.map
+│   │   │   │   │   └── evaluation-config.service.ts
+│   │   │   │   ├── invites
+│   │   │   │   │   ├── invites.controller.d.ts
+│   │   │   │   │   ├── invites.controller.d.ts.map
+│   │   │   │   │   ├── invites.controller.js
+│   │   │   │   │   ├── invites.controller.js.map
+│   │   │   │   │   ├── invites.controller.ts
+│   │   │   │   │   ├── invites.routes.d.ts
+│   │   │   │   │   ├── invites.routes.d.ts.map
+│   │   │   │   │   ├── invites.routes.js
+│   │   │   │   │   ├── invites.routes.js.map
+│   │   │   │   │   ├── invites.routes.ts
+│   │   │   │   │   ├── invites.validator.d.ts
+│   │   │   │   │   ├── invites.validator.d.ts.map
+│   │   │   │   │   ├── invites.validator.js
+│   │   │   │   │   ├── invites.validator.js.map
+│   │   │   │   │   ├── invites.validator.ts
+│   │   │   │   │   └── services
+│   │   │   │   │       ├── invites.accept.service.d.ts
+│   │   │   │   │       ├── invites.accept.service.d.ts.map
+│   │   │   │   │       ├── invites.accept.service.js
+│   │   │   │   │       ├── invites.accept.service.js.map
+│   │   │   │   │       ├── invites.accept.service.ts
+│   │   │   │   │       ├── invites.service.d.ts
+│   │   │   │   │       ├── invites.service.d.ts.map
+│   │   │   │   │       ├── invites.service.js
+│   │   │   │   │       ├── invites.service.js.map
+│   │   │   │   │       ├── invites.service.ts
+│   │   │   │   │       ├── invites.validate.service.d.ts
+│   │   │   │   │       ├── invites.validate.service.d.ts.map
+│   │   │   │   │       ├── invites.validate.service.js
+│   │   │   │   │       ├── invites.validate.service.js.map
+│   │   │   │   │       └── invites.validate.service.ts
+│   │   │   │   ├── jobRoleCategories
+│   │   │   │   │   ├── controllers
+│   │   │   │   │   │   ├── jobRoleCategory.controller.d.ts
+│   │   │   │   │   │   ├── jobRoleCategory.controller.d.ts.map
+│   │   │   │   │   │   ├── jobRoleCategory.controller.js
+│   │   │   │   │   │   ├── jobRoleCategory.controller.js.map
+│   │   │   │   │   │   └── jobRoleCategory.controller.ts
+│   │   │   │   │   ├── helpers
+│   │   │   │   │   ├── routes
+│   │   │   │   │   │   ├── jobRoleCategory.routes.d.ts
+│   │   │   │   │   │   ├── jobRoleCategory.routes.d.ts.map
+│   │   │   │   │   │   ├── jobRoleCategory.routes.js
+│   │   │   │   │   │   ├── jobRoleCategory.routes.js.map
+│   │   │   │   │   │   └── jobRoleCategory.routes.ts
+│   │   │   │   │   ├── services
+│   │   │   │   │   │   ├── jobRoleCategory.service.d.ts
+│   │   │   │   │   │   ├── jobRoleCategory.service.d.ts.map
+│   │   │   │   │   │   ├── jobRoleCategory.service.js
+│   │   │   │   │   │   ├── jobRoleCategory.service.js.map
+│   │   │   │   │   │   └── jobRoleCategory.service.ts
+│   │   │   │   │   └── validators
+│   │   │   │   │       ├── jobRoleCategory.validator.d.ts
+│   │   │   │   │       ├── jobRoleCategory.validator.d.ts.map
+│   │   │   │   │       ├── jobRoleCategory.validator.js
+│   │   │   │   │       ├── jobRoleCategory.validator.js.map
+│   │   │   │   │       └── jobRoleCategory.validator.ts
+│   │   │   │   ├── jobs
+│   │   │   │   │   ├── constants
+│   │   │   │   │   │   ├── jobPolicy.d.ts
+│   │   │   │   │   │   ├── jobPolicy.d.ts.map
+│   │   │   │   │   │   ├── jobPolicy.js
+│   │   │   │   │   │   ├── jobPolicy.js.map
+│   │   │   │   │   │   ├── jobPolicy.ts
+│   │   │   │   │   │   ├── scoring.d.ts
+│   │   │   │   │   │   ├── scoring.d.ts.map
+│   │   │   │   │   │   ├── scoring.js
+│   │   │   │   │   │   ├── scoring.js.map
+│   │   │   │   │   │   └── scoring.ts
+│   │   │   │   │   ├── jobs.controller.ts
+│   │   │   │   │   ├── jobs.route.ts
+│   │   │   │   │   ├── logic
+│   │   │   │   │   │   ├── evaluation.d.ts
+│   │   │   │   │   │   ├── evaluation.d.ts.map
+│   │   │   │   │   │   ├── evaluation.js
+│   │   │   │   │   │   ├── evaluation.js.map
+│   │   │   │   │   │   ├── evaluation.ts
+│   │   │   │   │   │   ├── evidence.d.ts
+│   │   │   │   │   │   ├── evidence.d.ts.map
+│   │   │   │   │   │   ├── evidence.js
+│   │   │   │   │   │   ├── evidence.js.map
+│   │   │   │   │   │   ├── evidence.ts
+│   │   │   │   │   │   ├── requirements.d.ts
+│   │   │   │   │   │   ├── requirements.d.ts.map
+│   │   │   │   │   │   ├── requirements.js
+│   │   │   │   │   │   ├── requirements.js.map
+│   │   │   │   │   │   ├── requirements.ts
+│   │   │   │   │   │   ├── success.d.ts
+│   │   │   │   │   │   ├── success.d.ts.map
+│   │   │   │   │   │   ├── success.js
+│   │   │   │   │   │   ├── success.js.map
+│   │   │   │   │   │   └── success.ts
+│   │   │   │   │   ├── services
+│   │   │   │   │   │   ├── helpers
+│   │   │   │   │   │   │   ├── createJobRecords.d.ts
+│   │   │   │   │   │   │   ├── createJobRecords.d.ts.map
+│   │   │   │   │   │   │   ├── createJobRecords.js
+│   │   │   │   │   │   │   ├── createJobRecords.js.map
+│   │   │   │   │   │   │   ├── createJobRecords.ts
+│   │   │   │   │   │   │   ├── eligibilityCriteria.d.ts
+│   │   │   │   │   │   │   ├── eligibilityCriteria.d.ts.map
+│   │   │   │   │   │   │   ├── eligibilityCriteria.js
+│   │   │   │   │   │   │   ├── eligibilityCriteria.js.map
+│   │   │   │   │   │   │   ├── eligibilityCriteria.ts
+│   │   │   │   │   │   │   ├── evaluationRecord.d.ts
+│   │   │   │   │   │   │   ├── evaluationRecord.d.ts.map
+│   │   │   │   │   │   │   ├── evaluationRecord.js
+│   │   │   │   │   │   │   ├── evaluationRecord.js.map
+│   │   │   │   │   │   │   ├── evaluationRecord.ts
+│   │   │   │   │   │   │   ├── evidenceRecord.d.ts
+│   │   │   │   │   │   │   ├── evidenceRecord.d.ts.map
+│   │   │   │   │   │   │   ├── evidenceRecord.js
+│   │   │   │   │   │   │   ├── evidenceRecord.js.map
+│   │   │   │   │   │   │   ├── evidenceRecord.ts
+│   │   │   │   │   │   │   ├── getJobDto.d.ts
+│   │   │   │   │   │   │   ├── getJobDto.d.ts.map
+│   │   │   │   │   │   │   ├── getJobDto.js
+│   │   │   │   │   │   │   ├── getJobDto.js.map
+│   │   │   │   │   │   │   ├── getJobDto.ts
+│   │   │   │   │   │   │   ├── getJobEvaluationPriorities.d.ts
+│   │   │   │   │   │   │   ├── getJobEvaluationPriorities.d.ts.map
+│   │   │   │   │   │   │   ├── getJobEvaluationPriorities.js
+│   │   │   │   │   │   │   ├── getJobEvaluationPriorities.js.map
+│   │   │   │   │   │   │   ├── getJobEvaluationPriorities.ts
+│   │   │   │   │   │   │   ├── getJobEvidencePriorities.d.ts
+│   │   │   │   │   │   │   ├── getJobEvidencePriorities.d.ts.map
+│   │   │   │   │   │   │   ├── getJobEvidencePriorities.js
+│   │   │   │   │   │   │   ├── getJobEvidencePriorities.js.map
+│   │   │   │   │   │   │   ├── getJobEvidencePriorities.ts
+│   │   │   │   │   │   │   ├── getJobForEvaluation.d.ts
+│   │   │   │   │   │   │   ├── getJobForEvaluation.d.ts.map
+│   │   │   │   │   │   │   ├── getJobForEvaluation.js
+│   │   │   │   │   │   │   ├── getJobForEvaluation.js.map
+│   │   │   │   │   │   │   ├── getJobForEvaluation.ts
+│   │   │   │   │   │   │   ├── getJobRequirement.d.ts
+│   │   │   │   │   │   │   ├── getJobRequirement.d.ts.map
+│   │   │   │   │   │   │   ├── getJobRequirement.js
+│   │   │   │   │   │   │   ├── getJobRequirement.js.map
+│   │   │   │   │   │   │   ├── getJobRequirement.ts
+│   │   │   │   │   │   │   ├── getJobSuccessSignals.d.ts
+│   │   │   │   │   │   │   ├── getJobSuccessSignals.d.ts.map
+│   │   │   │   │   │   │   ├── getJobSuccessSignals.js
+│   │   │   │   │   │   │   ├── getJobSuccessSignals.js.map
+│   │   │   │   │   │   │   ├── getJobSuccessSignals.ts
+│   │   │   │   │   │   │   ├── getPublishedJob.d.ts
+│   │   │   │   │   │   │   ├── getPublishedJob.d.ts.map
+│   │   │   │   │   │   │   ├── getPublishedJob.js
+│   │   │   │   │   │   │   ├── getPublishedJob.js.map
+│   │   │   │   │   │   │   ├── getPublishedJob.ts
+│   │   │   │   │   │   │   ├── jobDraft.d.ts
+│   │   │   │   │   │   │   ├── jobDraft.d.ts.map
+│   │   │   │   │   │   │   ├── jobDraft.js
+│   │   │   │   │   │   │   ├── jobDraft.js.map
+│   │   │   │   │   │   │   ├── jobDraft.ts
+│   │   │   │   │   │   │   ├── jobRequirements.d.ts
+│   │   │   │   │   │   │   ├── jobRequirements.d.ts.map
+│   │   │   │   │   │   │   ├── jobRequirements.js
+│   │   │   │   │   │   │   ├── jobRequirements.js.map
+│   │   │   │   │   │   │   ├── jobRequirements.ts
+│   │   │   │   │   │   │   ├── submissionRequirements.d.ts
+│   │   │   │   │   │   │   ├── submissionRequirements.d.ts.map
+│   │   │   │   │   │   │   ├── submissionRequirements.js
+│   │   │   │   │   │   │   ├── submissionRequirements.js.map
+│   │   │   │   │   │   │   ├── submissionRequirements.ts
+│   │   │   │   │   │   │   ├── successRecord.d.ts
+│   │   │   │   │   │   │   ├── successRecord.d.ts.map
+│   │   │   │   │   │   │   ├── successRecord.js
+│   │   │   │   │   │   │   ├── successRecord.js.map
+│   │   │   │   │   │   │   ├── successRecord.ts
+│   │   │   │   │   │   │   ├── toEvaluationContextDto.d.ts
+│   │   │   │   │   │   │   ├── toEvaluationContextDto.d.ts.map
+│   │   │   │   │   │   │   ├── toEvaluationContextDto.js
+│   │   │   │   │   │   │   ├── toEvaluationContextDto.js.map
+│   │   │   │   │   │   │   └── toEvaluationContextDto.ts
+│   │   │   │   │   │   ├── [jobId]
+│   │   │   │   │   │   │   ├── evaluationContext.d.ts
+│   │   │   │   │   │   │   ├── evaluationContext.d.ts.map
+│   │   │   │   │   │   │   ├── evaluationContext.js
+│   │   │   │   │   │   │   ├── evaluationContext.js.map
+│   │   │   │   │   │   │   ├── evaluationContext.ts
+│   │   │   │   │   │   │   ├── job.get.service.d.ts
+│   │   │   │   │   │   │   ├── job.get.service.d.ts.map
+│   │   │   │   │   │   │   ├── job.get.service.js
+│   │   │   │   │   │   │   ├── job.get.service.js.map
+│   │   │   │   │   │   │   ├── job.get.service.ts
+│   │   │   │   │   │   │   ├── job.preview.service.ts
+│   │   │   │   │   │   │   ├── jobs.publish.service.d.ts
+│   │   │   │   │   │   │   ├── jobs.publish.service.d.ts.map
+│   │   │   │   │   │   │   └── jobs.publish.service.ts
+│   │   │   │   │   │   ├── jobs.create.service.ts
+│   │   │   │   │   │   └── publicJob.service.ts
+│   │   │   │   │   └── validators
+│   │   │   │   │       ├── create
+│   │   │   │   │       │   ├── jobs.validator.d.ts
+│   │   │   │   │       │   ├── jobs.validator.d.ts.map
+│   │   │   │   │       │   ├── jobs.validator.js
+│   │   │   │   │       │   ├── jobs.validator.js.map
+│   │   │   │   │       │   └── jobs.validator.ts
+│   │   │   │   │       └── get
+│   │   │   │   │           ├── validator.d.ts
+│   │   │   │   │           ├── validator.d.ts.map
+│   │   │   │   │           ├── validator.js
+│   │   │   │   │           ├── validator.js.map
+│   │   │   │   │           └── validator.ts
+│   │   │   │   ├── organizations
+│   │   │   │   │   ├── controller
+│   │   │   │   │   │   ├── orgs.controller.d.ts
+│   │   │   │   │   │   ├── orgs.controller.d.ts.map
+│   │   │   │   │   │   ├── orgs.controller.js
+│   │   │   │   │   │   ├── orgs.controller.js.map
+│   │   │   │   │   │   └── orgs.controller.ts
+│   │   │   │   │   ├── orgs.routes.d.ts
+│   │   │   │   │   ├── orgs.routes.d.ts.map
+│   │   │   │   │   ├── orgs.routes.js
+│   │   │   │   │   ├── orgs.routes.js.map
+│   │   │   │   │   ├── orgs.routes.ts
+│   │   │   │   │   ├── orgs.types.d.ts
+│   │   │   │   │   ├── orgs.types.d.ts.map
+│   │   │   │   │   ├── orgs.types.js
+│   │   │   │   │   ├── orgs.types.js.map
+│   │   │   │   │   ├── orgs.types.ts
+│   │   │   │   │   ├── orgs.validator.d.ts
+│   │   │   │   │   ├── orgs.validator.d.ts.map
+│   │   │   │   │   ├── orgs.validator.js
+│   │   │   │   │   ├── orgs.validator.js.map
+│   │   │   │   │   ├── orgs.validator.ts
+│   │   │   │   │   └── services
+│   │   │   │   │       ├── orgs.create.service.d.ts
+│   │   │   │   │       ├── orgs.create.service.d.ts.map
+│   │   │   │   │       ├── orgs.create.service.js
+│   │   │   │   │       ├── orgs.create.service.js.map
+│   │   │   │   │       ├── orgs.create.service.ts
+│   │   │   │   │       ├── orgs.fetch.service.d.ts
+│   │   │   │   │       ├── orgs.fetch.service.d.ts.map
+│   │   │   │   │       ├── orgs.fetch.service.js
+│   │   │   │   │       ├── orgs.fetch.service.js.map
+│   │   │   │   │       └── orgs.fetch.service.ts
+│   │   │   │   ├── scoring
+│   │   │   │   │   └── resume
+│   │   │   │   │       ├── index.d.ts
+│   │   │   │   │       ├── index.d.ts.map
+│   │   │   │   │       ├── index.js
+│   │   │   │   │       ├── index.js.map
+│   │   │   │   │       ├── index.ts
+│   │   │   │   │       ├── ranking.service.d.ts
+│   │   │   │   │       ├── ranking.service.d.ts.map
+│   │   │   │   │       ├── ranking.service.js
+│   │   │   │   │       ├── ranking.service.js.map
+│   │   │   │   │       ├── ranking.service.ts
+│   │   │   │   │       ├── scoring.constants.d.ts
+│   │   │   │   │       ├── scoring.constants.d.ts.map
+│   │   │   │   │       ├── scoring.constants.js
+│   │   │   │   │       ├── scoring.constants.js.map
+│   │   │   │   │       ├── scoring.constants.ts
+│   │   │   │   │       ├── scoring.models.d.ts
+│   │   │   │   │       ├── scoring.models.d.ts.map
+│   │   │   │   │       ├── scoring.models.js
+│   │   │   │   │       ├── scoring.models.js.map
+│   │   │   │   │       ├── scoring.models.ts
+│   │   │   │   │       ├── scoring.service.d.ts
+│   │   │   │   │       ├── scoring.service.d.ts.map
+│   │   │   │   │       ├── scoring.service.js
+│   │   │   │   │       ├── scoring.service.js.map
+│   │   │   │   │       └── scoring.service.ts
+│   │   │   │   └── technologies
+│   │   │   │       ├── technology.controller.d.ts
+│   │   │   │       ├── technology.controller.d.ts.map
+│   │   │   │       ├── technology.controller.js
+│   │   │   │       ├── technology.controller.js.map
+│   │   │   │       ├── technology.controller.ts
+│   │   │   │       ├── technology.repository.d.ts
+│   │   │   │       ├── technology.repository.d.ts.map
+│   │   │   │       ├── technology.repository.js
+│   │   │   │       ├── technology.repository.js.map
+│   │   │   │       ├── technology.repository.ts
+│   │   │   │       ├── technology.routes.d.ts
+│   │   │   │       ├── technology.routes.d.ts.map
+│   │   │   │       ├── technology.routes.js
+│   │   │   │       ├── technology.routes.js.map
+│   │   │   │       ├── technology.routes.ts
+│   │   │   │       ├── technology.schema.d.ts
+│   │   │   │       ├── technology.schema.d.ts.map
+│   │   │   │       ├── technology.schema.js
+│   │   │   │       ├── technology.schema.js.map
+│   │   │   │       ├── technology.schema.ts
+│   │   │   │       ├── technology.service.d.ts
+│   │   │   │       ├── technology.service.d.ts.map
+│   │   │   │       ├── technology.service.js
+│   │   │   │       ├── technology.service.js.map
+│   │   │   │       └── technology.service.ts
+│   │   │   ├── queues
+│   │   │   │   ├── connection.ts
+│   │   │   │   ├── producer.ts
+│   │   │   │   ├── redis.ts
+│   │   │   │   └── worker.ts
+│   │   │   ├── server.d.ts
+│   │   │   ├── server.d.ts.map
+│   │   │   ├── server.js
+│   │   │   ├── server.js.map
+│   │   │   ├── server.ts
+│   │   │   ├── storage
+│   │   │   │   ├── r2.client.d.ts
+│   │   │   │   ├── r2.client.d.ts.map
+│   │   │   │   ├── r2.client.js
+│   │   │   │   ├── r2.client.js.map
+│   │   │   │   ├── r2.client.ts
+│   │   │   │   ├── r2.service.d.ts
+│   │   │   │   ├── r2.service.d.ts.map
+│   │   │   │   ├── r2.service.js
+│   │   │   │   ├── r2.service.js.map
+│   │   │   │   └── r2.service.ts
+│   │   │   ├── types
+│   │   │   │   └── express.d.ts
+│   │   │   ├── utils
+│   │   │   │   ├── postgresErrors.d.ts
+│   │   │   │   ├── postgresErrors.d.ts.map
+│   │   │   │   ├── postgresErrors.js
+│   │   │   │   ├── postgresErrors.js.map
+│   │   │   │   └── postgresErrors.ts
+│   │   │   ├── worker.d.ts
+│   │   │   ├── worker.d.ts.map
+│   │   │   ├── worker.js
+│   │   │   ├── worker.js.map
+│   │   │   └── worker.ts
+│   │   └── tsconfig.json
+│   ├── web
+│   │   ├── AGENTS.md
+│   │   ├── app
+│   │   │   ├── (auth)
+│   │   │   │   ├── jobs
+│   │   │   │   ├── login
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── register
+│   │   │   │       └── page.tsx
+│   │   │   ├── (candidate)
+│   │   │   ├── careers
+│   │   │   │   └── [orgSlug]
+│   │   │   │       └── [jobSlug]
+│   │   │   │           └── page.tsx
+│   │   │   ├── favicon.ico
+│   │   │   ├── globals.css
+│   │   │   ├── layout.tsx
+│   │   │   ├── (marketing)
+│   │   │   ├── page.tsx
+│   │   │   └── (protected)
+│   │   │       ├── create-org
+│   │   │       │   └── page.tsx
+│   │   │       ├── layout.tsx
+│   │   │       └── orgs
+│   │   │           └── [orgId]
+│   │   │               ├── dashboard
+│   │   │               │   └── page.tsx
+│   │   │               └── jobs
+│   │   │                   ├── create
+│   │   │                   │   └── page.tsx
+│   │   │                   └── [jobId]
+│   │   │                       └── publish
+│   │   │                           └── page.tsx
+│   │   ├── CLAUDE.md
+│   │   ├── components
+│   │   │   ├── auth
+│   │   │   │   └── AuthGuard.tsx
+│   │   │   ├── dashboard
+│   │   │   │   ├── NavBar.tsx
+│   │   │   │   ├── org-mock.ts
+│   │   │   │   ├── org-panels.tsx
+│   │   │   │   ├── org-sidebar.tsx
+│   │   │   │   ├── primitives.tsx
+│   │   │   │   └── sideBar.tsx
+│   │   │   ├── editorial
+│   │   │   │   ├── ChapterMark.tsx
+│   │   │   │   ├── EditorialContainer.tsx
+│   │   │   │   ├── EditorialParagraph.tsx
+│   │   │   │   ├──  EditorialRule.tsx
+│   │   │   │   ├── FigureCaption.tsx
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── Parallax.tsx
+│   │   │   │   ├── Reveal.tsx
+│   │   │   │   └── SectionHeading.tsx
+│   │   │   ├── marketing
+│   │   │   │   ├── capability-cards.tsx
+│   │   │   │   ├── chapter-introduction.tsx
+│   │   │   │   ├── footer.tsx
+│   │   │   │   ├── github-chaos.tsx
+│   │   │   │   ├── hero.tsx
+│   │   │   │   ├── hiring-cost.tsx
+│   │   │   │   ├── hiring-philosophy.tsx
+│   │   │   │   ├── limitations.tsx
+│   │   │   │   ├── navbar.tsx
+│   │   │   │   ├── pain-timeline.tsx
+│   │   │   │   ├── pain-weekend-loop.tsx
+│   │   │   │   ├── resume-chaos.tsx
+│   │   │   │   ├── story-section.tsx
+│   │   │   │   ├── structured-report-preview.tsx
+│   │   │   │   └── trace-introduction.tsx
+│   │   │   ├── shared
+│   │   │   └── ui
+│   │   │       ├── avatar.tsx
+│   │   │       ├── badge.tsx
+│   │   │       ├── button.tsx
+│   │   │       ├── checkbox.tsx
+│   │   │       ├── command.tsx
+│   │   │       ├── dialog.tsx
+│   │   │       ├── dropdown-menu.tsx
+│   │   │       ├── input-group.tsx
+│   │   │       ├── input.tsx
+│   │   │       ├── label.tsx
+│   │   │       ├── popover.tsx
+│   │   │       ├── scroll-area.tsx
+│   │   │       ├── select.tsx
+│   │   │       ├── separator.tsx
+│   │   │       ├── sheet.tsx
+│   │   │       ├── sonner.tsx
+│   │   │       ├── tabs.tsx
+│   │   │       ├── textarea.tsx
+│   │   │       └── tooltip.tsx
+│   │   ├── components.json
+│   │   ├── constants
+│   │   ├── eslint.config.mjs
+│   │   ├── features
+│   │   │   ├── analysis
+│   │   │   │   ├── api
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── components
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── constants
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── forms
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── hooks
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── pages
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── types
+│   │   │   │   │   └── index.ts
+│   │   │   │   └── utils
+│   │   │   │       └── index.ts
+│   │   │   ├── applications
+│   │   │   │   ├── api
+│   │   │   │   │   ├── apply.ts
+│   │   │   │   │   ├── get-application.ts
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   └── queries.ts
+│   │   │   │   ├── components
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   └── PublicJobApplication.tsx
+│   │   │   │   ├── constants
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── forms
+│   │   │   │   │   ├── ApplicationForm.tsx
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── hooks
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── pages
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── types
+│   │   │   │   │   └── index.ts
+│   │   │   │   └── utils
+│   │   │   │       └── index.ts
+│   │   │   ├── auth
+│   │   │   │   ├── api
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   ├── login.ts
+│   │   │   │   │   ├── logout.ts
+│   │   │   │   │   ├── me.ts
+│   │   │   │   │   └── register.ts
+│   │   │   │   ├── components
+│   │   │   │   │   ├── forms
+│   │   │   │   │   │   ├── index.ts
+│   │   │   │   │   │   ├── LoginForm.tsx
+│   │   │   │   │   │   └── RegisterForm.tsx
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── constants
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── hooks
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   ├── use-login.ts
+│   │   │   │   │   ├── use-me.ts
+│   │   │   │   │   └── use-register.ts
+│   │   │   │   ├── pages
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   ├── LoginPage.tsx
+│   │   │   │   │   └── RegisterPage.tsx
+│   │   │   │   ├── types
+│   │   │   │   │   └── index.ts
+│   │   │   │   └── utils
+│   │   │   │       └── index.ts
+│   │   │   ├── candidate
+│   │   │   │   ├── api
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── components
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── constants
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── forms
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── hooks
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── pages
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   └── ProfilePage.tsx
+│   │   │   │   ├── types
+│   │   │   │   │   └── index.ts
+│   │   │   │   └── utils
+│   │   │   │       └── index.ts
+│   │   │   ├── dashboard
+│   │   │   │   ├── api
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── components
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── constants
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── forms
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── hooks
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── pages
+│   │   │   │   │   ├── DashboardPage.tsx
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── types
+│   │   │   │   │   └── index.ts
+│   │   │   │   └── utils
+│   │   │   │       └── index.ts
+│   │   │   ├── jobs
+│   │   │   │   ├── api
+│   │   │   │   │   ├── create-job.ts
+│   │   │   │   │   ├── get-job.ts
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   ├── publish.ts
+│   │   │   │   │   ├── queries.ts
+│   │   │   │   │   ├── step3.ts
+│   │   │   │   │   ├── step4.ts
+│   │   │   │   │   ├── step5.ts
+│   │   │   │   │   └── step6.ts
+│   │   │   │   ├── components
+│   │   │   │   │   ├── CreateJobStep1.tsx
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   ├── JobDefinitionWizard.tsx
+│   │   │   │   │   ├── PublishJobPage.tsx
+│   │   │   │   │   ├── Step2.tsx
+│   │   │   │   │   ├── Step3.tsx
+│   │   │   │   │   ├── Step4.tsx
+│   │   │   │   │   ├── Step5.tsx
+│   │   │   │   │   ├── Step6.tsx
+│   │   │   │   │   └── Step7.tsx
+│   │   │   │   ├── constants
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── forms
+│   │   │   │   │   ├── CreateJobForm.tsx
+│   │   │   │   │   ├── defaults.ts
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   └── schema.ts
+│   │   │   │   ├── hooks
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   └── use-job-draft.ts
+│   │   │   │   ├── pages
+│   │   │   │   │   ├── CreateJobPage.tsx
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── types
+│   │   │   │   │   └── index.ts
+│   │   │   │   └── utils
+│   │   │   │       └── index.ts
+│   │   │   ├── organizations
+│   │   │   │   ├── api
+│   │   │   │   │   ├── create-org.ts
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── components
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── constants
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── forms
+│   │   │   │   │   ├── CreateOrgForm.tsx
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── hooks
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   └── use-create-org.ts
+│   │   │   │   ├── pages
+│   │   │   │   │   ├── CreateOrgpage.tsx
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── types
+│   │   │   │   │   └── index.ts
+│   │   │   │   └── utils
+│   │   │   │       └── index.ts
+│   │   │   └── reports
+│   │   │       ├── api
+│   │   │       │   └── index.ts
+│   │   │       ├── components
+│   │   │       │   └── index.ts
+│   │   │       ├── constants
+│   │   │       │   └── index.ts
+│   │   │       ├── forms
+│   │   │       │   └── index.ts
+│   │   │       ├── hooks
+│   │   │       │   └── index.ts
+│   │   │       ├── pages
+│   │   │       │   └── index.ts
+│   │   │       ├── types
+│   │   │       │   └── index.ts
+│   │   │       └── utils
+│   │   │           └── index.ts
+│   │   ├── hooks
+│   │   │   └── use-in-view.ts
+│   │   ├── lib
+│   │   │   ├── api
+│   │   │   │   ├── client.ts
+│   │   │   │   ├── cookies.ts
+│   │   │   │   ├── endpoints.ts
+│   │   │   │   ├── errors.ts
+│   │   │   │   ├── fetcher.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── interceptors.ts
+│   │   │   │   └── query-client.ts
+│   │   │   ├── auth
+│   │   │   │   ├── auth.ts
+│   │   │   │   ├── permissions.ts
+│   │   │   │   └── session.ts
+│   │   │   ├── env
+│   │   │   │   └── client.ts
+│   │   │   ├── query
+│   │   │   │   ├── client.ts
+│   │   │   │   ├── defaults.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   └── keys.ts
+│   │   │   ├── utils
+│   │   │   │   └── cn.ts
+│   │   │   ├── utils.ts
+│   │   │   └── validation
+│   │   │       └── api.ts
+│   │   ├── next.config.ts
+│   │   ├── next-env.d.ts
+│   │   ├── package.json
+│   │   ├── package-lock.json
+│   │   ├── postcss.config.mjs
+│   │   ├── providers
+│   │   │   ├── auth-provider.tsx
+│   │   │   ├── providers.tsx
+│   │   │   ├── query-provider.tsx
+│   │   │   └── theme-provider.tsx
+│   │   ├── public
+│   │   │   ├── file.svg
+│   │   │   ├── fonts
+│   │   │   ├── globe.svg
+│   │   │   ├── next.svg
+│   │   │   ├── vercel.svg
+│   │   │   └── window.svg
+│   │   ├── README.md
+│   │   ├── shared
+│   │   │   ├── components
+│   │   │   │   ├── ConfirmDialog
+│   │   │   │   │   └── index.tsx
+│   │   │   │   ├── DataTable
+│   │   │   │   │   └── index.tsx
+│   │   │   │   ├── EmptyState
+│   │   │   │   │   └── index.tsx
+│   │   │   │   ├── Error
+│   │   │   │   │   └── index.tsx
+│   │   │   │   ├── FileUpload
+│   │   │   │   │   └── index.tsx
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── Loading
+│   │   │   │   │   └── index.tsx
+│   │   │   │   ├── PageHeader
+│   │   │   │   │   └── index.tsx
+│   │   │   │   ├── PageLayout
+│   │   │   │   │   └── index.tsx
+│   │   │   │   └── SearchInput
+│   │   │   │       └── index.tsx
+│   │   │   ├── config
+│   │   │   │   └── index.ts
+│   │   │   ├── constants
+│   │   │   │   └── index.ts
+│   │   │   ├── hooks
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── useApi.ts
+│   │   │   │   ├── useCopy.ts
+│   │   │   │   ├── useDebounce.ts
+│   │   │   │   ├── useDisclosure.ts
+│   │   │   │   ├── useInfiniteScroll.ts
+│   │   │   │   ├── useLocalStorage.ts
+│   │   │   │   └── usePagination.ts
+│   │   │   ├── icons
+│   │   │   │   └── index.ts
+│   │   │   ├── index.ts
+│   │   │   ├── layouts
+│   │   │   │   └── index.ts
+│   │   │   ├── providers
+│   │   │   │   └── index.ts
+│   │   │   ├── types
+│   │   │   │   └── index.ts
+│   │   │   ├── utils
+│   │   │   │   └── index.ts
+│   │   │   └── validators
+│   │   │       └── index.ts
+│   │   ├── styles
+│   │   │   ├── animations
+│   │   │   │   └── index.css
+│   │   │   ├── base
+│   │   │   │   ├── reset.css
+│   │   │   │   └── tokens.css
+│   │   │   ├── index.css
+│   │   │   ├── themes
+│   │   │   │   ├── forensic.css
+│   │   │   │   └── moss.css
+│   │   │   └── typography
+│   │   │       └── index.css
+│   │   ├── tsconfig.json
+│   │   ├── tsconfig.tsbuildinfo
+│   │   └── types
+│   └── worker
+├── architecture-tree.txt
+├── docs
+│   ├── architecture
+│   │   └── system-overview.md
+│   ├── database
+│   │   └── schema-v1.md
+│   └── domain
+│       └── entities.md
+├── infra
+│   ├── docker-compose.yml
+│   ├── postgres
+│   │   ├── migrations
+│   │   ├── seeds
+│   │   └── snapshots
+│   │       └── schema_v1.sql
+│   └── schema_dump.txt
+├── package.json
+├── package-lock.json
+├── packages
+│   └── shared
+│       ├── contracts
+│       │   ├── analysis
+│       │   ├── applications
+│       │   ├── auth
+│       │   ├── jobs
+│       │   └── organizations
+│       ├── cosntants
+│       ├── enums
+│       ├── package.json
+│       ├── README.md
+│       ├── src
+│       │   ├── constants
+│       │   ├── contracts
+│       │   │   ├── analysis.ts
+│       │   │   ├── applications.ts
+│       │   │   ├── auth.ts
+│       │   │   ├── auth.validator.ts
+│       │   │   ├── evaluationPolicy.ts
+│       │   │   ├── jobpolicy.ts
+│       │   │   ├── jobs.ts
+│       │   │   ├── organizations.ts
+│       │   │   └── successPolicy.ts
+│       │   ├── enums
+│       │   ├── index.ts
+│       │   ├── types
+│       │   └── utils
+│       ├── tsconfig.json
+│       ├── types
+│       └── validators
+├── README.md
+├── structure.txt
+├── taged schema files
+└── tsconfig.json
+
+262 directories, 924 files
