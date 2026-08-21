@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import type { OrgMembership } from "@/features/auth/api/me";
+import Link from "next/link";
 
 const GROUPS = [
   { label: undefined, items: ["Dashboard"] },
@@ -34,9 +35,24 @@ export function OrgSidebar({
             <div key={group.label ?? "dashboard"}>
               {group.label && <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.18em] text-olive/80">{group.label}</p>}
               <ul className="space-y-1">
-                {group.items.map((item) => (
-                  <li key={item}><span className={`block rounded-sm px-2 py-1.5 text-sm ${item === "Dashboard" ? "bg-forest/10 text-forest" : "text-moss/70"}`}>{item}</span></li>
-                ))}
+                {group.items.map((item) => {
+                  const href = item === "Dashboard"
+                    ? `/orgs/${orgId}/dashboard`
+                    : item === "Jobs"
+                      ? `/orgs/${orgId}/jobs`
+                      : undefined;
+                  return (
+                    <li key={item}>
+                      {href ? (
+                        <Link href={href} className={`block rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-forest/10 hover:text-forest ${item === "Dashboard" ? "bg-forest/10 text-forest" : "text-moss/70"}`}>
+                          {item}
+                        </Link>
+                      ) : (
+                        <span className="block rounded-sm px-2 py-1.5 text-sm text-moss/70">{item}</span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
