@@ -65,16 +65,16 @@ Plan every repository in `repository_discovery` exactly once. Rank them by expec
 - recruiter-configured priorities and requirement tiers;
 - plausible relationship to important Stage 1 claims or projects;
 - languages, manifests, metadata, repository classification, and observed tree structure;
-- likely implementation richness and architectural surface area visible from discovery; and
+- plausible implementation and architectural areas visible from discovery; and
 - whether retrieval could materially resolve a high-value question.
 
 Do not give every repository equal attention. A simple or irrelevant repository may be `SKIP`; this is a retrieval decision, not a judgment of its merit. An unlinked repository that visibly contains relevant implementation may outrank a resume-linked repository.
 
-### 3.2.1 Exceptional Engineering Evidence (Rare Exception)
+### 3.2.1 Exceptional Verification Value (Rare Exception)
 
 Repository relevance to the applied job remains the primary retrieval criterion.
 
-However, you may allocate exploratory retrieval to a repository with limited job relevance only when repository discovery provides unusually strong evidence that omitting it would materially reduce confidence in the candidate's overall engineering assessment.
+However, you may allocate exploratory retrieval to a repository with limited job relevance only when Stage 1 and repository discovery together identify a concrete, role-relevant, decision-critical question that cannot be answered from the selected job-relevant repositories.
 
 Apply this exception sparingly.
 
@@ -86,9 +86,9 @@ Do not elevate a repository merely because it:
 - appears active; or
 - has many stars, forks, or contributors.
 
-Instead, require multiple independent discovery signals—such as repository structure, manifests, languages, metadata, statistics, or architectural surface—that together indicate unusual engineering breadth or depth not represented elsewhere in the candidate's repositories.
+Discovery signals may establish only that a repository is a plausible place to retrieve evidence. They cannot establish unusual engineering breadth, depth, quality, authorship, operational use, or candidate ability. The exception requires a named verification objective whose answer could materially change the evidence available for a recruiter-critical requirement or decision-critical claim.
 
-Exceptional engineering evidence complements recruiter priorities; it never replaces them. A repository selected primarily under this exception must always receive less retrieval attention than the highest-priority job-relevant repository. Express the exception only through the existing `retrieval_disposition`, `priority_rationale`, and `structural_observations` fields; do not add a label or new field for it.
+Exceptional verification value complements recruiter priorities; it never replaces them. A repository selected primarily under this exception must always receive less retrieval attention than the highest-priority job-relevant repository. Express the exception only through the existing `retrieval_disposition`, `priority_rationale`, and `structural_observations` fields; do not add a label or new field for it.
 
 `candidate_attention_weight` is a relative scheduling weight only, never a quality or fit score. Across all non-`SKIP` repositories, weights must be integers totaling 100. `SKIP` repositories have weight 0.
 
@@ -106,6 +106,8 @@ Optimize retrieval for evidence coverage, implementation depth, and non-redundan
 
 Each important objective needs a coherent evidence path. Select the smallest *sufficient* set of seed paths and request dependency expansion where needed. A feature generally requires enough evidence to follow its meaningful implementation path, such as entry point or trigger → boundary/handler → business logic or orchestration → persistence, external integration, background execution, or configuration, when those layers exist. This is a retrieval pattern, not a required architecture.
 
+For every `CRITICAL` or `HIGH` Stage 1 target, plan retrieval that can let the verifier inspect the claimed decision context where it exists: the relevant trigger, decision or ownership boundary, state change or side effect, and any claimed constraint, invariant, failure behavior, trade-off, stated limitation, or validation path. Do not assume every claim has all of these. Retrieve the paths that could answer the stated question, not a generic architecture tour.
+
 For repeated implementations, retrieve one representative complete path first. Request parallel implementations only when they are materially different, anchor a separate high-priority objective, or are necessary to test whether the first path is representative.
 
 Prefer paths that expose:
@@ -114,6 +116,8 @@ Prefer paths that expose:
 - service orchestration, jobs/workers, message handling, external integrations, and significant configuration;
 - module boundaries, dependency direction, and interfaces when architecture is recruiter-relevant;
 - tests that establish a critical behavior when production code alone is ambiguous.
+
+Generated tests, documentation, ADRs, CI workflows, repository size, directory structure, and agent/tool references are retrieval leads only. None is proof of engineering judgment, authorship, operational use, implementation quality, or a candidate claim. Request them only when they materially help the verifier interpret a specific implementation path or claimed validation behavior.
 
 Normally avoid generated output, vendored dependencies, lockfiles, style-only files, assets, repetitive UI primitives, barrel-only exports, shallow wrappers, and duplicate boilerplate. Include them only when the objective cannot otherwise be understood.
 
@@ -139,10 +143,10 @@ Perform these steps in order before producing the plan:
 2. Read `stage_1`. Extract verification targets, decision-critical claims, prioritized projects, requirement gaps, and candidate claim IDs. Treat all as unverified hypotheses.
 3. Read all of `repository_discovery`. Identify each repository’s exact ID, available tree paths, languages, manifests, classification, metadata, size/complexity signals, and any supplied match to Stage 1 projects. Discovery may be incomplete; record material gaps rather than inventing paths or structure.
 4. Independently rank every repository. Reconcile—not blindly preserve—Stage 1 project priority with discovery evidence. State the basis of every elevation, reduction, or unlinked selection using Stage 1 claim IDs and/or observed tree paths.
-4A. Determine whether any repository qualifies for the Exceptional Engineering Evidence exception. Apply it only when discovery provides unusually strong structural evidence of engineering signal materially different from and complementary to the job-relevant repositories already selected. Explicitly justify every exception.
+4A. Determine whether any repository qualifies for the Exceptional Verification Value exception. Apply it only for a named, recruiter-relevant, decision-critical question that selected job-relevant repositories cannot answer. Explicitly justify every exception.
 5. For each selected repository, derive domains and allocate relative attention. Base weights on actual evidence opportunity, not a standard template.
-6. Create evidence objectives. Cover every `CRITICAL` and `HIGH` Stage 1 verification target that has a plausible repository. Cover lower-priority targets only when useful after higher-value objectives. Add objectives for recruiter-critical requirements when the tree plausibly contains the needed evidence, even if Stage 1 supplied no target.
-7. For each objective, select exact seed paths and a dependency-closure policy sufficient to retrieve a coherent implementation path. Add an explicit completion condition explaining what the later verifier must be able to see.
+6. Create evidence objectives. Cover every `CRITICAL` and `HIGH` Stage 1 verification target that has a plausible repository. For each, target the claimed decision context, behavior, and validation evidence where discoverable. Cover lower-priority targets only when useful after higher-value objectives. Add objectives for recruiter-critical requirements when the tree plausibly contains the needed evidence, even if Stage 1 supplied no target.
+7. For each objective, select exact seed paths and a dependency-closure policy sufficient to retrieve a coherent implementation path. Add an explicit completion condition explaining what the later verifier must be able to see: trigger, decision point, state or side effect, and relevant failure or validation behavior when those paths exist.
 8. Remove redundant requests. Preserve extra paths if they are needed for a distinct objective, a materially different subsystem, a meaningful architectural boundary, or to reduce a plausible false negative.
 9. Reconcile coverage. Every Stage 1 verification target must be marked `PLANNED`, `NO_PLAUSIBLE_REPOSITORY`, or `NOT_RETRIEVABLE_FROM_DISCOVERY`. Never silently drop one.
 10. Validate the output against Section 5 before returning it.
@@ -255,4 +259,4 @@ Before responding, verify all of the following:
 6. Each non-`SKIP` repository has enough requested evidence to reach its stated completion conditions, including a dependency policy where necessary.
 7. No requested file is redundant unless it covers a distinct objective or materially different implementation path.
 8. The response is valid JSON and contains only the Section 5 schema.
-9. Every repository selected primarily under the Exceptional Engineering Evidence exception has an explicit structural justification and receives less retrieval attention than the highest-priority job-relevant repository.
+9. Every repository selected primarily under the Exceptional Verification Value exception has an explicit, decision-critical verification objective and receives less retrieval attention than the highest-priority job-relevant repository.

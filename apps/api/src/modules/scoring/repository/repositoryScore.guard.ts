@@ -106,6 +106,31 @@ export function assertRepositoryReportScorable(
         );
       }
     }
+
+    assertIntegerScore(
+      card.implementation_depth_score,
+      `Card ${card.card_id} implementation depth score`,
+    );
+    assertIntegerScore(
+      card.correctness_and_failure_handling_score,
+      `Card ${card.card_id} correctness score`,
+    );
+    assertIntegerScore(
+      card.system_scope_and_integration_score,
+      `Card ${card.card_id} system scope score`,
+    );
+    assertIntegerScore(
+      card.maintainability_and_operability_score,
+      `Card ${card.card_id} maintainability score`,
+    );
+    assertIntegerScore(
+      card.evidence_strength_score,
+      `Card ${card.card_id} evidence strength score`,
+    );
+    assertIntegerScore(
+      card.assessment_scope_coverage_score,
+      `Card ${card.card_id} coverage score`,
+    );
   }
 
   const seenMappings = new Set<string>();
@@ -148,6 +173,16 @@ export function assertRepositoryReportScorable(
     if (!allowedStates(mapping.assessment_scope).includes(mapping.evidence_state)) {
       throw new RepositoryScoreContractError(
         `Invalid scope/state combination for ${mapping.requirement_name}`,
+      );
+    }
+
+    const positiveEvidenceState =
+      mapping.evidence_state === "SUBSTANTIAL" ||
+      mapping.evidence_state === "FUNCTIONAL" ||
+      mapping.evidence_state === "SURFACE";
+    if (positiveEvidenceState && mapping.linked_card_ids.length === 0) {
+      throw new RepositoryScoreContractError(
+        `Positive requirement ${mapping.requirement_name} must cite an engineering card`,
       );
     }
 

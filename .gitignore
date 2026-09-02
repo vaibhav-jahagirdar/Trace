@@ -128,3 +128,20 @@ apps/api/src/**/*.js.map
 apps/api/scripts/*.js
 apps/api/scripts/*.d.ts
 apps/api/scripts/*.js.map
+
+# TypeScript / generated declaration artifacts
+*.d.ts.map
+*.d.ts
+*.js.map
+*.tsbuildinfo
+
+# Build output
+dist/
+build/
+.next/
+out/
+coverage/
+
+# General generated files
+*.log
+.DS_Store

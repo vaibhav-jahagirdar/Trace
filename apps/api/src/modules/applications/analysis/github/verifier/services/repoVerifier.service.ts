@@ -26,10 +26,11 @@ import {
 
 const VERIFIER_MODEL =
   process.env.LLM_MODEL ?? "deepseek-ai/deepseek-v4-flash";
+const VERIFIER_CONTRACT_REVISION = "v2-agentic-raised-bar";
 const VERIFIER_PROMPT_VERSION =
-  process.env.REPOSITORY_VERIFIER_PROMPT_VERSION ?? "v1";
+  process.env.REPOSITORY_VERIFIER_PROMPT_VERSION ?? VERIFIER_CONTRACT_REVISION;
 const SCORER_SOURCE_REVISION =
-  process.env.REPOSITORY_SCORER_SOURCE_REVISION ?? "local-unversioned";
+  process.env.REPOSITORY_SCORER_SOURCE_REVISION ?? "repository-v3-raised-bar";
 
 function hashJson(value: unknown): string {
   return createHash("sha256")
@@ -137,7 +138,14 @@ export async function repoVerifier(
     jobId,
     repositoryAnalysisId,
   );
-  const requestHash = hashJson(payload);
+  // The report contract is prompt-defined. Include its version so a calibration
+  // change cannot silently reuse a structurally valid but semantically stale
+  // verifier report for the same retrieval payload.
+  const requestHash = hashJson({
+    payload,
+    verifierPromptVersion: VERIFIER_PROMPT_VERSION,
+    verifierContractRevision: VERIFIER_CONTRACT_REVISION,
+  });
   const db = getDb();
   const existing = await getVerifierCheckpoint(
     db as unknown as PoolClient,

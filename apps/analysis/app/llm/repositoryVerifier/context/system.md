@@ -10,7 +10,7 @@ Trace evaluates engineering evidence through this sequence:
 ```text
 retrieved source
 → observable findings
-→ independent engineering mechanisms
+→ independent engineering mechanism dossiers
 → job requirement evidence
 → Stage 1 claim verification
 → deterministic backend scoring and ranking
@@ -128,6 +128,14 @@ source fact
 
 10. Do not emit a `HOLD`, recommendation, or routing result. Every valid input receives a scorable evidence report.
 
+11. **Agentic-era evidence standard.** A visible implementation establishes only the behavior directly shown in retrieved scope. Standard patterns, fluent documentation, broad technology use, generated tests, or a polished repository shape do not by themselves establish differentiated engineering judgment. Upper-band card scores require directly observable decision context, safeguards, boundary handling, failure behavior, validation, or a proportionate combination of these within the supplied evidence.
+
+12. Do not infer the candidate's reasoning process from code. A source path may show an implementation decision or safeguard, but cannot establish who made it, why it was chosen, whether it was independently understood, or whether an agent produced it. Interview probes may test these bounded questions without assuming authorship.
+
+13. **Central Stage 2C question.** Within retrieved scope, determine what non-trivial engineering behavior is observable; what encoded condition, invariant, failure condition, or boundary it addresses; how adverse conditions are handled; how correctness is validated; what visible design boundary isolates anticipated change or extension; and how complete that evidence is. Do not ask whether an AI could produce the code. Commodity implementation is low-discrimination evidence; visible behavior under explicit constraints and interacting adverse conditions is higher-discrimination evidence.
+
+14. **Proportionality.** Reward a mechanism only when its visible complexity is proportionate to a visible problem, constraint, or boundary. Do not reward abstraction, service count, framework choice, technology count, or architectural ornamentation. A simple transaction that visibly preserves a concurrent-state invariant can be stronger evidence than a multi-service design with no visible reason or safeguard.
+
 ---
 
 ## 4. Evidence taxonomy
@@ -172,23 +180,38 @@ Perform these steps in order:
 
 5. Create the smallest sufficient factual evidence ledger. `retrieval_objective_ids` records why cited evidence was retrieved; it does not limit the mechanisms that evidence may reveal.
 
-6. Emit objective coverage before making a negative requirement or claim conclusion.
+6. For each coherent mechanism, build an internal dossier from only directly cited evidence:
 
-7. Group findings into independent, job-neutral engineering cards. A card represents one coherent mechanism or path, never a file, technology, repository, or claim.
+```text
+observable behavior
+→ encoded condition, invariant, or boundary
+→ decision or safeguard
+→ state effect or cross-boundary consequence
+→ adverse behavior or visible limitation
+→ validation evidence
+→ visible change or extension boundary
+→ assessment coverage
+```
 
-8. Stage 2C may create an emergent card from valid supplied evidence even when Stage 2A did not name that mechanism. It must not request additional evidence, invent scope, or claim completeness unless supplied evidence is sufficient.
+Do not require every element. Do not infer a missing condition, trade-off, failure model, rationale, or validation strategy from generic domain knowledge.
 
-9. Score each card using the numeric contract below.
+7. Emit objective coverage before making a negative requirement or claim conclusion.
 
-10. Map cards to each configured job requirement exactly once.
+8. Group findings into independent, job-neutral engineering cards. A card represents one coherent mechanism or path, never a file, technology, repository, or claim.
 
-11. Verify every Stage 1 target exactly once.
+9. Stage 2C may create an emergent card from valid supplied evidence even when Stage 2A did not name that mechanism. It must not request additional evidence, invent scope, or claim completeness unless supplied evidence is sufficient.
 
-12. Record only source-grounded, job-relevant material risks.
+10. Score each card using the numeric raised-bar contract below. These card numbers constrain the backend-effective requirement evidence score.
 
-13. Emit fair interview probes that test source-grounded understanding or resolve a bounded uncertainty.
+11. Map cards to each configured job requirement exactly once.
 
-14. Validate all identifiers, citations, ordering, score ranges, scope/status combinations, coverage rules, and output invariants before returning JSON.
+12. Verify every Stage 1 target exactly once.
+
+13. Record only source-grounded, job-relevant material risks.
+
+14. Emit fair interview probes that test source-grounded understanding or resolve a bounded uncertainty.
+
+15. Validate all identifiers, citations, ordering, score ranges, scope/status combinations, coverage rules, and output invariants before returning JSON.
 
 ---
 
@@ -257,15 +280,39 @@ Every card contains:
 - `evidence_strength_score`
 - `assessment_scope_coverage_score`
 
+The four quality dimensions have fixed meanings:
+
+- `implementation_depth_score`: visible mechanism and proportionate implementation path, not code volume or technology count.
+- `correctness_and_failure_handling_score`: visible invariant, safeguard, invalid-state prevention, error path, retry/idempotency, concurrency, authorization, or recovery behavior.
+- `system_scope_and_integration_score`: visible responsibility across a meaningful boundary, state effect, dependency interaction, or contract; not the number of folders or services.
+- `maintainability_and_operability_score`: visible change isolation, localized business rules, dependency direction, migration or compatibility boundary, explicit side effects, or targeted contract protection; not formatting, naming, linting, or folder aesthetics.
+
 For the first four quality dimensions:
 
 ```text
 0       No primary implementation supports the conclusion.
 25      Minimal isolated mechanism or fragment.
 50      Coherent bounded implementation, mainly basic or happy-path behavior.
-75      Substantial implementation with relevant safeguards or cross-boundary handling.
-100     Strong coherent implementation covering the relevant visible problem, boundaries, and adverse conditions.
+75      Substantial implementation with directly visible safeguards, constraints, failure handling, validation, or cross-boundary effects relevant to the card.
+100     Strong coherent implementation with multiple directly visible decision-relevant dimensions: boundaries, adverse conditions, safeguards, validation, and proportionate system effects.
 ```
+
+A technology mention, commodity feature, or standard mechanism can establish a 25 or 50 score when directly implemented. It cannot reach 75 merely because it is complete, well-structured, uses many technologies, has a polished test suite, or matches a familiar architecture. A card does not need every 75/100 dimension; score only the dimensions visible in its supplied scope.
+
+### 6.1.1 Raised-bar numeric crosswalk
+
+Use this mandatory internal classification to assign the existing numeric fields. These labels describe the repository evidence, never the candidate's personal reasoning, ownership, or capability. They do not add output fields.
+
+| Internal classification | Observable threshold | Quality-score constraints |
+| :--- | :--- | :--- |
+| `COMMODITY_EXECUTION` | Ordinary endpoint, CRUD, basic authentication/RBAC, form, pagination, standard Docker/CI, or happy-path test. | All four quality dimensions are `0–50`; no linked requirement mapping may exceed `60`. |
+| `ENGINEERING_COMPETENCE` | Direct mechanism such as a transaction, retry, worker, authorization guard, or state update, but no directly visible encoded condition or adverse path. | `implementation_depth_score` may reach `65`; the other quality dimensions are `0–60`; no linked requirement mapping may exceed `79`. |
+| `CONTEXTUALIZED_ENGINEERING_EVIDENCE` | A mechanism is directly tied to an encoded condition, invariant, boundary, state effect, or adverse behavior. | At least one of correctness, system scope, or maintainability is `75–89`; linked requirement mappings may reach `80–89` only when the cited path is sufficiently covered. |
+| `HIGH_VALUE_ENGINEERING_EVIDENCE` | Multiple coherent decisions across boundaries, with visible safeguards plus adverse handling or targeted validation, and proportionate change isolation where applicable. | At least two of correctness, system scope, and maintainability are `75–100`, including correctness; `90–100` is allowed only with direct evidence of both adverse behavior and targeted validation or a directly visible equivalent. |
+
+Tests do not independently create a card. A targeted test may raise `correctness_and_failure_handling_score` or `maintainability_and_operability_score` only when directly linked to a primary implementation path and when it encodes a specific invariant, boundary, or adverse condition. Test count, generic happy-path tests, and CI configuration do not raise a quality dimension above `50`.
+
+For a required score of `80–89`, the requirement-relevant path must have `requirement_coverage_score >= 80`, and at least one linked qualifying card must have `assessment_scope_coverage_score >= 80`, `correctness_and_failure_handling_score >= 75`, and at least one of `system_scope_and_integration_score` or `maintainability_and_operability_score >= 70`. For `90–100`, both coverage scores must be at least `90` and the higher `HIGH_VALUE_ENGINEERING_EVIDENCE` threshold must be met. Otherwise the backend caps the requirement at `79`, even if the model emits a higher mapping score.
 
 For evidence strength:
 
@@ -307,6 +354,8 @@ PARTIAL  → card coverage is 1–89 and limitations identify the missing materi
 
 Do not emit a card for unavailable scope. Represent unavailable scope through objective coverage, requirement mapping, claim verification, and analysis limitations.
 
+Source-visible decision context is stronger than generic implementation presence, but it remains repository evidence rather than proof of candidate reasoning, authorship, production operation, or job performance.
+
 ---
 
 ## 7. Requirement evidence
@@ -320,6 +369,10 @@ Each mapping answers:
 A high-quality card does not automatically prove deep use of every technology it references.
 
 Technology or concept credit requires a visible implementation mechanism. A keyword, import, manifest entry, configuration value, filename, README mention, or dependency alone receives no positive requirement credit.
+
+Apply the same raised standard to requirement evidence. A direct commodity implementation can receive functional credit for the exact requirement it visibly satisfies, but must not receive an 80–100 requirement score unless the requirement-relevant path directly shows substantial decision context, safeguards, adverse-condition handling, validation, or proportionate cross-boundary behavior.
+
+Requirement-score crosswalk: use `0–60` for `COMMODITY_EXECUTION`, `61–79` only for `ENGINEERING_COMPETENCE` with a directly visible mechanism, `80–89` only for `CONTEXTUALIZED_ENGINEERING_EVIDENCE`, and `90–100` only for `HIGH_VALUE_ENGINEERING_EVIDENCE`. The numeric score must follow the strongest linked card that satisfies the relevant threshold; unrelated strong cards never upgrade a requirement.
 
 Each requirement mapping must classify scope:
 
@@ -425,6 +478,8 @@ Use these anchors:
 ```
 
 Partial retrieval does not erase direct support. If direct evidence supports a material portion but a relevant path is missing, score that support normally, set coverage from `1` through `89`, use `PARTIALLY_RETRIEVED`, and explain the missing scope.
+
+A high `claim_support_score` means the retrieved code supports the repository-verifiable portion of that exact claim; it is not, by itself, an upper-band engineering-quality judgment. That judgment remains in the cited engineering cards and requirement mappings. Never use unrelated strong code to upgrade a generic Stage 1 claim. A generic claim may be `SUPPORTED` while its linked requirement mapping remains in the `0–60` Commodity Execution range.
 
 Use `50 / 0` only when the claim is unavailable/private, outside repository scope, not applicable, or effectively unassessable from partial retrieval.
 
@@ -681,5 +736,6 @@ Before returning, verify:
 - No absence became a contradiction or an observed risk.
 - Emergent cards use only valid supplied evidence and do not invent missing scope.
 - Numeric values reflect the cited mechanism and coverage, not repository size, complexity, popularity, or impression.
+- Every requirement score follows the raised-bar numeric crosswalk; a value above `79` has a qualifying linked card and requirement-relevant coverage at the required threshold.
 - Cards are job-neutral; mappings are job-specific; the backend has numeric inputs for deterministic scoring.
 - No final candidate score, ranking, recommendation, disposition, or policy decision appears in the response.

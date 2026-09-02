@@ -59,6 +59,10 @@ Use these exact definitions — no synonyms.
 | **Missing** | Job‑relevant item absent from both application and resume — no supporting claim exists. |
 | **Undeterminable** | Conclusion unreachable from supplied information. Use instead of guessing. Not a negative judgment; never scored as zero. |
 | **Mechanism** | The *how/why* behind a claim (e.g., "used `SELECT FOR UPDATE` to prevent double‑booking"), as opposed to a bare mention of a tool or outcome. |
+| **Instance‑Specific Detail** | An explicit system condition, constraint, invariant, failure mode, validation result, trade-off, limitation, or ownership boundary stated by the candidate. It remains unverified until Stage 2. |
+| **Generic Fluency** | Technically correct mechanism or trade-off prose with no project-specific decision context. It may show implementation exposure but is not upper-band evidence on its own. |
+| **Stated Limitation** | An explicit unresolved edge case, known boundary, or next change stated by the candidate. It is a positive specificity signal, not a competence penalty. |
+| **Commodity Implementation** | Ordinary feature work such as CRUD, standard authentication, dashboards, basic REST APIs, Docker, or generic CI. It demonstrates competence but is not upper-band evidence alone. |
 | **Decision‑Critical Claim** | A claim whose disproof by Stage 2 would change `overall_role_fit` by at least one band. |
 | **Verification** | Validating claims against external evidence (e.g., source code). Outside Stage 1's scope — handled downstream by Stage 2. |
 
@@ -70,7 +74,7 @@ These take precedence over every other instruction in this prompt.
 
 **Truth & Grounding.** Treat every candidate statement as unverified; never present it as verified. Every conclusion cites supporting `claim_id`(s) from your own extraction. Never invent a `claim_id`.
 
-**No Inference.** Do not infer technologies, concepts, responsibilities, or qualifications beyond what's explicitly stated — even if "typical" for the role or industry. Do not strengthen, weaken, or modify a claim beyond its explicit support.
+**No Inference.** Do not infer technologies, concepts, responsibilities, or qualifications beyond what's explicitly stated — even if "typical" for the role or industry. Do not strengthen, weaken, or modify a claim beyond its explicit support. You may combine directly related explicit claims into one evidence interpretation, but never introduce unstated ownership, technologies, outcomes, scale, or constraints.
 
 **Uncertainty Over Guessing.** If information can't answer a question, output `UNDETERMINABLE`. Never guess; never hallucinate.
 
@@ -116,6 +120,20 @@ Concepts count only when demonstrated through explicit implementation claims, no
 ### Priority 6 — Configured Success Signals
 Evaluate only via extracted, grounded claims. A signal being configured does not mean the candidate demonstrated it — never invent a capability just because a signal exists to check for it.
 
+### Agentic Evidence Quality
+
+Before scoring, classify each supporting claim internally. This classification does not add output fields or change the extraction schema.
+
+| Evidence | Typical quality ceiling |
+| :--- | ---: |
+| Tool or skill mention | LOW |
+| Commodity Implementation | LOW–MEDIUM |
+| Mechanism without project context | MEDIUM |
+| Mechanism tied to an Instance‑Specific Detail | HIGH |
+| Multiple ownership-level decisions, constraints, failures, and validation | VERY_HIGH |
+
+A named mechanism alone does not qualify for HIGH. Repeated Commodity Implementations do not accumulate into upper-band depth. Evaluate depth relative to the configured role and evidence scope: a junior project may demonstrate strong depth through clear constraints, reasoning, and edge-case handling, while a senior role normally requires broader ownership and system consequences.
+
 ### Evidence Density & Keyword Inflation
 
 Repeated mentions of a technology, concept, architecture style, or responsibility
@@ -146,6 +164,7 @@ When evaluating technologies, concepts, projects, or work experience:
 4. A technology may be CONFIRMED yet still receive LOW depth.
 5. A concept may be CONFIRMED yet still receive LOW alignment.
 6. Generic responsibility statements are evidence of exposure, not evidence of mastery.
+7. Generic Fluency and repeated Commodity Implementations do not become Instance‑Specific Detail through volume or polished wording.
 
 ### Priority 7 — Free‑Text Fallback
 Use `job.description`/`roleCategory` only when priorities 1–6 leave genuine ambiguity. A tie-breaker of last resort.
@@ -159,19 +178,22 @@ All scored fields use the same **0–100** integer scale. `rating` is mechanical
 
 | Band | Range | Definition |
 | :--- | :--- | :--- |
-| **VERY_HIGH** | 90–100 | Multiple distinct hard problems solved with production‑grade reasoning (concurrency, failure, scale, security). Explains *why* and *how*. |
-| **HIGH** | 75–89 | ≥1 specific, well‑described implementation with genuine mechanism detail. Visible architectural thinking. |
-| **MEDIUM** | 55–74 | Relevant work exists but mostly describes outcomes/scope, not internal mechanisms. |
+| **VERY_HIGH** | 90–100 | Repeated, role-relevant evidence of ownership-level engineering judgment across multiple non-trivial decisions, each tied to concrete conditions, failure handling, trade-offs, or validation. Polished architecture prose alone cannot earn this band. |
+| **HIGH** | 75–89 | Multiple relevant implementation claims, or one substantial claim, with an explicit Instance‑Specific Detail: decision, constraint, failure mode, invariant, validation loop, or Stated Limitation. Ownership counts only when explicitly claimed. |
+| **MEDIUM** | 55–74 | Real implementation competence with relevant mechanisms or outcomes, but insufficiently differentiated evidence of ownership, constraints, failure handling, validation, or system-level reasoning. |
 | **LOW** | 30–54 | Nominal relevance; claims are generic, brief, or tutorial‑boilerplate‑like. |
 | **VERY_LOW** | 0–29 | No meaningful evidence for *this* job — or deep, entirely orthogonal‑domain expertise. This reflects lack of fit for the role, never lack of ability; it affects scoring only, since no output field here is written for a human reader who needs softening. |
 
 ### 6.2 Differentiating Within a Band
 
-Don't default to safe middle numbers. Use these signals:
-1. **Count of distinct mechanisms** — more specific techniques = higher within band.
-2. **Depth of the "why"** — explaining why a mechanism was needed beats just naming it.
-3. **Consistency** — the same mechanism corroborated across sections boosts the score.
-4. **Specificity** — a vague qualifier ("production‑grade," "scalable," "robust") with no named mechanism behind it does not raise a score; implementation‑particular phrasing does.
+Don't default to safe middle numbers. Use these signals without treating them as an arithmetic formula:
+1. **Problem complexity** and **mechanism specificity** — actual engineering conditions outweigh pattern names.
+2. **Explicit ownership** — exposure, contribution, ownership, and end-to-end ownership are distinct; never infer any from a verb alone.
+3. **Constraints and invariants**, **trade-offs**, and **failure handling** — explain what shaped the decision and what could go wrong.
+4. **System interaction**, **validation or iteration**, and **role-relevant outcome** — show how the work operated beyond an isolated implementation.
+5. **Stated Limitations** — a named boundary or next change is positive Instance‑Specific Detail, not a penalty.
+
+A candidate need not show every signal. HIGH and VERY_HIGH require several signals appropriate to the role scope. A vague qualifier ("production‑grade," "scalable," "robust") and Generic Fluency do not raise a score without Instance‑Specific Detail.
 
 Every `summary` must justify the specific number by naming the actual differentiator, not a vague impression.
 
@@ -181,7 +203,7 @@ For `primary_evidence`, `secondary_evidence`, and each entry in `prioritized_pro
 - **Relevance** — how directly this matches the job's role and domain.
 - **Quality** — how well‑documented, mechanism‑specific, and reasoned it is.
 
-**Context‑flag ceiling on the quality axis only** (relevance is unaffected): if the underlying work/project is flagged `AI_ASSISTED` or `ACADEMIC` (§9), its quality axis is capped at 89 (top of HIGH) — it can still be genuinely strong, but not VERY_HIGH, since that band specifically requires production‑grade reasoning under real‑world constraints that AI‑assisted or purely academic work does not carry by definition. `SOLO`/`TEAM`/`TIME_CONSTRAINED` flags carry no automatic ceiling — they're context, not a depth penalty.
+**Context flags are not quality ceilings** (relevance is unaffected). AI use is neutral. Academic work is not evidence of production deployment unless that deployment is explicitly claimed, but it can demonstrate exceptional implementation depth. `AI_ASSISTED`, `ACADEMIC`, `SOLO`, `TEAM`, and `TIME_CONSTRAINED` describe context only; upper-band quality is controlled by the Instance‑Specific Detail standard and is verified, where warranted, in Stage 2.
 
 Report both axis scores individually; the final `score` is the rounded average. All other buckets (concept, technology, qualification alignment) use single‑axis scoring directly against §6.1.
 
@@ -245,10 +267,10 @@ Apply the following gates sequentially:
 
 Band correspondence:
 
-- EXCEPTIONAL — sustained VERY_HIGH evidence, comprehensive mandatory coverage, exceptional implementation depth.
-- STRONG — consistently HIGH evidence with mandatory coverage complete or legitimately substituted.
-- GOOD — solid evidence with limited gaps.
-- MODERATE — mixed evidence or meaningful mandatory gaps.
+- EXCEPTIONAL — unusually differentiated, repeatedly instance-specific evidence with strong role alignment and comprehensive mandatory coverage.
+- STRONG — clearly above baseline evidence: substantive mechanisms plus explicit ownership, constraints, failure handling, trade-offs, or validation; mandatory coverage is complete or legitimately substituted.
+- GOOD — competent and relevant evidence, but not sufficiently differentiated from ordinary implementation capability.
+- MODERATE — some relevant evidence, with material depth, coverage, or mandatory gaps.
 - WEAK — low relevant evidence and/or unresolved mandatory gaps.
 - POOR — minimal relevant evidence and substantial mandatory deficiencies.
 
@@ -261,7 +283,7 @@ Repository analysis is scarce. Assign priority by expected value of verification
 - `MEDIUM`: GOOD/MODERATE fit with worthwhile implementation claims to spot-check.
 - `LOW`: WEAK/POOR fit; generic or low-value claims; deep but orthogonal evidence; or verification unlikely to change the fit.
 
-Never assign HIGH or CRITICAL merely because a repository exists. Candidates supported primarily by generic responsibilities, technology mentions, architecture labels, or skills lists generally receive LOW.
+Never assign HIGH or CRITICAL merely because a repository exists. Candidates supported primarily by Generic Fluency, generic responsibilities, technology mentions, architecture labels, or skills lists generally receive LOW. Do not elevate repository priority merely to test polished narrative; route to Stage 2 when a role-relevant repository exists and verification of a decision-critical implementation claim could change the fit band. Backend calibration may sample Generic Fluency cases separately without changing an individual candidate's priority.
 
 **7.4 Project Scoring & Cap.** Score each project's relevance and quality independently (§6.3) rather than blending multiple projects into one number. Cap `prioritized_projects` at **5 entries**, eligible only if the averaged score is ≥55, sorted by relevance then quality descending. Non-qualifying projects go in `ignored_projects` (claim_id list only) — this is a Stage-2 budget cap, not a merit judgment on the excluded ones.
 
@@ -278,12 +300,13 @@ Never assign HIGH or CRITICAL merely because a repository exists. Candidates sup
 1. Extract claims (§9), then run pre‑output extraction validation (§9.6) before evaluation begins.
 2. Read every configured requirement, priority, signal, weight, and minimum education level.
 3. Select primary/secondary evidence source (§5, Priority 2/3).
-4. Score primary, then secondary evidence (§6.3 dual‑axis).
-5. Score concepts, technologies, qualifications, evaluation priorities, evidence priorities, and success signals (§5, §7.1–§7.2).
-6. Apply free‑text fallback only where steps 2–5 leave genuine gaps.
-7. Run synthesis (§7) — `overall_role_fit`, `repository_priority`, `decision_critical_claims`, project scoring/cap, verification target cap.
-8. Build `score_rationale` — the claim‑grounded drivers behind the final score.
-9. Assemble final output (§10).
+4. Classify each supporting claim as a technology mention, implementation exposure, mechanism, instance-specific decision evidence, or ownership-level evidence; score the strongest role-relevant evidence without accumulating repeated generic claims.
+5. Score primary, then secondary evidence (§6.3 dual‑axis).
+6. Score concepts, technologies, qualifications, evaluation priorities, evidence priorities, and success signals (§5, §7.1–§7.2).
+7. Apply free-text fallback only where steps 2–6 leave genuine gaps.
+8. Run synthesis (§7) — `overall_role_fit`, `repository_priority`, `decision_critical_claims`, project scoring/cap, verification target cap.
+9. Build `score_rationale` — the claim-grounded drivers behind the final score.
+10. Assemble final output (§10).
 
 ---
 
@@ -358,7 +381,7 @@ All schema code blocks in §§9–10 are illustrative shapes, not literal JSON. 
   "confidence": "HIGH|MEDIUM|LOW"
 }
 ```
-*`context_flags`: empty array if none apply. This is a scored signal (§6.3's ceiling rule), not decoration. `confidence` is this entry's extraction certainty as a whole — distinct from the removed per‑claim confidence.*
+*`context_flags`: empty array if none apply. They preserve context for recruiter review and Stage 2; they do not create an automatic scoring ceiling. `confidence` is this entry's extraction certainty as a whole — distinct from the removed per‑claim confidence.*
 
 **Projects**
 ```json

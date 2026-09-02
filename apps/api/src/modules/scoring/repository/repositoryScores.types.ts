@@ -67,6 +67,10 @@ export interface RepositoryVerifierReport {
   engineering_cards: Array<{
     card_id: string;
     supporting_finding_ids: string[];
+    implementation_depth_score: number;
+    correctness_and_failure_handling_score: number;
+    system_scope_and_integration_score: number;
+    maintainability_and_operability_score: number;
     evidence_strength_score: number;
     assessment_scope_coverage_score: number;
   }>;

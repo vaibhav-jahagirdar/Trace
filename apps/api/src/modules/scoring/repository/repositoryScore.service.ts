@@ -41,10 +41,63 @@ function isScoreable(mapping: RequirementMapping): boolean {
   return isPositiveScoreable(mapping) || isNegativeScoreable(mapping);
 }
 
-function effectiveEvidenceScore(mapping: RequirementMapping): number {
+function requirementScoreCeilingFromCards(
+  mapping: RequirementMapping,
+  report: RepositoryScoreInput["report"],
+): number {
+  if (!isPositiveScoreable(mapping)) return 100;
+
+  const cardsById = new Map(
+    report.engineering_cards.map((card) => [card.card_id, card]),
+  );
+
+  let ceiling = 60;
+  for (const cardId of mapping.linked_card_ids) {
+    const card = cardsById.get(cardId);
+    if (!card) continue;
+
+    const upperBandEligible =
+      mapping.requirement_coverage_score >= 80 &&
+      card.assessment_scope_coverage_score >= 80 &&
+      card.correctness_and_failure_handling_score >= 75 &&
+      (card.system_scope_and_integration_score >= 70 ||
+        card.maintainability_and_operability_score >= 70);
+    const highLeverageEligible =
+      mapping.requirement_coverage_score >= 90 &&
+      card.assessment_scope_coverage_score >= 90 &&
+      card.correctness_and_failure_handling_score >= 90 &&
+      (card.system_scope_and_integration_score >= 75 ||
+        card.maintainability_and_operability_score >= 75) &&
+      card.evidence_strength_score >= 75;
+
+    if (highLeverageEligible) {
+      ceiling = Math.max(ceiling, 100);
+    } else if (upperBandEligible) {
+      ceiling = Math.max(ceiling, 89);
+    } else if (
+      card.implementation_depth_score > 50 ||
+      card.correctness_and_failure_handling_score > 50 ||
+      card.system_scope_and_integration_score > 50 ||
+      card.maintainability_and_operability_score > 50
+    ) {
+      ceiling = Math.max(ceiling, 79);
+    }
+  }
+
+  return ceiling;
+}
+
+function effectiveEvidenceScore(
+  mapping: RequirementMapping,
+  report: RepositoryScoreInput["report"],
+): number {
+  const cappedEvidenceScore = Math.min(
+    mapping.requirement_evidence_score,
+    requirementScoreCeilingFromCards(mapping, report),
+  );
   return clamp(
     50 +
-      (mapping.requirement_evidence_score - 50) *
+      (cappedEvidenceScore - 50) *
         (mapping.requirement_coverage_score / 100),
   );
 }
@@ -126,7 +179,7 @@ export function computeRepositoryScore(
       continue;
     }
 
-    const effectiveScore = effectiveEvidenceScore(mapping);
+    const effectiveScore = effectiveEvidenceScore(mapping, input.report);
 
     // Never renormalize to only inspected requirements.
     // Otherwise one small, observed bonus item could dominate the entire job score.
@@ -199,6 +252,7 @@ export function computeRepositoryScore(
     requirementContributions,
     auditNotes: [
       "Only requirement mappings contributed to the repository adjustment.",
+      "Raised-bar card ceilings cap requirement evidence: commodity paths at 60, mechanism-only paths at 79, and upper bands require correctness, boundary-or-change evidence, and sufficient requirement and card coverage.",
       "Cards, claims, and risks are retained as audit signals and were not double-counted.",
       `Scoring blend: ${(REPOSITORY_SCORE_POLICY.repositoryEvidenceWeight * 100).toFixed(0)}% repository evidence and ${(REPOSITORY_SCORE_POLICY.stage1Weight * 100).toFixed(0)}% Stage 1.`,
       hasAssessableRepositoryEvidence
