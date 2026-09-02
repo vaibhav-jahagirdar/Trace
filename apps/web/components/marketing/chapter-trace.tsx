@@ -1,0 +1,11 @@
+"use client";
+import { useInView } from "@/hooks/use-in-view";
+import { cn } from "@/lib/utils";
+import { ChapterMark, FigureCaption } from "@/components/editorial";
+
+const STEPS = [["01", "Define", "The role, constraints, and signals that actually matter."], ["02", "Filter", "Hard gates and candidate fit before investigation."], ["03", "Trace", "Relevant work, paths, and evidence behind the claim."], ["04", "Decide", "A clear brief for the human interview." ]];
+
+export function ChapterTrace() {
+  const { ref, inView } = useInView(.2);
+  return <section ref={ref} className="border-t border-forest/15 bg-paper px-6 py-24 text-ink md:px-12 md:py-36 lg:px-20"><div className="mx-auto max-w-6xl"><ChapterMark index="07" label="Trace" /><div className="mt-14 grid gap-14 lg:grid-cols-12 lg:items-start lg:gap-16"><div className="lg:col-span-5"><h2 className="max-w-[11ch] font-sans text-[clamp(2.8rem,5vw,4.6rem)] font-normal leading-[.92] tracking-[-.06em]">Start with<br />the role.<br /><span className="text-olive">End with evidence.</span></h2><p className="mt-8 max-w-[34ch] text-base leading-[1.7] text-olive">Trace turns an open-ended search into a sequence you can inspect, explain, and act on.</p></div><figure className="lg:col-span-7"><div className="border border-forest/15 bg-warm"><div className="flex items-center justify-between border-b border-forest/15 px-5 py-4"><span className="font-mono text-[9px] uppercase tracking-[.16em] text-olive">Evidence path</span><span className="font-mono text-[9px] uppercase tracking-[.12em] text-forest">role → source</span></div><div className="divide-y divide-forest/10">{STEPS.map(([number, title, detail], i) => <div key={number} className={cn("grid gap-4 px-5 py-5 sm:grid-cols-[42px_130px_1fr] sm:items-baseline", inView ? "step-in" : "opacity-0")} style={{ animationDelay: `${i * 140}ms` }}><span className="font-mono text-[10px] text-forest">{number}</span><span className="font-sans text-lg font-medium">{title}</span><span className="text-sm leading-6 text-olive">{detail}</span></div>)}</div><div className="border-t border-forest/15 px-5 py-4 font-mono text-[9px] uppercase tracking-[.12em] text-forest">One candidate · one inspectable decision path</div></div><FigureCaption id="Fig. 7.1">A hiring decision with its path back to the role and the work.</FigureCaption></figure></div></div></section>;
+}

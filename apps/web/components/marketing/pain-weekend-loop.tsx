@@ -1,153 +1,143 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import {
-  ChapterMark,
-  EditorialContainer,
-  EditorialParagraph,
-  EditorialRule,
-  FigureCaption,
-  Reveal,
-  SectionHeading,
-} from "@/components/editorial";
+import { useInView } from "@/hooks/use-in-view";
+import { cn } from "@/lib/utils";
+import { ChapterMark, FigureCaption, Reveal } from "@/components/editorial";
 
-function useInView(threshold = 0.25) {
-  const ref = useRef<HTMLElement | null>(null);
-  const [inView, setInView] = useState(false);
+const TABS = [
+  "resume_03.pdf", "github.com/avery", "linkedin.com/in/avery", "portfolio",
+  "resume_17.pdf", "notes.txt", "github.com/…", "resume_11.pdf",
+];
 
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setInView(true);
-        observer.unobserve(element);
-      }
-    }, { threshold });
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [threshold]);
-
-  return { ref, inView };
-}
-
-const TABS = ["resume_03.pdf", "github.com/avery", "linkedin.com/in/avery", "portfolio", "notes.txt"];
-
-const CANDIDATES = [
-  { id: "03", name: "Avery Chen", role: "Platform engineer", detail: "Strong systems work?", state: "first seen" },
-  { id: "17", name: "Maya Patel", role: "Frontend engineer", detail: "Was this the ML project?", state: "re-opened" },
-  { id: "50", name: "Jon Bell", role: "Backend engineer", detail: "Need to compare later", state: "unscored" },
+const DOCS = [
+  { id: "03", rotate: -5, x: 0, y: 0 },
+  { id: "17", rotate: 3, x: 27, y: 14 },
+  { id: "30", rotate: -2, x: 54, y: 28 },
+  { id: "11", rotate: 4, x: 81, y: 42 },
+  { id: "50", rotate: -1, x: 108, y: 56 },
 ];
 
 export function PainWeekendLoop() {
-  const { ref, inView } = useInView();
+  const { ref, inView } = useInView(0.25);
 
   return (
-    <section ref={ref} className="border-t border-forest/10 bg-moss text-paper">
-      <EditorialContainer width="story" spacing="xl">
-        <ChapterMark index="02" label="The weekend loop" tone="paper" />
+    <section ref={ref} className="border-t border-forest/20 bg-moss px-6 py-24 text-paper md:px-12 md:py-32 lg:px-20">
+      <div className="mx-auto max-w-6xl">
+        <ChapterMark index="02" label="The review loop" tone="paper" />
 
-        <div className="mt-16 grid grid-cols-1 gap-16 lg:grid-cols-12">
+        <div className="mt-14 grid gap-14 lg:grid-cols-12 lg:items-center lg:gap-16">
           <div className="lg:col-span-5">
             <Reveal>
-              <SectionHeading size="hero" style={{fontWeight: 400}}>
-                Open.
-                <br />
-                Close.
-                <br />
-                Next.
-              </SectionHeading>
+              <h2 className="max-w-[12ch] font-sans text-[clamp(2.7rem,4vw,3.7rem)]  leading-[0.94] tracking-[-0.055em] text-paper">
+                Open.<br />Compare.<br />Lose the thread.
+              </h2>
             </Reveal>
 
-            <Reveal delay={0.15} className="mt-10">
-              <EditorialParagraph className="text-stone/75">
-                Resume. GitHub. LinkedIn. Portfolio. Back to the resume.
-                <br />
-                <br />
-                Every application asks for a fresh comparison. By Sunday evening,
-                candidate three and candidate fifty have started to blur together.
-              </EditorialParagraph>
+            <Reveal delay={0.15} className="mt-8">
+              <p className="max-w-[39ch] text-base leading-[1.7] text-paper/76">
+                Resume. LinkedIn. GitHub. Portfolio. Another repository. Another candidate.
+                Every application asks you to reconstruct the comparison from scratch.
+              </p>
             </Reveal>
 
-            <Reveal delay={0.3} className="mt-12">
-              <EditorialRule width="md" tone="paper" />
+            <Reveal delay={0.25} className="mt-10 border-l border-sage pl-5">
+              <p className="max-w-[31ch] font-sans text-lg font-normal leading-[1.3] text-paper">
+                By candidate 30, the reason candidate 3 looked stronger than candidate 17 has
+                become another thing to recover.
+              </p>
             </Reveal>
           </div>
 
           <figure className="lg:col-span-7">
-            <div className={`weekend-loop relative min-h-107.5 overflow-hidden border border-paper/10 bg-black/15 ${inView ? "weekend-loop-running" : ""}`}>
-              <div className="flex items-center justify-between border-b border-paper/10 px-4 py-3">
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-sage/65">
-                  <span className="size-1.5 rounded-full bg-red-300/80" />
-                  Sunday review
+            <div className={cn("relative overflow-hidden border border-ink/20 bg-paper text-ink", inView && "weekend-loop-running")}>
+              <header className="flex items-center justify-between border-b border-ink/15 px-4 py-3">
+                <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[.15em] text-moss">
+                  <span className="size-1.5 rounded-full bg-destructive" /> Sunday review
                 </div>
-                <span className="weekend-clock font-mono text-[10px] text-paper/45">8:47 PM</span>
-              </div>
+                <span className="weekend-clock font-mono text-[10px] text-ink/55">8:47 PM</span>
+              </header>
 
-              <div className="weekend-tabs flex gap-1 overflow-hidden border-b border-paper/10 px-3 pt-3">
+              <div className="weekend-tabs flex gap-px overflow-hidden border-b border-ink/15 bg-ink/15 px-3 pt-3">
                 {TABS.map((tab, index) => (
-                  <div key={tab} className={`weekend-tab weekend-tab-${index}`}>
-                    <span className="size-1 rounded-full bg-sage/60" />
+                  <div
+                    key={`${tab}-${index}`}
+                    className={cn("weekend-tab !border-ink/15 !bg-paper !text-ink/80", `weekend-tab-${index}`, !inView && "opacity-0")}
+                  >
+                    <span className="size-1 shrink-0 rounded-full bg-moss/70" />
                     <span className="truncate">{tab}</span>
-                    <span className="text-paper/35">×</span>
+                    <span className="text-ink/35">×</span>
                   </div>
                 ))}
               </div>
 
-              <div className="relative grid gap-3 p-5 sm:grid-cols-[1fr_10.5rem]">
-                <div className="relative min-h-67.5">
-                  <div className="mb-3 flex items-end justify-between">
-                    <div>
-                      <p className="label-index tracking-[0.15em] text-sage/55">Applications reviewed</p>
-                      <p className="mt-1 font-serif text-3xl text-paper">50 <span className="text-base text-paper/35">/ 86</span></p>
-                    </div>
-                    <p className="weekend-counter text-right font-mono text-[10px] leading-4 text-red-200/75">12 tabs open<br />3 notes missing</p>
+              <div className="relative min-h-[362px] px-6 py-6 sm:px-8">
+                <div className="flex items-end justify-between border-b border-ink/15 pb-4">
+                  <div>
+                    <p className="font-mono text-[9px] uppercase tracking-[.15em] text-moss">Review workspace</p>
+                    <p className="mt-2 font-sans text-xl font-medium tracking-[-.025em]">Fifty candidates. One remembered note.</p>
                   </div>
+                  <p className="text-right font-mono text-[9px] leading-4 text-destructive">147 switches<br />unresolved</p>
+                </div>
 
-                  <div className="space-y-2">
-                    {CANDIDATES.map((candidate, index) => (
-                      <article key={candidate.id} className={`weekend-candidate weekend-candidate-${index}`}>
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono text-[10px] text-sage/55">#{candidate.id}</span>
-                          <span className="text-[9px] uppercase tracking-[0.12em] text-red-200/70">{candidate.state}</span>
-                        </div>
-                        <p className="mt-1 text-sm text-paper/90">{candidate.name}</p>
-                        <p className="text-[10px] text-sage/60">{candidate.role}</p>
-                        <p className="mt-3 border-t border-paper/10 pt-2 text-[10px] italic text-paper/50">“{candidate.detail}”</p>
+                <div className="relative h-[248px] overflow-hidden">
+                  <div className="absolute left-2 top-7 h-48 w-48 sm:left-8">
+                    {DOCS.map((document, index) => (
+                      <article
+                        key={document.id}
+                        className={cn(
+                          "weekend-document absolute flex h-48 w-36 flex-col border border-ink/20 bg-warm p-3 sm:w-40",
+                          `weekend-document-${index}`,
+                        )}
+                        style={{ transform: `translate(${document.x}px, ${document.y}px) rotate(${document.rotate}deg)` }}
+                      >
+                        <span className="font-mono text-[9px] uppercase tracking-[.1em] text-moss">candidate_{document.id}</span>
+                        <span className="mt-5 h-px w-full bg-ink/25" />
+                        <span className="mt-3 h-px w-5/6 bg-ink/15" />
+                        <span className="mt-3 h-px w-2/3 bg-ink/15" />
+                        <span className="mt-auto h-px w-1/2 bg-ink/15" />
                       </article>
                     ))}
                   </div>
+
+                  <aside className="absolute right-0 top-9 hidden w-40 border-l border-ink/15 pl-4 sm:block">
+                    <p className="font-mono text-[9px] uppercase tracking-[.12em] text-moss">Decision note</p>
+                    <p className="mt-3 font-sans text-base font-medium leading-[1.25] text-ink">Candidate 03 looked stronger.</p>
+                    <p className="weekend-note-fade mt-4 font-mono text-[10px] text-destructive">Reason missing.</p>
+                  </aside>
+
+                  <div aria-hidden className="weekend-overload pointer-events-none absolute inset-0" />
                 </div>
 
-                <aside className="weekend-notes border border-paper/10 bg-paper/[0.035] p-3">
-                  <p className="label-index tracking-[0.14em] text-sage/55">Scratch notes</p>
-                  <div className="mt-4 space-y-3 font-mono text-[10px] leading-4 text-paper/45">
-                    <p>→ strong communicator</p>
-                    <p>→ which one shipped payments?</p>
-                    <p className="line-through opacity-50">→ compare to #03</p>
-                    <p className="weekend-note-fade">→ revisit tomorrow</p>
+                <div className="border-t border-ink/15 pt-4">
+                  <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-[.12em] text-ink/55">
+                    <span>Scratch notes</span><span className="text-destructive">Memory unstable</span>
                   </div>
-                </aside>
-
-                <div aria-hidden className="weekend-overload absolute inset-0 pointer-events-none" />
+                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                    <p className="font-mono text-[10px] text-ink/70">→ strong communicator</p>
+                    <p className="font-mono text-[10px] text-ink/70">→ compare to #03</p>
+                    <p className="weekend-note-fade font-mono text-[10px] text-ink/70">→ revisit tomorrow</p>
+                  </div>
+                </div>
               </div>
 
-              <div className="absolute inset-x-0 bottom-0 flex items-center justify-between border-t border-paper/10 px-5 py-3 font-mono text-[10px] text-paper/40">
-                <span>context switches: <b className="font-normal text-red-200/75">147</b></span>
-                <span className="weekend-memory">memory of #03: fading</span>
-              </div>
+              <footer className="flex items-center justify-between border-t border-ink/15 px-5 py-3 font-mono text-[10px] text-ink/55">
+                <span>candidate memory: <b className="font-normal text-destructive">fading</b></span>
+                <span>decision: unresolved</span>
+              </footer>
             </div>
 
-            <Reveal delay={0.45} className="mt-6">
-              <FigureCaption id="Fig. 2.1" tone="paper">
-                Attention spent reconstructing context, not comparing engineers.
-              </FigureCaption>
+            <Reveal delay={0.4} className="mt-5">
+              <FigureCaption id="Fig. 2.1" tone="paper">Attention spent reconstructing candidates, not evaluating engineers.</FigureCaption>
             </Reveal>
           </figure>
         </div>
-      </EditorialContainer>
+
+        <Reveal delay={0.5} className="mt-16 border-t border-paper/20 pt-6">
+          <p className="max-w-[48ch] font-sans text-lg font-normal leading-[1.35] text-paper md:text-xl">
+            Too much time spent switching context. Not enough spent making the decision.
+          </p>
+        </Reveal>
+      </div>
     </section>
   );
 }

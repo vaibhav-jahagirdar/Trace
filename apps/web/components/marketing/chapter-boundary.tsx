@@ -1,0 +1,7 @@
+import { ChapterMark } from "@/components/editorial";
+
+const LIMITS = ["It won’t tell you who to hire.", "It won’t replace engineering judgement.", "It won’t prove code ownership.", "It won’t guarantee job performance."];
+
+export function ChapterBoundary() {
+  return <section className="border-t border-paper/15 bg-moss px-6 py-24 text-paper md:px-12 md:py-36 lg:px-20"><div className="mx-auto max-w-6xl"><ChapterMark index="10" label="The boundary" tone="paper" /><div className="mt-14 grid gap-14 lg:grid-cols-12 lg:items-end lg:gap-16"><div className="lg:col-span-6"><h2 className="max-w-[10ch] font-sans text-[clamp(2.8rem,5vw,4.6rem)] font-normal leading-[.92] tracking-[-.06em]">Trace won’t<br />hire for you.</h2><p className="mt-8 max-w-[38ch] text-base leading-[1.75] text-sage">It gives you organised evidence before the expensive human decision. The judgement stays with the people who know the role, the team, and the stakes.</p></div><div className="lg:col-span-5 lg:col-start-8"><p className="mb-5 font-mono text-[9px] uppercase tracking-[.16em] text-sage">What remains human</p><div className="grid gap-2">{LIMITS.map((limit) => <div key={limit} className="border border-paper/15 bg-forest/30 px-4 py-3 font-sans text-sm text-paper/85">{limit}</div>)}</div></div></div><div className="mt-14 border-t border-paper/15 pt-6"><p className="max-w-[44ch] font-sans text-lg leading-[1.5] text-paper/80">Narrow scope is the point: better organised evidence, before you make the decision that only a human can make.</p></div></div></section>;
+}
