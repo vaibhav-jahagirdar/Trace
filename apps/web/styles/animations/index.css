@@ -138,8 +138,8 @@
 
 /* The review loop deliberately becomes less legible over time. */
 @keyframes weekend-tab-switch {
-  0%, 13%, 100% { opacity: .45; transform: translateY(0); background: rgb(255 255 255 / .025); }
-  16%, 29% { opacity: 1; transform: translateY(1px); background: rgb(255 255 255 / .12); }
+  0%, 13%, 100% { opacity: .55; transform: translateY(0); background: rgb(24 53 45 / .025); }
+  16%, 29% { opacity: 1; transform: translateY(1px); background: rgb(24 53 45 / .1); }
   32% { opacity: .5; }
 }
 
@@ -163,6 +163,23 @@
 @keyframes weekend-clock {
   0%, 100% { opacity: .45; }
   50% { opacity: .9; color: rgb(254 202 202 / .9); }
+}
+
+@keyframes weekend-focus-slide {
+  0%, 18% { transform: translateX(0); }
+  42%, 62% { transform: translateX(100%); }
+  82%, 100% { transform: translateX(0); }
+}
+
+@keyframes weekend-focus-label {
+  0%, 18% { opacity: 1; }
+  42%, 62% { opacity: 0; }
+  72%, 100% { opacity: 1; }
+}
+
+@keyframes weekend-document-rise {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 /* ========================================================= */
@@ -216,7 +233,7 @@
   padding: .45rem .5rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 9px;
-  color: rgb(255 255 255 / .55);
+  color: var(--ink);
 }
 
 .weekend-candidate {
@@ -226,7 +243,7 @@
 }
 
 .weekend-overload {
-  background: repeating-linear-gradient(0deg, transparent 0, transparent 7px, rgb(255 255 255 / .8) 8px);
+  background: repeating-linear-gradient(0deg, transparent 0, transparent 7px, rgb(24 53 45 / .18) 8px);
   mix-blend-mode: overlay;
 }
 
@@ -242,6 +259,13 @@
 .weekend-loop-running .weekend-note-fade { animation: weekend-memory-fade 5.5s ease-in-out infinite; }
 .weekend-loop-running .weekend-overload { animation: weekend-overload 5.5s ease-in-out infinite; }
 .weekend-loop-running .weekend-clock { animation: weekend-clock 1.2s ease-in-out infinite; }
+.weekend-loop-running .weekend-focus { animation: weekend-focus-slide 5.6s var(--ease-editorial) infinite; }
+.weekend-loop-running .weekend-focus-label { animation: weekend-focus-label 5.6s ease-in-out infinite; }
+.weekend-loop-running .weekend-document { animation: weekend-document-rise 700ms var(--ease-editorial) both; }
+.weekend-loop-running .weekend-document-1 { animation-delay: 140ms; }
+.weekend-loop-running .weekend-document-2 { animation-delay: 280ms; }
+.weekend-loop-running .weekend-document-3 { animation-delay: 420ms; }
+.weekend-loop-running .weekend-document-4 { animation-delay: 560ms; }
 
 /* ========================================================= */
 /* Scroll Reveal */
