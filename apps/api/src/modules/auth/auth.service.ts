@@ -1,4 +1,4 @@
-import type { RegisterInput, LoginInput } from "./auth.validator";
+import type { RegisterInput, LoginInput, UpdateProfileInput } from "./auth.validator";
 import type { SessionMeta, AuthResult, AuthTokens } from "./auth.types";
 import { withTransaction } from "../../config/transaction";
 import jwt from "jsonwebtoken";
@@ -231,16 +231,33 @@ AND u.suspended_at IS NULL`,
     };
   });
 }
+export async function updateUserProfile(userId: string, data: UpdateProfileInput) {
+  return withTransaction(async (client) => {
+    try {
+      if (data.username !== undefined) await client.query(`UPDATE users SET username = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL`, [data.username, userId]);
+      const fields = ["first_name", "last_name", "phone", "linkedin_url", "avatar_url"] as const;
+      const updates = fields.filter((field) => data[field] !== undefined);
+      if (updates.length) await client.query(`UPDATE user_profiles SET ${updates.map((field, index) => `${field} = $${index + 2}`).join(", ")}, updated_at = NOW() WHERE user_id = $1`, [userId, ...updates.map((field) => data[field])]);
+    } catch (error) { handlePgError(error); }
+    return getUserWithOrgsFromClient(client, userId);
+  });
+}
+
+async function getUserWithOrgsFromClient(client: { query: (text: string, values?: unknown[]) => Promise<{ rows: any[] }> }, userId: string) {
+  const { rows: userRows } = await client.query(`SELECT u.id, u.username, u.email, u.status, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone, p.linkedin_url, p.avatar_url FROM users u LEFT JOIN user_profiles p ON p.user_id = u.id WHERE u.id = $1 AND u.deleted_at IS NULL AND u.suspended_at IS NULL`, [userId]);
+  if (userRows.length === 0) throw new NotFoundError("User not found");
+  const { rows: orgRows } = await client.query(`SELECT om.organization_id AS "orgId", o.slug AS "orgSlug", o.name AS "orgName", om.role AS "role", om.title AS "title", om.joined_at AS "joinedAt" FROM organization_members om JOIN organizations o ON o.id = om.organization_id WHERE om.user_id = $1 AND om.removed_at IS NULL AND o.deleted_at IS NULL AND o.status IN ('ACTIVE', 'PENDING_DELETION') ORDER BY om.joined_at ASC`, [userId]);
+  return { ...userRows[0], organizations: orgRows };
+}
+
 export async function getUserWithOrgs(userId: string) {
   const client = await getDb().connect();
   try {
 
     const { rows: userRows } = await client.query(
-      `SELECT id, username, email, status, created_at, updated_at
-       FROM users
-       WHERE id = $1
-         AND deleted_at IS NULL
-         AND suspended_at IS NULL`,
+      `SELECT u.id, u.username, u.email, u.status, u.created_at, u.updated_at, p.first_name, p.last_name, p.phone, p.linkedin_url, p.avatar_url
+       FROM users u LEFT JOIN user_profiles p ON p.user_id = u.id
+       WHERE u.id = $1 AND u.deleted_at IS NULL AND u.suspended_at IS NULL`,
       [userId]
     );
     if (userRows.length === 0) throw new NotFoundError("User not found");
@@ -261,7 +278,7 @@ export async function getUserWithOrgs(userId: string) {
        WHERE om.user_id = $1
          AND om.removed_at IS NULL
          AND o.deleted_at IS NULL
-         AND o.status = 'ACTIVE'
+         AND o.status IN ('ACTIVE', 'PENDING_DELETION')
        ORDER BY om.joined_at ASC`,
       [userId]
     );

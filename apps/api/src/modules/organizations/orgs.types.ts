@@ -1,6 +1,6 @@
 
 
-export type OrgStatus = "ACTIVE" | "SUSPENDED" | "DELETED";
+export type OrgStatus = "ACTIVE" | "SUSPENDED" | "PENDING_DELETION" | "DELETED";
 
 export type Organization = {
   id: string;
@@ -13,6 +13,9 @@ export type Organization = {
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;
+  deletion_requested_at?: Date | null;
+  deletion_scheduled_for?: Date | null;
+  security_question?: string | null;
 };
 
 

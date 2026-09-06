@@ -7,7 +7,8 @@ export async function fetchOrganizationInfo(orgId: string): Promise<Organization
   let orgResult;
   try {
     orgResult = await getDb().query(
-      `SELECT id, slug, name, description, status, credits, created_by, created_at, updated_at, deleted_at
+      `SELECT id, slug, name, description, status, credits, created_by, created_at, updated_at, deleted_at,
+              deletion_requested_at, deletion_scheduled_for, security_question
        FROM organizations WHERE id = $1 AND deleted_at IS NULL`,
       [orgId],
     );
@@ -20,7 +21,7 @@ export async function fetchOrganizationInfo(orgId: string): Promise<Organization
     throw new AppError("Organization not found", 404, "ORG_NOT_FOUND");
   }
 
-  const {id, slug, name, description, status, credits, created_by, created_at, updated_at, deleted_at} = orgResult.rows[0];
+  const {id, slug, name, description, status, credits, created_by, created_at, updated_at, deleted_at, deletion_requested_at, deletion_scheduled_for, security_question} = orgResult.rows[0];
 
   return {
     id,
@@ -32,6 +33,9 @@ export async function fetchOrganizationInfo(orgId: string): Promise<Organization
     created_by,
     created_at,
     updated_at,
-    deleted_at
+    deleted_at,
+    deletion_requested_at,
+    deletion_scheduled_for,
+    security_question
   };
 }

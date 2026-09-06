@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { registerSchema, loginSchema } from "./auth.validator";
-import { registerUser, loginUser, getUserWithOrgs } from "./auth.service";
+import { registerSchema, loginSchema, updateProfileSchema } from "./auth.validator";
+import { registerUser, loginUser, getUserWithOrgs, updateUserProfile } from "./auth.service";
 import { asyncHandler } from "../../middleware/asyncHandler";
 import { UAParser } from "ua-parser-js";
 import { UnauthorizedError } from "../../middleware/errorHandler";
@@ -69,4 +69,10 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
   if (!userId) throw new UnauthorizedError("User not authenticated");
   const data = await getUserWithOrgs(userId);
   res.json({ data });
+});
+
+export const updateProfile = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user?.id) throw new UnauthorizedError("User not authenticated");
+  const data = updateProfileSchema.parse(req.body);
+  res.json({ data: await updateUserProfile(req.user.id, data) });
 });

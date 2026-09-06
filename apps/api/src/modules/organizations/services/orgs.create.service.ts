@@ -4,6 +4,7 @@ import { withTransaction } from "../../../config/transaction";
 import type { CreateOrganizationInput } from "../orgs.validator";
 
 import { handlePgError } from "../../../utils/postgresErrors";
+import bcrypt from "bcrypt";
 
 export async function createOrganization(
   input: CreateOrganizationInput,
@@ -16,6 +17,8 @@ export async function createOrganization(
         name,
         description,
         title,
+        securityQuestion,
+        securityAnswer,
       } = input;
 
       const createOrgResult =
@@ -25,13 +28,17 @@ export async function createOrganization(
             slug,
             name,
             description,
-            created_by
+            created_by,
+            security_question,
+            security_answer_hash
           )
           VALUES (
             $1,
             $2,
             $3,
-            $4
+            $4,
+            $5,
+            $6
           )
           RETURNING id
           `,
@@ -40,6 +47,8 @@ export async function createOrganization(
             name,
             description ?? null,
             userId,
+            securityQuestion ?? null,
+            securityAnswer ? await bcrypt.hash(securityAnswer, 12) : null,
           ]
         );
 

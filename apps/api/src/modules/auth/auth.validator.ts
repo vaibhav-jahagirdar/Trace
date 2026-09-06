@@ -56,5 +56,14 @@ export const loginSchema = z.object({
   email,
   password: z.string().min(1),
 });
+export const updateProfileSchema = z.object({
+  username: username.optional(),
+  first_name: z.string().trim().min(1).max(100).optional(),
+  last_name: z.string().trim().max(100).nullable().optional(),
+  phone: z.string().trim().max(30).regex(/^\+?[0-9\s\-().]+$/).nullable().optional(),
+  linkedin_url: z.url().nullable().optional(),
+  avatar_url: z.url().nullable().optional(),
+}).refine((value) => Object.keys(value).length > 0, { message: "At least one profile field is required" });
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
