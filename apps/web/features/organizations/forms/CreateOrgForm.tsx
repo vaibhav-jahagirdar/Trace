@@ -259,6 +259,13 @@ export function CreateOrgForm() {
                 />
               </Field>
 
+              <Field id="securityQuestion" index="05" label="Organization security question" optional hint="Used as an alternative confirmation before deletion.">
+                <input {...register("securityQuestion")} id="securityQuestion" placeholder="What was our first product?" className={inputClassName} />
+              </Field>
+              <Field id="securityAnswer" index="06" label="Security answer" optional error={errors.securityAnswer?.message}>
+                <input {...register("securityAnswer")} id="securityAnswer" type="password" autoComplete="off" placeholder="A private answer your team will remember" className={inputClassName} />
+              </Field>
+
               {errorMessage && (
                 <div
                   className="border-l-2 border-destructive bg-destructive/5 px-4 py-3 text-sm leading-relaxed text-destructive"

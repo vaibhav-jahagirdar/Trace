@@ -27,7 +27,7 @@ export function OrgSidebar({
     <aside className="hidden w-56 shrink-0 border-r border-forest/12 bg-warm lg:block">
       <div className="sticky top-0 flex h-screen flex-col px-6 py-7">
         <div className="flex items-center justify-between gap-3">
-          <span className="font-mono text-sm uppercase tracking-[0.18em] text-forest">Trace</span>
+          <Link href={orgId ? `/orgs/${orgId}/dashboard` : "/profile"} className="font-mono text-sm uppercase tracking-[0.18em] text-forest">Trace</Link>
         </div>
         <OrganizationSwitcher orgId={orgId} organization={organization} organizations={organizations} onOrganizationChange={onOrganizationChange} />
         <nav className="mt-10 flex-1 space-y-8" aria-label="Organization navigation">
@@ -40,6 +40,10 @@ export function OrgSidebar({
                     ? `/orgs/${orgId}/dashboard`
                     : item === "Jobs"
                       ? `/orgs/${orgId}/jobs`
+                      : item === "Settings" && organization?.role === "ORG_OWNER"
+                        ? `/orgs/${orgId}/settings`
+                      : item === "Members" && organization?.role !== "VIEWER"
+                        ? `/orgs/${orgId}/members`
                       : undefined;
                   return (
                     <li key={item}>
@@ -60,6 +64,7 @@ export function OrgSidebar({
         <div className="border-t border-forest/12 pt-4">
           <p className="text-sm text-ink">{organization?.orgName ?? "Organization"}</p>
           <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.16em] text-olive">{organization?.role ?? "Workspace"}</p>
+          <Link href="/profile" className="mt-3 inline-block text-sm text-forest hover:underline">My profile</Link>
         </div>
       </div>
     </aside>

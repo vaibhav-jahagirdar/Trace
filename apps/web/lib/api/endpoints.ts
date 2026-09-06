@@ -13,6 +13,8 @@ export const API = {
 
     detail: (organizationId: string) =>
       `/organizations/${organizationId}`,
+    deletionRequest: (organizationId: string) => `/organizations/${organizationId}/deletion-request`,
+    deletionCancel: (organizationId: string) => `/organizations/${organizationId}/deletion-cancel`,
   },
 
   jobs: {

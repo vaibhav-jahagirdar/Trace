@@ -20,8 +20,17 @@ export interface MeResponse {
     status: string;
     created_at: string;
     updated_at: string;
+    first_name?: string | null;
+    last_name?: string | null;
+    phone?: string | null;
+    linkedin_url?: string | null;
+    avatar_url?: string | null;
     organizations: OrgMembership[];
   };
+}
+
+export function updateMe(payload: Partial<Pick<MeResponse["data"], "username" | "first_name" | "last_name" | "phone" | "linkedin_url" | "avatar_url">>) {
+  return api.patch<MeResponse>("/auth/me", payload);
 }
 
 export function getMe() {

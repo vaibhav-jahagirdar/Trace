@@ -70,8 +70,6 @@ export default function OrganizationDashboardPage() {
                   >
                     Post a job
                   </Link>
-                  <button type="button" className="inline-flex items-center gap-2 rounded-sm border border-forest/30 px-4 py-3 text-sm text-forest transition-colors hover:bg-warm">Use template</button>
-                  <button type="button" className="inline-flex items-center gap-2 rounded-sm border border-forest/30 px-4 py-3 text-sm text-forest transition-colors hover:bg-warm">View interviews</button>
                 </div>
               </div>
               <p className="mt-8 max-w-[56ch] text-base leading-relaxed text-moss">What is happening across our hiring, and where do I need to act?</p>
@@ -82,11 +80,11 @@ export default function OrganizationDashboardPage() {
 
             {error && <p className="mt-8 border border-destructive/20 bg-destructive/5 p-5 text-sm text-destructive">{error}</p>}
             {loading && <p className="mt-8 font-mono text-xs uppercase tracking-[0.16em] text-olive">Loading hiring activity…</p>}
-            <div className="mt-20"><ActiveJobs jobs={data.activeJobs} /></div>
-            <div className="mt-24"><NeedsAttention items={data.attention} /></div>
-            <div className="mt-24 grid gap-16 lg:grid-cols-[1fr_1fr] lg:gap-20"><UpcomingInterviews groups={data.interviews} /><RecentActivity items={data.activity} /></div>
-            <div className="mt-24"><DraftJobs drafts={data.drafts} /></div>
-            <div className="mt-24"><RecentlyClosed jobs={data.recentlyClosed} /></div>
+            <div className="mt-20"><NeedsAttention items={data.attention} orgId={orgId} /></div>
+            <div className="mt-24"><ActiveJobs jobs={data.activeJobs} orgId={orgId} /></div>
+            {data.interviews.length > 0 && <div className="mt-24"><UpcomingInterviews groups={data.interviews} /></div>}
+            <div className="mt-24"><RecentActivity items={data.activity} orgId={orgId} /></div>
+            <div className="mt-24"><DraftJobs drafts={data.drafts} orgId={orgId} /></div>
 
             <section className="mt-28 border-t border-forest/12 pt-10"><div className="grid gap-10 md:grid-cols-2"><p className="body-editorial max-w-[34ch] text-ink">This screen orchestrates hiring across the organization.</p><p className="body-editorial max-w-[34ch] text-olive">Each role decides who deserves your interview time.</p></div></section>
           </div>

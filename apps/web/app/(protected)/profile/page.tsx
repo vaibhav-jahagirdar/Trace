@@ -1,0 +1,20 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { useAuth } from "@/providers/auth-provider";
+import { updateMe } from "@/features/auth/api/me";
+
+export default function ProfilePage() {
+  const { user, organizations, logout, refetch } = useAuth();
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  if (!user) return null;
+  async function save(form: FormData) {
+    setBusy(true); setSaved(false); setError(null);
+    try { await updateMe({ username: String(form.get("username")), first_name: String(form.get("first_name")), last_name: String(form.get("last_name")) || null, phone: String(form.get("phone")) || null, linkedin_url: String(form.get("linkedin_url")) || null }); await refetch(); setSaved(true); }
+    catch (e) { setError(e instanceof Error ? e.message : "Unable to save profile."); } finally { setBusy(false); }
+  }
+  return <main className="min-h-screen bg-paper px-6 py-10 text-ink md:px-12"><div className="mx-auto max-w-4xl"><div className="flex items-center justify-between border-b border-forest/15 pb-5"><Link href={organizations[0] ? `/orgs/${organizations[0].orgId}/dashboard` : "/create-org"} className="font-mono text-xs uppercase tracking-[.16em] text-olive">← Workspace</Link><button type="button" onClick={() => void logout()} className="border border-forest/25 px-4 py-2 font-mono text-xs uppercase tracking-[.12em] text-forest">Log out</button></div><section className="py-14"><p className="font-mono text-xs uppercase tracking-[.18em] text-olive">Account</p><h1 className="mt-4 text-5xl font-light tracking-[-.05em]">My profile</h1><p className="mt-4 max-w-xl text-base leading-relaxed text-moss">Update your account details and see the organizations connected to your Trace account.</p></section><div className="grid gap-12 lg:grid-cols-[1.2fr_.8fr]"><form action={save} className="border-t border-forest/15 pt-8"><h2 className="text-2xl">Personal details</h2><div className="mt-6 grid gap-5"><label className="text-sm">Username<input name="username" defaultValue={user.username} required className="mt-2 w-full border border-rule bg-transparent p-3" /></label><label className="text-sm">First name<input name="first_name" defaultValue={user.first_name ?? ""} required className="mt-2 w-full border border-rule bg-transparent p-3" /></label><label className="text-sm">Last name<input name="last_name" defaultValue={user.last_name ?? ""} className="mt-2 w-full border border-rule bg-transparent p-3" /></label><label className="text-sm">Phone<input name="phone" defaultValue={user.phone ?? ""} className="mt-2 w-full border border-rule bg-transparent p-3" /></label><label className="text-sm">LinkedIn URL<input name="linkedin_url" type="url" defaultValue={user.linkedin_url ?? ""} className="mt-2 w-full border border-rule bg-transparent p-3" /></label><label className="text-sm text-olive">Email<input value={user.email} readOnly className="mt-2 w-full border border-rule bg-warm/40 p-3 text-olive" /></label></div>{error && <p className="mt-5 text-sm text-destructive" role="alert">{error}</p>}{saved && <p className="mt-5 text-sm text-forest">Profile saved.</p>}<button disabled={busy} className="mt-7 bg-forest px-5 py-3 font-mono text-xs uppercase tracking-[.14em] text-paper disabled:opacity-50">{busy ? "Saving…" : "Save changes"}</button></form><section className="border-t border-forest/15 pt-8"><h2 className="text-2xl">Your organizations</h2><div className="mt-6 space-y-3">{organizations.length === 0 ? <p className="text-sm text-olive">You are not a member of an organization yet.</p> : organizations.map((org) => <Link key={org.orgId} href={`/orgs/${org.orgId}/dashboard`} className="block border border-forest/15 p-4 transition-colors hover:bg-warm"><p className="font-medium">{org.orgName}</p><p className="mt-1 font-mono text-xs uppercase tracking-[.12em] text-olive">{org.role}{org.title ? ` · ${org.title}` : ""}</p></Link>)}</div></section></div></div></main>;
+}

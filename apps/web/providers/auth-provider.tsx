@@ -22,6 +22,11 @@ type AuthContextValue = {
     status: string;
     created_at: string;
     updated_at: string;
+    first_name?: string | null;
+    last_name?: string | null;
+    phone?: string | null;
+    linkedin_url?: string | null;
+    avatar_url?: string | null;
   } | null;
   organizations: OrgMembership[];
   activeOrg: OrgMembership | null;
@@ -31,6 +36,7 @@ type AuthContextValue = {
   isError: boolean;
   error: Error | null;
   refetch: () => Promise<unknown>;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -67,6 +73,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
             status: user.status,
             created_at: user.created_at,
             updated_at: user.updated_at,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            phone: user.phone,
+            linkedin_url: user.linkedin_url,
+            avatar_url: user.avatar_url,
           }
         : null,
       organizations,
@@ -77,6 +88,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isError,
       error: error instanceof Error ? error : error ? new Error("Unknown error") : null,
       refetch,
+      logout: async () => { await api.post("/auth/logout"); window.location.assign("/login"); },
     }),
     [user, organizations, activeOrg, isLoading, isError, error, refetch],
   );
