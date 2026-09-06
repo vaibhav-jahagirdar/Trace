@@ -17,10 +17,10 @@ from app.llm.resumeAnalyzer.prompt.builder import (
 # Configuration
 # ---------------------------------------------------------------------------
 
-DEEPSEEK_MODEL = (
-    settings.DEEPSEEK_MODEL
-    or os.getenv("DEEPSEEK_MODEL")
-    or "deepseek-v4-flash"
+AZURE_MODEL = (
+    settings.AZURE_DEPLOYMENT_NAME
+    or os.getenv("AZURE_DEPLOYMENT_NAME")
+    or "gpt-5.6-luna"
 )
 
 # Application-level concurrency.
@@ -31,13 +31,13 @@ DEEPSEEK_MODEL = (
 # Example:
 #   DEEPSEEK_MAX_CONCURRENCY=10
 #
-DEEPSEEK_MAX_CONCURRENCY = int(
-    settings.DEEPSEEK_MAX_CONCURRENCY
-    or os.getenv("DEEPSEEK_MAX_CONCURRENCY", "10")
+AZURE_MAX_CONCURRENCY = int(
+    getattr(settings, "AZURE_OPENAI_MAX_CONCURRENCY", 10)
+    or os.getenv("AZURE_OPENAI_MAX_CONCURRENCY", "10")
 )
 
 # One shared semaphore for the Python process.
-_DEEPSEEK_SEMAPHORE = asyncio.Semaphore(DEEPSEEK_MAX_CONCURRENCY)
+_AZURE_SEMAPHORE = asyncio.Semaphore(AZURE_MAX_CONCURRENCY)
 
 
 # ---------------------------------------------------------------------------
@@ -142,12 +142,11 @@ async def generate(
     system_instruction: str | None = None,
 ) -> Tuple[dict[str, Any] | None, str]:
     """
-    Generate structured JSON using DeepSeek V4 Flash.
+    Generate structured JSON using Azure OpenAI.
 
     Configuration:
-      - DeepSeek V4 Flash
-      - Thinking mode enabled
-      - reasoning_effort = max
+      - Azure deployment configured by AZURE_DEPLOYMENT_NAME
+      - GPT-5.6 reasoning via reasoning_effort
       - JSON output enabled
       - max_tokens = 16384
       - application-level concurrency control
@@ -203,34 +202,32 @@ async def generate(
     print(f"[LLM] Debug prompt written to: {tmp_path}")
 
     print("=" * 80)
-    print("[LLM] Calling DeepSeek")
-    print(f"[LLM] Model: {DEEPSEEK_MODEL}")
-    print("[LLM] Thinking: enabled")
-    print("[LLM] Reasoning effort: max")
+    print("[LLM] Calling Azure OpenAI")
+    print(f"[LLM] Model deployment: {AZURE_MODEL}")
+    print(f"[LLM] Reasoning effort: {getattr(settings, 'AZURE_OPENAI_REASONING_EFFORT', 'high')}")
     print("[LLM] JSON output: enabled")
-    print(f"[LLM] Max concurrency: {DEEPSEEK_MAX_CONCURRENCY}")
+    print(f"[LLM] Max concurrency: {AZURE_MAX_CONCURRENCY}")
     print(f"[LLM] Prompt chars: {len(prompt)}")
     print("=" * 80)
 
     # -----------------------------------------------------------------------
-    # DeepSeek request
+    # Azure OpenAI request
     # -----------------------------------------------------------------------
 
-    async def call_deepseek():
+    async def call_azure():
         return await asyncio.to_thread(
             client.complete,
-            provider="deepseek",
-            model=DEEPSEEK_MODEL,
+            provider="azure",
+            model=AZURE_MODEL,
             messages=messages,
 
-            # DeepSeek thinking configuration
-            reasoning_effort="max",
+            reasoning_effort=getattr(settings, "AZURE_OPENAI_REASONING_EFFORT", "high"),
 
             # JSON mode
             json_output=True,
 
             # Large enough for your evaluation object
-           max_tokens=65_536,
+            max_completion_tokens=65_536,
 
             # Do NOT send temperature/top_p/seed.
             # DeepSeek thinking mode does not use them.
@@ -238,15 +235,15 @@ async def generate(
 
     try:
         # Application-level concurrency protection.
-        async with _DEEPSEEK_SEMAPHORE:
+        async with _AZURE_SEMAPHORE:
 
             print(
-                "[LLM] Acquired DeepSeek concurrency slot "
-                f"({DEEPSEEK_MAX_CONCURRENCY} max)"
+                "[LLM] Acquired Azure concurrency slot "
+                f"({AZURE_MAX_CONCURRENCY} max)"
             )
 
             response = await _call_with_retry(
-                call_deepseek,
+                call_azure,
                 max_retries=3,
                 base_delay=2.0,
                 max_delay=16.0,
@@ -254,15 +251,13 @@ async def generate(
             )
 
         if not response.choices:
-            raise RuntimeError(
-                "DeepSeek returned no choices."
-            )
+            raise RuntimeError("Azure OpenAI returned no choices.")
 
         message = response.choices[0].message
 
         raw_text = message.content
 
-        # DeepSeek exposes reasoning separately.
+        # Reasoning tokens are not part of the final message content.
         #
         # DO NOT persist reasoning_content as part of your evaluation.
         #
@@ -275,7 +270,7 @@ async def generate(
 
         if not raw_text:
             raise RuntimeError(
-                "DeepSeek returned an empty response."
+                "Azure OpenAI returned an empty response."
             )
 
         # -------------------------------------------------------------------
@@ -304,15 +299,15 @@ async def generate(
             )
 
         print("=" * 80)
-        print("[LLM] DeepSeek response received")
+        print("[LLM] Azure OpenAI response received")
         print("=" * 80)
 
     except Exception as deepseek_error:
-        print("[LLM] DeepSeek failed")
-        print(f"[LLM] DeepSeek error: {repr(deepseek_error)}")
+        print("[LLM] Azure OpenAI failed")
+        print(f"[LLM] Azure OpenAI error: {repr(deepseek_error)}")
 
         raise RuntimeError(
-            "DeepSeek provider failed."
+            "Azure OpenAI provider failed."
         ) from deepseek_error
 
     # -----------------------------------------------------------------------
@@ -367,7 +362,7 @@ async def generate(
 
         if not isinstance(payload, dict):
             raise ValueError(
-                "DeepSeek JSON response is not a JSON object."
+                "Azure OpenAI JSON response is not a JSON object."
             )
 
         print("[LLM] JSON parsed successfully")

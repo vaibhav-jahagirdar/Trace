@@ -34,7 +34,7 @@ _MAX_DISCOVERY_TREE_CHARS = 1_800_000
 
 
 def _compact_tree(node: Any, budget: int) -> tuple[dict[str, Any], int]:
-    """Return a deterministic, path-addressable tree prefix within budget."""
+    """Return a deterministic structural tree prefix within budget."""
     if not isinstance(node, dict) or budget <= 0:
         return {}, 0
 
@@ -60,6 +60,27 @@ def _compact_tree(node: Any, budget: int) -> tuple[dict[str, Any], int]:
         compact["children"] = children
         used = len(json.dumps(compact, ensure_ascii=False))
     return compact, used
+
+
+def _path_index(node: Any) -> list[dict[str, str]]:
+    """Flatten every discovered tree entry for exact path selection."""
+    entries: list[dict[str, str]] = []
+
+    def walk(current: Any) -> None:
+        if not isinstance(current, dict):
+            return
+        path = current.get("path")
+        entry_type = current.get("type")
+        if isinstance(path, str) and path:
+            item = {"path": path}
+            if isinstance(entry_type, str):
+                item["type"] = entry_type
+            entries.append(item)
+        for child in current.get("children") or []:
+            walk(child)
+
+    walk(node)
+    return entries
 
 
 @lru_cache(maxsize=1)
@@ -113,6 +134,18 @@ def _filter_stage_1(stage_1: dict[str, Any]) -> dict[str, Any]:
     evaluation.pop("metadata", None)
     evaluation.pop("confidence", None)
 
+    # Stage 2A needs the verification targets, decision-critical claims,
+    # projects, and requirement gaps. These resume-stage diagnostics are
+    # redundant with those fields and add narrative noise to planning.
+    bucket_scores = evaluation.get("bucket_scores")
+    if isinstance(bucket_scores, dict):
+        bucket_scores.pop("qualification_alignment", None)
+
+    rationale = evaluation.get("score_rationale")
+    if isinstance(rationale, dict):
+        rationale.pop("drivers_up", None)
+        rationale.pop("drivers_down", None)
+
     return data
 
 
@@ -126,6 +159,19 @@ def _filter_candidate_context(candidate_context: dict[str, Any]) -> dict[str, An
     submitted.pop("linkedinUrl", None)
     submitted.pop("problemSolvingProfileUrl", None)
 
+    # These free-text application responses are useful to Stage 1, but are
+    # redundant once Stage 2A has the extracted claims and verification plan.
+    # Keeping them would increase prompt size and expose more injection-shaped
+    # narrative without improving path selection.
+    for field in (
+        "projectDescription",
+        "featureDescription",
+        "engineeringHighlight",
+        "bestEvidenceNote",
+        "whyGoodFit",
+    ):
+        submitted.pop(field, None)
+
     return data
 
 
@@ -138,10 +184,20 @@ def _filter_repository_discovery(
     data.pop("updated_at", None)
     data.pop("public_repos", None)
     data.pop("self_owned", None)
-    data.pop("forks", None)
-    data.pop("organization", None)
+    # Keep classification and routing metadata. They are triage signals only,
+    # never evidence of authorship, quality, or candidate ability.
 
-    repositories = data.get("repositories", [])
+    # Stage 2A intake is intentionally limited to repositories owned by the
+    # candidate. Keep the complete discovery object outside this prompt for
+    # auditability, but do not spend LLM context on forks or organization
+    # repositories. Classification is metadata routing, never quality or
+    # authorship evidence.
+    repositories = [
+        repo
+        for repo in data.get("repositories", [])
+        if str(repo.get("classification", "")).upper() == "SELF_OWNED"
+    ]
+    data["repositories"] = repositories
 
     if repositories:
         per_repo_budget = max(
@@ -153,13 +209,15 @@ def _filter_repository_discovery(
 
     for repo in repositories:
         repo.pop("private", None)
-        repo.pop("archived", None)
-        repo.pop("pushed_at", None)
+        # Archived/fork/recent metadata helps deterministic intake triage and
+        # must not be confused with source evidence.
 
         tree = repo.get("tree")
         if tree is not None:
             compact_tree, _ = _compact_tree(tree, per_repo_budget)
             repo["tree"] = compact_tree
+            repo["path_index"] = _path_index(tree)
+            repo["tree_view_truncated"] = len(repo["path_index"]) > 0 and compact_tree != tree
 
     return data
 

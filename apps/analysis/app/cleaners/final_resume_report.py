@@ -50,12 +50,29 @@ def _validate_job_bound_sections(
             expected_names = [
                 item.name for item in expected_items if item.type == requirement_type
             ]
-            actual_names = [item["name"] for item in actual_category[key]]
-            if actual_names != expected_names:
-                raise ValueError(
-                    f"requirement_analysis.{tier}.{key} must contain the job's "
-                    f"configured items exactly and in order."
-                )
+            # LLMs occasionally omit a configured item or return a casing
+            # variant.  Normalize the list deterministically so one malformed
+            # row cannot turn an otherwise valid analysis into HTTP 500.
+            actual_items = actual_category.get(key) or []
+            by_name = {
+                str(item.get("name", "")).strip().casefold(): item
+                for item in actual_items
+                if isinstance(item, dict)
+            }
+            aligned = []
+            for expected_name in expected_names:
+                item = deepcopy(by_name.get(expected_name.strip().casefold()))
+                if item is None:
+                    item = {
+                        "name": expected_name,
+                        "status": "MISSING",
+                        "supporting_claim_ids": [],
+                        "note": "No supporting resume claim was extracted.",
+                    }
+                else:
+                    item["name"] = expected_name
+                aligned.append(item)
+            actual_category[key] = aligned
 
     expected_qualification = job_context.qualifications.minimumEducationLevel
     actual_qualification = report["requirement_analysis"]["qualification"]
@@ -66,14 +83,18 @@ def _validate_job_bound_sections(
                 "education requirement is configured."
             )
     elif actual_qualification is None:
-        raise ValueError(
-            "requirement_analysis.qualification must match the configured minimum "
-            "education requirement."
-        )
+        report["requirement_analysis"]["qualification"] = {
+            "name": expected_qualification,
+            "status": "MISSING",
+            "supporting_claim_ids": [],
+            "note": "No assessment of the configured minimum education requirement was extracted.",
+        }
     elif _canonical_education_name(actual_qualification.get("name")) != _canonical_education_name(expected_qualification):
-        raise ValueError(
-            "requirement_analysis.qualification must match the configured minimum "
-            "education requirement."
+        actual_qualification["name"] = expected_qualification
+        actual_qualification["status"] = "UNCONFIRMED"
+        actual_qualification["supporting_claim_ids"] = []
+        actual_qualification["note"] = (
+            "The extracted education label did not match the configured minimum requirement."
         )
     else:
         # Downstream consumers rely on the job's canonical label. The model may
@@ -148,6 +169,15 @@ def normalize_final_resume_report(
 ) -> dict:
     """Apply loss-minimizing repairs for bounded auxiliary model output."""
     report = deepcopy(raw)
+    # Older prompt versions occasionally nested the report-level sections
+    # inside bucket_scores. Promote them before schema validation so a prompt
+    # shape drift does not force another LLM call.
+    if isinstance(report, dict) and isinstance(report.get("bucket_scores"), dict):
+        buckets = report["bucket_scores"]
+        for field in ("score_rationale", "verification_plan", "confidence", "overall"):
+            if field not in report and field in buckets:
+                report[field] = buckets[field]
+            buckets.pop(field, None)
     targets = (
         report.get("verification_plan", {})
         if isinstance(report, dict)

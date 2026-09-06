@@ -109,6 +109,13 @@ def _collect_valid_paths(repo: dict[str, Any]) -> set[str]:
     TreeNode's real fields: name, type, path, children.
     """
     paths: set[str] = set()
+    indexed = repo.get("path_index") or []
+    paths.update(
+        item.get("path")
+        for item in indexed
+        if isinstance(item, dict) and isinstance(item.get("path"), str)
+    )
+
     tree = repo.get("tree")
     if not tree:
         return paths

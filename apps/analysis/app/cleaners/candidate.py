@@ -19,7 +19,7 @@ def _collect_all_claim_ids_from_dict(obj: Any) -> Set[str]:
     return ids
 
 
-_SHORT_CLAIM_ID = re.compile(r"^c(\d+)$")
+_CLAIM_ID = re.compile(r"^(?:claim_)?(\d+)$|^c(\d+)$")
 
 
 def _canonicalize_claim_ids(value: Any) -> Any:
@@ -35,9 +35,10 @@ def _canonicalize_claim_ids(value: Any) -> Any:
     if isinstance(value, list):
         return [_canonicalize_claim_ids(item) for item in value]
     if isinstance(value, str):
-        match = _SHORT_CLAIM_ID.fullmatch(value)
+        match = _CLAIM_ID.fullmatch(value)
         if match:
-            return f"claim_{int(match.group(1)):04d}"
+            number = match.group(1) or match.group(2)
+            return f"claim_{int(number):04d}"
     return value
 
 

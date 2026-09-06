@@ -33,7 +33,13 @@ class MultiProviderClient:
                     "Set them in your .env file or environment variables."
                 )
 
-            base_url = endpoint.rstrip("/")
+            # Accept endpoints copied from Azure portal/env files, including
+            # an accidental duplicated `h` and a Responses route suffix.
+            base_url = endpoint.strip().replace("hhttps://", "https://", 1).rstrip("/")
+            if "/openai/v1/responses" in base_url:
+                base_url = base_url.replace("/openai/v1/responses", "/openai/v1")
+            elif base_url.endswith("/responses"):
+                base_url = base_url[: -len("/responses")]
 
             if not base_url.endswith("/openai/v1"):
                 base_url = f"{base_url}/openai/v1"
@@ -85,8 +91,8 @@ class MultiProviderClient:
         max_completion_tokens: int | None = None,
         seed: int = 42,
         stream: bool = False,
-        provider: str = "deepseek",
-        reasoning_effort: str = "max",
+        provider: str = "azure",
+        reasoning_effort: str = "high",
         json_output: bool = True,
         **kwargs,
     ):
@@ -139,15 +145,20 @@ class MultiProviderClient:
                 else max_tokens
             )
 
-            return client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                max_completion_tokens=token_param,
-                seed=seed,
-                stream=stream,
+            request_kwargs = {
+                "model": model,
+                "messages": messages,
+                "max_completion_tokens": token_param,
+                "stream": stream,
+                "reasoning_effort": reasoning_effort,
                 **kwargs,
-            )
+            }
+            # GPT-5/o-series reasoning deployments reject sampling controls.
+            if not (model.lower().startswith("gpt-5") or model.lower().startswith("o1") or model.lower().startswith("o3")):
+                request_kwargs.update({"temperature": temperature, "top_p": top_p, "seed": seed})
+            if json_output:
+                request_kwargs["response_format"] = {"type": "json_object"}
+            return client.chat.completions.create(**request_kwargs)
 
         raise ValueError(
             f"Unsupported provider: {provider}. "
