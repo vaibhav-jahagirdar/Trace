@@ -5,6 +5,10 @@ export interface JobControlRoomResult {
   job: {
     id: string;
     title: string;
+    slug: string;
+    organizationSlug: string;
+    slug: string;
+    organization_slug: string;
     department: string | null;
     role: string | null;
     status: string;
@@ -59,10 +63,11 @@ export async function getJobControlRoom(
     updated_at: string;
   }>(
     `
-    SELECT j.id, j.title, j.department, rc.name AS role, j.status,
+    SELECT j.id, j.title, j.slug, o.slug AS organization_slug, j.department, rc.name AS role, j.status,
            j.employment_type, j.work_mode, j.open_positions,
-           j.created_at, j.updated_at
+    j.created_at, j.updated_at
     FROM jobs j
+    JOIN organizations o ON o.id = j.organization_id
     LEFT JOIN job_role_categories rc ON rc.id = j.role_category_id
     WHERE j.id = $1 AND j.organization_id = $2 AND j.deleted_at IS NULL
     LIMIT 1
@@ -164,6 +169,8 @@ export async function getJobControlRoom(
     job: {
       id: job.id,
       title: job.title,
+      slug: job.slug,
+      organizationSlug: job.organization_slug,
       department: job.department,
       role: job.role,
       status: job.status,

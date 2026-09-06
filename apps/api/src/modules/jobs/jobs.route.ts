@@ -10,6 +10,8 @@ import {
   listJobsController,
   getJobControlRoomController,
   getJobApplicationAnalysisReportsController,
+  getJobApplicationResumeController,
+  updateJobController, transitionJobController, deleteJobController,
 } from "./jobs.controller";
 import { getJobDraftController } from "./jobs.controller";
 import { saveJobDraftController } from "./jobs.controller";
@@ -21,15 +23,18 @@ const router = Router({ mergeParams: true });
 router.post(
   "/",
   requireAuth,
-  requireMembership(),
+  requireMembership("RECRUITER"),
   validateParams(orgIdParamSchema),
   createJobController,
 );
+router.patch("/:jobId", requireAuth, requireMembership("RECRUITER"), validateParams(orgJobIdParamSchema), updateJobController);
+router.post("/:jobId/status", requireAuth, requireMembership("RECRUITER"), validateParams(orgJobIdParamSchema), transitionJobController);
+router.delete("/:jobId", requireAuth, requireMembership("RECRUITER"), validateParams(orgJobIdParamSchema), deleteJobController);
 
 router.post(
   "/:jobId/publish",
   requireAuth,
-  requireMembership(),
+  requireMembership("RECRUITER"),
   validateParams(orgJobIdParamSchema),
   publishJobController,
 );
@@ -40,8 +45,8 @@ router.get(
   validateParams(orgJobIdParamSchema),
   getJobPreviewController,
 );
-router.get("/draft", requireAuth, requireMembership(), validateParams(orgIdParamSchema), getJobDraftController);
-router.put("/draft", requireAuth, requireMembership(), validateParams(orgIdParamSchema), saveJobDraftController);
+router.get("/draft", requireAuth, requireMembership("RECRUITER"), validateParams(orgIdParamSchema), getJobDraftController);
+router.put("/draft", requireAuth, requireMembership("RECRUITER"), validateParams(orgIdParamSchema), saveJobDraftController);
 router.get(
   "/",
   requireAuth,
@@ -63,7 +68,14 @@ router.get(
   validateParams(orgJobIdParamSchema.extend({ applicationId: orgJobIdParamSchema.shape.jobId })),
   getJobApplicationAnalysisReportsController,
 );
-router.get("/:jobId", getJobController);
+router.get(
+  "/:jobId/applications/:applicationId/resume",
+  requireAuth,
+  requireMembership(),
+  validateParams(orgJobIdParamSchema.extend({ applicationId: orgJobIdParamSchema.shape.jobId })),
+  getJobApplicationResumeController,
+);
+router.get("/:jobId", requireAuth, requireMembership(), validateParams(orgJobIdParamSchema), getJobController);
 router.post(
   "/:jobId/applications/:applicationId/repository-plan",
   requireAuth,

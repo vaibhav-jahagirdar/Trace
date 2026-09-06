@@ -1,7 +1,7 @@
 import { api } from "@/lib/api/client";
 
 export interface JobApplicationAnalysisReportsResponse {
-  application: { id: string; candidateName: string; jobTitle: string };
+  application: { id: string; candidateName: string; email: string | null; githubUrl: string | null; resumeAvailable: boolean; jobTitle: string };
   stage1: unknown;
   stage2a: unknown;
   stage2c: unknown;

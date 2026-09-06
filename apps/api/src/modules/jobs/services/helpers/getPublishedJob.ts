@@ -4,12 +4,14 @@ import { NotFoundError } from "../../../../middleware/errorHandler";
 export async function getPublishedJob(
   client: PoolClient,
   jobId: string,
+  organizationId?: string,
 ) {
   const result = await client.query(
     `
       SELECT
         j.id,
         j.title,
+        j.slug,
         j.department,
         j.employment_type,
         j.work_mode,
@@ -49,11 +51,12 @@ export async function getPublishedJob(
         ON j.id = j_s_r.job_id
 
       WHERE j.id = $1
+        AND ($2::uuid IS NULL OR j.organization_id = $2)
         AND j.status = 'PUBLISHED'
         AND j.closed_at IS NULL
         AND j.deleted_at IS NULL
     `,
-    [jobId],
+    [jobId, organizationId ?? null],
   );
 
   if (result.rowCount === 0) {
@@ -112,10 +115,7 @@ export async function getPublishedJobByPublicSlug(
       LEFT JOIN job_eligibility_criteria j_e ON j.id = j_e.job_id
       LEFT JOIN job_submission_requirements j_s_r ON j.id = j_s_r.job_id
       WHERE lower(o.slug::text) = lower($1)
-        AND regexp_replace(
-          regexp_replace(lower(j.title), '[^a-z0-9]+', '-', 'g'),
-          '(^-|-$)', '', 'g'
-        ) = lower($2)
+        AND j.slug = lower($2)
         AND o.deleted_at IS NULL
         AND j.status = 'PUBLISHED'
         AND j.closed_at IS NULL

@@ -11,8 +11,10 @@ import { getActiveDraft, upsertDraft } from "./services/helpers/jobDraft";
 import { getJobPreview } from "./services/[jobId]/job.preview.service";
 import { listOrganizationJobs } from "./services/jobs.list.service";
 import { getJobControlRoom } from "./services/job.control-room.service";
-import { getJobApplicationAnalysisReports } from "./services/job.analysis-reports.service";
+import { getJobApplicationAnalysisReports, getJobApplicationResumeObject } from "./services/job.analysis-reports.service";
 import { getOrganizationDashboard } from "./services/organization-dashboard.service";
+import { updateJob, transitionJob, deleteJob } from "./services/jobs.manage.service";
+import { updateJobSchema } from "./validators/create/jobs.validator";
 
 function toDraftDto(draft: Awaited<ReturnType<typeof getActiveDraft>>) {
   if (!draft) return null;
@@ -194,17 +196,47 @@ export async function getJobController(
 ) {
   try {
     const jobId = req.params.jobId;
+    const orgId = req.params.orgId;
 
     if (typeof jobId !== "string") {
       return res.status(400).json({ message: "Invalid jobId" });
     }
 
-    const result = await getJob(jobId);
+    const result = await getJob(jobId, typeof orgId === "string" ? orgId : undefined);
 
     return res.status(200).json(result);
   } catch (error) {
     next(error);
   }
+}
+
+export async function updateJobController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.id;
+    const { orgId, jobId } = req.params;
+    if (!userId || typeof orgId !== "string" || typeof jobId !== "string") return res.status(400).json({ message: "Invalid route params" });
+    res.json({ message: "Job updated successfully", data: await updateJob(jobId, orgId, userId, updateJobSchema.parse(req.body)) });
+  } catch (error) { next(error); }
+}
+
+export async function transitionJobController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.id;
+    const { orgId, jobId } = req.params;
+    const status = req.body?.status;
+    if (!userId || typeof orgId !== "string" || typeof jobId !== "string") return res.status(400).json({ message: "Invalid route params" });
+    if (!["PAUSED", "PUBLISHED", "CLOSED"].includes(status)) return res.status(400).json({ message: "Invalid job status" });
+    res.json({ message: "Job status updated", data: await transitionJob(jobId, orgId, userId, status) });
+  } catch (error) { next(error); }
+}
+
+export async function deleteJobController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.id;
+    const { orgId, jobId } = req.params;
+    if (!userId || typeof orgId !== "string" || typeof jobId !== "string") return res.status(400).json({ message: "Invalid route params" });
+    res.json({ message: "Job archived", data: await deleteJob(jobId, orgId, userId) });
+  } catch (error) { next(error); }
 }
 
 export async function getJobControlRoomController(
@@ -238,6 +270,25 @@ export async function getJobApplicationAnalysisReportsController(
     return res.status(200).json(
       await getJobApplicationAnalysisReports(orgId, jobId, applicationId),
     );
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getJobApplicationResumeController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { orgId, jobId, applicationId } = req.params;
+    if (typeof orgId !== "string" || typeof jobId !== "string" || typeof applicationId !== "string") {
+      return res.status(400).json({ message: "Invalid route params" });
+    }
+    const object = await getJobApplicationResumeObject(orgId, jobId, applicationId);
+    res.setHeader("Content-Type", object.ContentType ?? "application/pdf");
+    res.setHeader("Content-Disposition", "inline");
+    if (object.ContentLength) res.setHeader("Content-Length", String(object.ContentLength));
+    if (!object.Body || typeof (object.Body as { pipe?: unknown }).pipe !== "function") {
+      return res.status(502).json({ message: "Resume storage returned no readable body" });
+    }
+    (object.Body as any).pipe(res);
   } catch (error) {
     next(error);
   }

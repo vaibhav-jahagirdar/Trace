@@ -1,5 +1,5 @@
-import JobAnalysisPage from "@/features/jobs/pages/JobAnalysisPage";
+import ApplicantsCandidatesPage from "@/features/jobs/pages/ApplicantsPage";
 
 export default function ApplicantsPage() {
-  return <JobAnalysisPage />;
+  return <ApplicantsCandidatesPage />;
 }

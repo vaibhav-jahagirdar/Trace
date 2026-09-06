@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { ArrowRight } from "lucide-react";
 import { useAuth } from "@/providers/auth-provider";
 import { OrganizationSwitcher, OrgSidebar } from "@/components/dashboard/org-sidebar";
 import { getJobControlRoom, type JobControlRoomResponse } from "../api/control-room";
 import { queueRepositoryAnalysis } from "../api/analysis-reports";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { deleteJob, transitionJob, updateJob } from "../api/manage";
 
 const EMPTY: JobControlRoomResponse | null = null;
 
@@ -49,6 +51,9 @@ export default function JobControlRoomPage() {
   const [selectedApplication, setSelectedApplication] = useState("");
   const [queueMessage, setQueueMessage] = useState<string | null>(null);
   const [queueing, setQueueing] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,6 +78,41 @@ export default function JobControlRoomPage() {
     }
   }
 
+  async function saveJob(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setSaving(true);
+    try {
+      await updateJob(params.orgId, params.jobId, { title: String(form.get("title")), slug: String(form.get("slug")), department: String(form.get("department") || "") || null, description: String(form.get("description") || "") || null, open_positions: Number(form.get("open_positions")) });
+      setEditing(false);
+      const refreshed = await getJobControlRoom(params.orgId, params.jobId);
+      setData(refreshed);
+    } catch { setError("We couldn't save this role."); } finally { setSaving(false); }
+  }
+
+  async function changeStatus(status: "PAUSED" | "PUBLISHED" | "CLOSED") {
+    try { await transitionJob(params.orgId, params.jobId, status); setData(await getJobControlRoom(params.orgId, params.jobId)); }
+    catch { setError("We couldn't update this role's status."); }
+  }
+
+  async function archive() {
+    if (!window.confirm("Archive this role? It will no longer appear in the organization job list.")) return;
+    try { await deleteJob(params.orgId, params.jobId); window.location.href = `/orgs/${params.orgId}/jobs`; }
+    catch { setError("We couldn't archive this role."); }
+  }
+
+  async function sharePublicLink() {
+    if (!data?.job.slug || !data.job.organizationSlug) return;
+    const url = `${window.location.origin}/careers/${data.job.organizationSlug}/${data.job.slug}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2200);
+    } catch {
+      window.prompt("Copy this public application link", url);
+    }
+  }
+
   return (
     <div className="flex min-h-screen w-full bg-paper text-ink">
       <OrgSidebar orgId={params.orgId} organization={organization} organizations={organizations} onOrganizationChange={setActiveOrg} />
@@ -86,6 +126,7 @@ export default function JobControlRoomPage() {
         </header>
 
         <main className="px-6 pb-28 md:px-10 lg:px-14">
+          {data?.job && <div className="mx-auto max-w-6xl pt-5"><button type="button" onClick={sharePublicLink} disabled={data.job.status !== "PUBLISHED"} className="rounded border border-forest/30 px-4 py-2.5 text-sm text-forest hover:bg-warm disabled:cursor-not-allowed disabled:opacity-40">{copied ? "Link copied" : "Share public link"}</button></div>}
           <div className="mx-auto max-w-6xl">
             {error && <p className="py-16 text-sm text-destructive">{error}</p>}
             {!data && !error && <p className="py-16 font-mono text-xs uppercase tracking-[0.16em] text-olive">Loading role…</p>}
@@ -96,12 +137,12 @@ export default function JobControlRoomPage() {
                     <div className="flex flex-wrap items-center gap-3"><h1 className="font-sans text-5xl font-light leading-none tracking-[-0.05em] md:text-6xl">{data.job.title}</h1><span className="font-mono text-[11px] uppercase tracking-[0.15em] text-olive">● {label(data.job.status)}</span></div>
                     <p className="mt-5 text-sm text-olive">{data.job.department ?? data.job.role ?? "Role"} · {label(data.job.employmentType)} · {label(data.job.workMode)} · {data.job.openPositions} {data.job.openPositions === 1 ? "opening" : "openings"}</p>
                   </div>
-                  <div className="flex flex-wrap gap-3"><Link href={`/orgs/${params.orgId}/jobs/${params.jobId}/publish`} className={`border px-4 py-3 text-sm transition-colors ${data.job.status === "DRAFT" ? "border-forest bg-forest text-paper hover:bg-moss" : "border-forest/30 text-forest hover:bg-warm"}`}>{data.job.status === "DRAFT" ? "Review & publish" : "Edit role"}</Link>{data.job.status !== "DRAFT" && <button type="button" className="border border-destructive/30 px-4 py-3 text-sm text-destructive hover:bg-destructive/5">Close</button>}</div>
+                  <div className="flex flex-wrap gap-3"><button type="button" onClick={() => setEditing(true)} className="border border-forest/30 px-4 py-3 text-sm text-forest hover:bg-warm">Edit role</button>{data.job.status === "PUBLISHED" && <button type="button" onClick={() => changeStatus("PAUSED")} className="border border-forest/30 px-4 py-3 text-sm text-forest hover:bg-warm">Pause</button>}{data.job.status === "PAUSED" && <button type="button" onClick={() => changeStatus("PUBLISHED")} className="border border-forest/30 px-4 py-3 text-sm text-forest hover:bg-warm">Resume</button>}{["PUBLISHED", "PAUSED"].includes(data.job.status) && <button type="button" onClick={() => changeStatus("CLOSED")} className="border border-destructive/30 px-4 py-3 text-sm text-destructive hover:bg-destructive/5">Close</button>}<button type="button" onClick={archive} className="border border-destructive/30 px-4 py-3 text-sm text-destructive hover:bg-destructive/5">Archive</button></div>
                 </div>
               </section>
 
               <nav className="flex gap-7 overflow-x-auto border-b border-forest/12 py-5 font-mono text-xs uppercase tracking-[0.14em] text-olive" aria-label="Job sections">
-                <span className="border-b-2 border-forest pb-5 text-forest">Overview</span><Link href={`/orgs/${params.orgId}/jobs/${params.jobId}/applicants`} className="hover:text-forest">Applicants</Link><Link href={`/orgs/${params.orgId}/jobs/${params.jobId}/analysis`} className="hover:text-forest">Analysis</Link><span>Interviews</span><Link href={`/orgs/${params.orgId}/jobs/${params.jobId}/audit`} className="hover:text-forest">Audit</Link>
+                <span className="border-b-2 border-forest pb-5 text-forest">Overview</span><Link href={`/orgs/${params.orgId}/jobs/${params.jobId}/applicants`} className="hover:text-forest">Applicants</Link><Link href={`/orgs/${params.orgId}/jobs/${params.jobId}/analysis`} className="hover:text-forest">Analysis</Link><Link href={`/orgs/${params.orgId}/jobs/${params.jobId}/audit`} className="hover:text-forest">Audit</Link><Link href={`/orgs/${params.orgId}/jobs/${params.jobId}/configuration`} className="hover:text-forest">Configuration</Link>
               </nav>
 
               <section className="border-b border-forest/12 py-12">
@@ -122,6 +163,7 @@ export default function JobControlRoomPage() {
         </main>
       </div>
       {manualOpen && data && <div className="fixed inset-0 z-50 flex items-center justify-center bg-forest/35 p-6" role="dialog" aria-modal="true"><div className="w-full max-w-xl rounded-sm border border-forest/20 bg-paper p-7 shadow-2xl"><p className="font-mono text-xs uppercase tracking-[0.18em] text-olive">Manual analysis</p><h2 className="mt-3 text-3xl font-light tracking-[-0.04em]">Choose a candidate</h2><p className="mt-3 text-sm leading-relaxed text-moss">Start repository investigation now, even when a candidate is outside the automatic selection threshold.</p><select value={selectedApplication} onChange={(event) => setSelectedApplication(event.target.value)} className="mt-7 w-full border-b border-forest/30 bg-transparent px-1 py-3 text-base text-forest outline-none"><option value="">Select candidate</option>{data.candidates.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name} · Stage 1 {candidate.stage1Score ?? "—"} · {candidate.stage2aStatus}</option>)}</select><div className="mt-8 flex justify-end gap-3"><button type="button" onClick={() => setManualOpen(false)} className="border border-forest/25 px-4 py-3 text-sm text-olive">Cancel</button><button type="button" disabled={!selectedApplication || queueing} onClick={analyzeSelectedCandidate} className="bg-forest px-4 py-3 text-sm text-paper disabled:cursor-not-allowed disabled:opacity-40">{queueing ? "Starting…" : "Start analysis"}</button></div></div></div>}
+      {editing && data && <div className="fixed inset-0 z-50 flex items-center justify-center bg-forest/35 p-6" role="dialog" aria-modal="true"><form onSubmit={saveJob} className="w-full max-w-xl rounded-sm border border-forest/20 bg-paper p-7 shadow-2xl"><p className="font-mono text-xs uppercase tracking-[0.18em] text-olive">Role configuration</p><h2 className="mt-3 text-3xl font-light">Edit role</h2><div className="mt-7 grid gap-4"><input name="title" defaultValue={data.job.title} required className="border border-rule bg-transparent p-3" placeholder="Role title" /><input name="slug" defaultValue={data.job.slug ?? ""} required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" className="border border-rule bg-transparent p-3" placeholder="stable-role-slug" /><input name="department" defaultValue={data.job.department ?? ""} className="border border-rule bg-transparent p-3" placeholder="Department" /><input name="open_positions" type="number" min="1" defaultValue={data.job.openPositions} className="border border-rule bg-transparent p-3" placeholder="Open positions" /><textarea name="description" defaultValue={data.job.description ?? ""} className="min-h-32 border border-rule bg-transparent p-3" placeholder="Role description" /></div><div className="mt-7 flex justify-end gap-3"><button type="button" onClick={() => setEditing(false)} className="border border-forest/25 px-4 py-3 text-sm text-olive">Cancel</button><button type="submit" disabled={saving} className="bg-forest px-4 py-3 text-sm text-paper disabled:opacity-50">{saving ? "Saving…" : "Save changes"}</button></div></form></div>}
     </div>
   );
 }

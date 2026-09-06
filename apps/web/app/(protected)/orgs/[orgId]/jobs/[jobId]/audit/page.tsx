@@ -1,5 +1,5 @@
-import JobAnalysisPage from "@/features/jobs/pages/JobAnalysisPage";
+import JobAuditPage from "@/features/jobs/pages/JobAuditPage";
 
 export default function AuditPage() {
-  return <JobAnalysisPage />;
+  return <JobAuditPage />;
 }

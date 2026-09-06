@@ -22,6 +22,10 @@ export async function createJobRecord(
     description,
     remote_scope
   } = jobData;
+  const baseSlug = String(title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "job";
+  const slugResult = await client.query(`SELECT COUNT(*)::int AS count FROM jobs WHERE organization_id = $1 AND (slug = $2 OR slug LIKE $2 || '-%')`, [orgId, baseSlug]);
+  const suffix = Number(slugResult.rows[0]?.count ?? 0);
+  const slug = suffix === 0 ? baseSlug : `${baseSlug}-${suffix + 1}`;
 
   const result = await client.query(
     `
@@ -38,12 +42,13 @@ export async function createJobRecord(
       city,
       open_positions,
       description,
+      slug,
       status,
       remote_scope
 
     )
     VALUES (
-      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'DRAFT',$13
+      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'DRAFT',$14
     )
     RETURNING id, role_category_id
     `,
@@ -60,6 +65,7 @@ export async function createJobRecord(
       city ?? null,
       open_positions,
       description ?? null,
+      slug,
       remote_scope
     ]
   );

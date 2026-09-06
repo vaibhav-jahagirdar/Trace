@@ -4,12 +4,15 @@ export interface JobControlRoomResponse {
   job: {
     id: string;
     title: string;
+    slug: string;
+    organizationSlug: string;
     department: string | null;
     role: string | null;
     status: string;
     employmentType: string;
     workMode: string;
     openPositions: number;
+    description?: string | null;
     createdAt: string;
     updatedAt: string;
   };

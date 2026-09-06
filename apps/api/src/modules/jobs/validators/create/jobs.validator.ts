@@ -150,6 +150,18 @@ export type JobSubmissionRequirementsInput =
 export type CreateJobInput =
   z.infer<typeof createJobSchema>;
 
+export const updateJobSchema = z.object({
+  slug: z.string().min(2).max(200).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional(),
+  title: z.string().min(2).max(255).trim().optional(),
+  department: z.string().max(150).trim().nullable().optional(),
+  description: z.string().max(10000).trim().nullable().optional(),
+  open_positions: z.number().int().min(1).max(1000).optional(),
+  work_mode: z.enum(["ONSITE", "HYBRID", "REMOTE"]).optional(),
+  country: z.string().min(1).max(100).trim().optional(),
+  state: z.string().max(100).trim().nullable().optional(),
+  city: z.string().max(100).trim().nullable().optional(),
+});
+
   export const successSignalSchema = z.object({
     success_signal_id : z.string().uuid(),
     weight : z.number().int().min(1).max(100),

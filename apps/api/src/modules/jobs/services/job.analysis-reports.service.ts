@@ -1,5 +1,21 @@
 import { getDb } from "../../../config/db";
 import { NotFoundError } from "../../../middleware/errorHandler";
+import { getResumeObject } from "../../../storage/r2.service";
+
+export async function getJobApplicationResumeObject(organizationId: string, jobId: string, applicationId: string) {
+  const result = await getDb().query<{ resume_object_key: string | null }>(
+    `SELECT asub.resume_object_key
+     FROM job_applications ja
+     JOIN jobs j ON j.id = ja.job_id AND j.organization_id = $1 AND j.deleted_at IS NULL
+     LEFT JOIN application_submissions asub ON asub.job_application_id = ja.id
+     WHERE ja.id = $2 AND ja.job_id = $3
+     LIMIT 1`,
+    [organizationId, applicationId, jobId],
+  );
+  const key = result.rows[0]?.resume_object_key;
+  if (!key) throw new NotFoundError("Resume not found");
+  return getResumeObject(key);
+}
 
 export async function getJobApplicationAnalysisReports(
   organizationId: string,
@@ -10,6 +26,9 @@ export async function getJobApplicationAnalysisReports(
   const result = await db.query<{
     application_id: string;
     candidate_name: string;
+    candidate_email: string | null;
+    github_url: string | null;
+    resume_available: boolean;
     job_title: string;
     stage1: unknown;
     stage2a: unknown;
@@ -20,12 +39,16 @@ export async function getJobApplicationAnalysisReports(
     SELECT
       ja.id AS application_id,
       CONCAT(ja.first_name, ' ', ja.last_name) AS candidate_name,
+      ja.email AS candidate_email,
+      asub.github_url,
+      (asub.resume_object_key IS NOT NULL) AS resume_available,
       j.title AS job_title,
       resume.cleaned_response AS stage1,
       plan.planner_output AS stage2a,
       verifier.cleaned_report AS stage2c_report,
       score.score_audit
     FROM job_applications ja
+    LEFT JOIN application_submissions asub ON asub.job_application_id = ja.id
     JOIN jobs j ON j.id = ja.job_id
       AND j.organization_id = $1
       AND j.deleted_at IS NULL
@@ -89,6 +112,9 @@ export async function getJobApplicationAnalysisReports(
     application: {
       id: row.application_id,
       candidateName: row.candidate_name,
+      email: row.candidate_email,
+      githubUrl: row.github_url,
+      resumeAvailable: row.resume_available,
       jobTitle: row.job_title,
     },
     stage1: row.stage1,
