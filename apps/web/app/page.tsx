@@ -1,36 +1,19 @@
-// apps/web/app/page.tsx – no changes needed
-import { Hero } from "@/components/marketing/hero";
-import { ChapterIntroduction } from "@/components/marketing/chapter-introduction";
-import { PainWeekendLoop } from "@/components/marketing/pain-weekend-loop";
-import { ChapterRepetition } from "@/components/marketing/chapter-repetition";
-import { ChapterRepository } from "@/components/marketing/github-chaos";
-import { ChapterCost } from "@/components/marketing/chapter-cost";
-import { ChapterTrace } from "@/components/marketing/chapter-trace";
-import { ChapterCapabilities as ChapterOutcomes } from "@/components/marketing/chapter-outcomes";
-import { ChapterReport } from "@/components/marketing/chapter-report";
-import { ChapterBoundary } from "@/components/marketing/chapter-boundary";
-import { ChapterCta } from "@/components/marketing/chapter-cta";
-import { ChapterProcess } from "@/components/marketing/chapter-process";
+import Link from "next/link";
 import { Navbar } from "@/components/marketing/navbar";
 import { Footer } from "@/components/marketing/footer";
 
+const STEPS = [
+  ["01", "Calibrate the role", "Turn a vague job description into explicit gates, requirements, and success signals."],
+  ["02", "Triage the queue", "Resolve work authorization, location, experience, salary, and other hard gates consistently."],
+  ["03", "Trace the work", "Follow high-signal claims into the candidate’s actual repositories and implementation paths."],
+  ["04", "Enter ready", "Get an evidence brief and questions that test decisions, not memorized keywords."],
+];
+
 export default function Home() {
-  return (
-    <main>
-      <Navbar />
-      <Hero />
-      <ChapterIntroduction />
-      <PainWeekendLoop />
-      <ChapterRepetition />
-      <ChapterRepository />
-      <ChapterCost />
-      <ChapterProcess />
-      <ChapterTrace />
-      <ChapterOutcomes />
-      <ChapterReport />
-      <ChapterBoundary />
-      <ChapterCta />
-      <Footer />
-    </main>
-  );
+  return <main className="min-h-screen bg-paper text-ink"><Navbar />
+    <section className="border-b border-forest/15 px-6 pb-20 pt-16 md:px-12 md:pb-28 md:pt-24 lg:px-20"><div className="mx-auto grid max-w-7xl items-center gap-16 lg:grid-cols-[1.05fr_.95fr]"><div><div className="inline-flex items-center gap-2 rounded-full border border-forest/20 bg-warm px-3 py-1.5 font-mono text-[10px] uppercase tracking-[.16em] text-forest"><span className="size-1.5 rounded-full bg-moss" />Built for technical hiring teams</div><h1 className="mt-8 max-w-[11ch] font-sans text-[clamp(3.4rem,7vw,7.2rem)] font-semibold leading-[.9] tracking-[-.07em]">Find the engineers worth your interview time.</h1><p className="mt-8 max-w-xl text-lg leading-8 text-olive md:text-xl">Trace turns a noisy engineering applicant queue into a focused, evidence-backed shortlist—so founders and hiring teams make faster, more defensible decisions.</p><div className="mt-10 flex flex-wrap items-center gap-4"><Link href="/register" className="rounded-md bg-forest px-5 py-3.5 font-mono text-[11px] font-semibold uppercase tracking-[.14em] text-paper hover:bg-moss">Start with one role <span aria-hidden>↗</span></Link><Link href="#method" className="px-3 py-3 font-mono text-[11px] uppercase tracking-[.14em] text-forest hover:text-moss">See how it works ↓</Link></div><p className="mt-6 font-mono text-[10px] uppercase tracking-[.12em] text-olive">Evidence before interviews · human judgment stays in control</p></div><div className="rounded-xl border border-forest/20 bg-forest p-3 shadow-[0_24px_70px_rgba(8,45,35,.18)] md:p-5"><div className="overflow-hidden rounded-lg bg-paper"><div className="flex items-center justify-between border-b border-forest/15 px-5 py-4"><div><p className="font-mono text-[9px] uppercase tracking-[.16em] text-olive">Role workspace</p><p className="mt-1 font-sans text-lg font-semibold">Senior backend engineer</p></div><span className="rounded-full bg-moss/10 px-2.5 py-1 font-mono text-[9px] uppercase text-moss">Reviewing</span></div><div className="grid grid-cols-3 divide-x divide-forest/10 border-b border-forest/10">{[["248","Applicants"],["61","Gate passed"],["12","Review-ready"]].map(([n,l])=><div key={l} className="px-4 py-4"><p className="font-mono text-2xl">{n}</p><p className="mt-1 text-xs text-olive">{l}</p></div>)}</div><div className="space-y-2 p-5"><p className="font-mono text-[9px] uppercase tracking-[.14em] text-olive">Evidence queue</p>{[["A. Patel","Strong claim · queue reliability","92"],["M. Chen","Needs repository review · auth","78"],["R. Okafor","Hard gate: location","—"]].map(([name,detail,score])=><div key={name} className="flex items-center gap-3 rounded-md border border-forest/10 px-3 py-3"><div className="flex size-8 items-center justify-center rounded-full bg-warm font-mono text-[10px] text-forest">{name.split(" ").map(n=>n[0]).join("")}</div><div className="min-w-0 flex-1"><p className="text-sm font-medium">{name}</p><p className="truncate text-xs text-olive">{detail}</p></div><span className="font-mono text-xs text-moss">{score}</span></div>)}</div><div className="border-t border-forest/10 bg-warm px-5 py-3 font-mono text-[9px] uppercase tracking-[.12em] text-olive">12 candidate briefs ready · updated moments ago</div></div></div></div></section>
+    <section id="method" className="border-b border-forest/15 bg-warm px-6 py-20 md:px-12 md:py-28 lg:px-20"><div className="mx-auto max-w-7xl"><p className="font-mono text-[10px] uppercase tracking-[.16em] text-moss">A focused operating system for technical screening</p><h2 className="mt-4 max-w-2xl font-sans text-4xl font-semibold leading-tight tracking-[-.05em] md:text-6xl">From application volume to an interview decision.</h2><div className="mt-14 grid gap-px overflow-hidden rounded-lg border border-forest/15 bg-forest/15 md:grid-cols-2 lg:grid-cols-4">{STEPS.map(([number,title,detail])=><div key={number} className="bg-paper p-6"><span className="font-mono text-xs text-moss">{number}</span><h3 className="mt-12 font-sans text-xl font-semibold">{title}</h3><p className="mt-3 text-sm leading-6 text-olive">{detail}</p></div>)}</div></div></section>
+    <section className="bg-paper px-6 py-20 md:px-12 md:py-28 lg:px-20"><div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-[.8fr_1.2fr]"><div><p className="font-mono text-[10px] uppercase tracking-[.16em] text-moss">Why teams use Trace</p><h2 className="mt-4 max-w-md font-sans text-4xl font-semibold leading-tight tracking-[-.05em] md:text-5xl">The signal is already there. We make it usable.</h2></div><div className="grid gap-4">{[["Less screening","Spend founder and engineering time on candidates who clear the role—not the whole inbox."],["Better signal","Separate a polished resume from directly observable implementation evidence."],["Consistent decisions","Keep hard-gate reasons, evidence, and interview context in one reviewable record."]].map(([title,detail],i)=><div key={title} className="grid gap-5 rounded-lg border border-forest/15 bg-warm p-6 sm:grid-cols-[36px_1fr]"><span className="font-mono text-xs text-moss">0{i+1}</span><div><h3 className="font-sans text-xl font-semibold">{title}</h3><p className="mt-2 max-w-xl text-sm leading-6 text-olive">{detail}</p></div></div>)}</div></div></section>
+    <section className="border-y border-forest/15 bg-forest px-6 py-20 text-paper md:px-12 md:py-28 lg:px-20"><div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[.8fr_1.2fr] lg:items-center"><div><p className="font-mono text-[10px] uppercase tracking-[.16em] text-sage">What a candidate brief contains</p><h2 className="mt-4 max-w-md font-sans text-4xl font-semibold leading-tight tracking-[-.05em] md:text-5xl">A better starting point for the interview.</h2><p className="mt-6 max-w-md text-base leading-7 text-sage">Role context, hard-gate status, observable implementation evidence, coverage limits, and questions grounded in the work.</p></div><div className="rounded-lg bg-paper p-5 text-ink shadow-2xl md:p-8"><div className="flex items-start justify-between border-b border-forest/15 pb-5"><div><p className="font-mono text-[9px] uppercase tracking-[.16em] text-olive">Trace · candidate brief</p><h3 className="mt-2 text-xl font-semibold">A. Patel · Backend Engineer</h3></div><span className="rounded-full bg-moss/10 px-2.5 py-1 font-mono text-[9px] uppercase text-moss">Review-ready</span></div><div className="grid gap-6 pt-6 sm:grid-cols-2"><div><p className="font-mono text-[9px] uppercase tracking-[.14em] text-olive">Evidence found</p><ul className="mt-3 space-y-2 text-sm"><li>Queue retry path identified</li><li>Idempotency guard located</li><li>Persistence boundary traced</li></ul></div><div><p className="font-mono text-[9px] uppercase tracking-[.14em] text-olive">Ask in interview</p><ul className="mt-3 space-y-2 text-sm"><li>Why this retry strategy?</li><li>What happens after a duplicate?</li><li>Where is the invariant enforced?</li></ul></div></div><div className="mt-7 border-t border-forest/10 pt-4 font-mono text-[9px] uppercase tracking-[.12em] text-olive">Citations available · limitations disclosed · ownership not inferred</div></div></div></section>
+    <section id="access" className="bg-moss px-6 py-20 text-paper md:px-12 md:py-28 lg:px-20"><div className="mx-auto flex max-w-7xl flex-col gap-8 md:flex-row md:items-end md:justify-between"><div><p className="font-mono text-[10px] uppercase tracking-[.16em] text-sage">Start with one open role</p><h2 className="mt-4 max-w-2xl font-sans text-4xl font-semibold leading-tight tracking-[-.05em] md:text-6xl">Stop screening paper. Start interviewing with context.</h2></div><Link href="/register" className="w-fit shrink-0 rounded-md bg-paper px-5 py-3.5 font-mono text-[11px] font-semibold uppercase tracking-[.14em] text-forest hover:bg-warm">Request access <span aria-hidden>↗</span></Link></div></section><Footer /></main>;
 }
