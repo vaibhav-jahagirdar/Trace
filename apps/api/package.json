@@ -8,15 +8,16 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
+    "@aws-sdk/s3-request-presigner": "^3.1127.0",
     "@trace/shared": "*",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "undici": "^7.29.0",
     "jsonwebtoken": "^9.0.3",
     "ua-parser-js": "^2.0.10",
+    "undici": "^7.29.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

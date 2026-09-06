@@ -145,3 +145,15 @@ coverage/
 # General generated files
 *.log
 .DS_Store
+
+# Next.js
+.next/
+.next-stale-check/
+
+# dependencies
+node_modules/
+
+# environment
+.env
+.env.local
+.env.*.local
