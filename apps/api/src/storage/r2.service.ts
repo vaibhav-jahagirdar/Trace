@@ -1,6 +1,7 @@
 
 
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
 import { createHash } from "crypto";
 import { r2Client } from "./r2.client";
@@ -51,5 +52,20 @@ export async function uploadResume({
   };
 }
 
+export async function createResumeViewUrl(objectKey: string): Promise<string> {
+  return getSignedUrl(
+    r2Client,
+    new GetObjectCommand({
+      Bucket: env.R2_BUCKET,
+      Key: objectKey,
+      ResponseContentType: "application/pdf",
+      ResponseContentDisposition: "inline",
+    }),
+    { expiresIn: 300 },
+  );
+}
 
+export async function getResumeObject(objectKey: string) {
+  return r2Client.send(new GetObjectCommand({ Bucket: env.R2_BUCKET, Key: objectKey }));
+}
 

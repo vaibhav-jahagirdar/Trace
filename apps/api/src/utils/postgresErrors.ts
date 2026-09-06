@@ -9,6 +9,8 @@ export function handlePgError(err: any): never {
       throw new AppError("Username already taken", 409, "USERNAME_TAKEN");
     if (err.constraint === "organizations_slug_key")
       throw new AppError("Slug already taken", 409, "SLUG_TAKEN");
+    if (err.constraint === "idx_jobs_organization_slug")
+      throw new AppError("Job slug already exists in this organization", 409, "JOB_SLUG_TAKEN");
   }
   throw err;
 }

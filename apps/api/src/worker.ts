@@ -3,13 +3,19 @@ import {
   repositoryVerifierWorker,
   resumeAnalysisWorker,
 } from "./queues/worker";
+import { processDueOrganizationDeletions, processDueOwnershipTransfers } from "./modules/organizations/services/orgs.manage.service";
 
 console.log("[Worker] Resume Analysis Worker Started");
+const deletionSweep = setInterval(() => {
+  void processDueOrganizationDeletions().catch((error) => console.error("[Organizations][deletion-processor] failed", error));
+  void processDueOwnershipTransfers().catch((error) => console.error("[Organizations][ownership-transfer-processor] failed", error));
+}, 60_000);
 
 async function shutdown(signal: string) {
   console.log(`[Worker] Received ${signal}. Shutting down...`);
 
   try {
+    clearInterval(deletionSweep);
     await Promise.all([
       resumeAnalysisWorker.close(),
       repositoryPlannerWorker.close(),
