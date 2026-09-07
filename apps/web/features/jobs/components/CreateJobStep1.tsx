@@ -83,7 +83,9 @@ const REMOTE_SCOPES = [
 ] as const;
 type LocationFormValues = {
   country?: string;
+  countryCode?: string;
   state?: string;
+  stateCode?: string;
   city?: string;
 };
 
@@ -132,12 +134,14 @@ export const step1Schema = z
       .trim()
       .min(1, "Select a country")
       .max(100),
+    country_code: z.string().length(2).optional(),
 
     state: z
       .string()
       .trim()
       .max(100)
       .optional(),
+    state_code: z.string().max(10).optional(),
 
     city: z
       .string()
@@ -621,6 +625,8 @@ export function CreateJobStep1({
   > = (data) => {
     onContinue?.({
       ...data,
+      country_code: countryCode || undefined,
+      state_code: stateCode || undefined,
       role_category_code: selectedRoleCategory?.code,
     });
 

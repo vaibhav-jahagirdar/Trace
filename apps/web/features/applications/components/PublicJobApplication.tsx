@@ -65,7 +65,7 @@ export function PublicJobApplication({ orgSlug, jobSlug }: Props) {
       willingToRelocate: form.get("willingToRelocate") === "on",
       requiresVisaSponsorship: form.get("requiresVisaSponsorship") === "on",
       workAuthorized: form.get("workAuthorized") === "on",
-      currentCountry: String(form.get("currentCountry")), currentState: String(form.get("currentState") || ""), currentCity: String(form.get("currentCity") || ""),
+      currentCountry: String(form.get("currentCountry")), currentCountryCode: countryCode || undefined, currentState: String(form.get("currentState") || ""), currentStateCode: stateCode || undefined, currentCity: String(form.get("currentCity") || ""),
     };
     const submission = {
       githubUrl: String(form.get("githubUrl")), portfolioUrl: String(form.get("portfolioUrl") || ""), linkedinUrl: String(form.get("linkedinUrl") || ""),
