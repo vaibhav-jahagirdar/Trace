@@ -19,7 +19,7 @@ export async function getJobPreviewForClient(jobId: string, orgId: string, clien
   const result = await client.query(`
     SELECT
       j.id, j.title, j.department, j.employment_type AS employment_type,
-      j.work_mode, j.remote_scope, j.country, j.state, j.city,
+      j.work_mode, j.remote_scope, j.country, j.country_code, j.state, j.state_code, j.city,
       j.organization_id, j.open_positions, j.description, j.status,
       j.published_at, j.role_category_id,
       jrc.code AS role_category_code, jrc.name AS role_category_name,

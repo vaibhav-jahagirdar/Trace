@@ -275,12 +275,14 @@ export const createJobSchema = z.object({
     .trim()
     .min(1)
     .max(100),
+  country_code: z.string().length(2).optional(),
 
   state: z
     .string()
     .trim()
     .max(100)
     .optional(),
+  state_code: z.string().max(10).optional(),
 
   city: z
     .string()

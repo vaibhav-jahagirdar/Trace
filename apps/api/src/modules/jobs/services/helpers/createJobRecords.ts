@@ -16,7 +16,9 @@ export async function createJobRecord(
     employment_type,
     work_mode,
     country,
+    country_code,
     state,
+    state_code,
     city,
     open_positions,
     description,
@@ -38,7 +40,9 @@ export async function createJobRecord(
       employment_type,
       work_mode,
       country,
+      country_code,
       state,
+      state_code,
       city,
       open_positions,
       description,
@@ -48,7 +52,7 @@ export async function createJobRecord(
 
     )
     VALUES (
-      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'DRAFT',$14
+      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'DRAFT',$16
     )
     RETURNING id, role_category_id
     `,
@@ -61,7 +65,9 @@ export async function createJobRecord(
       employment_type,
       work_mode,
       country,
+      country_code ?? null,
       state ?? null,
+      state_code ?? null,
       city ?? null,
       open_positions,
       description ?? null,
