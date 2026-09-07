@@ -20,6 +20,8 @@ export interface ApplicationForEvaluationRow {
   years_of_professional_experience: string; // numeric(4,1) comes back as string
   highest_education_level: string;
   github_url: string | null;
+  current_country_code: string | null;
+  current_state_code: string | null;
   portfolio_url: string | null;
   linkedin_url: string | null;
   problem_solving_profile_url: string | null;
@@ -45,6 +47,8 @@ export async function getApplicationForEvaluation(
 
         ae.years_of_professional_experience,
         ae.highest_education_level,
+        ae.current_country_code,
+        ae.current_state_code,
 
         asub.github_url,
         asub.portfolio_url,

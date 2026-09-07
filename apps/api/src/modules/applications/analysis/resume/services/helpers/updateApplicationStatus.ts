@@ -56,8 +56,11 @@ export async function markTaskFailed(
   error: unknown,
   attemptsMade: number,
   maxAttempts: number,
+  lockOwner?: string,
 ) {
-  const attempts = attemptsMade + 1;
+  // Queue claiming increments attempt_count before execution. Keeping the
+  // value here makes retries deterministic even when a worker dies mid-job.
+  const attempts = attemptsMade;
   const permanentlyFailed = attempts >= maxAttempts;
 
   await client.query(
@@ -67,13 +70,15 @@ export async function markTaskFailed(
             last_error_message = $4,
             human_intervention_required = $5,
             updated_at = NOW()
-      WHERE id = $1`,
+      WHERE id = $1
+        AND ($6::text IS NULL OR locked_by = $6)`,
     [
       taskId,
       permanentlyFailed ? "FAILED" : "PENDING",
       attempts,
       error instanceof Error ? error.message : String(error),
       permanentlyFailed,
+      lockOwner ?? null,
     ],
   );
 }

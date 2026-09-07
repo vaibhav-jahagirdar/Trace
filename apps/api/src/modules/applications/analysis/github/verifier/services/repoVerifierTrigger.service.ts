@@ -8,6 +8,7 @@ interface VerifierTaskRow {
   id: string;
   status: string;
   human_intervention_required: boolean;
+  lease_expires_at: Date | null;
 }
 
 async function ensureVerifierEnqueued(
@@ -17,7 +18,7 @@ async function ensureVerifierEnqueued(
   const db = getDb();
   const existing = await db.query<VerifierTaskRow>(
     `
-    SELECT id, status, human_intervention_required
+    SELECT id, status, human_intervention_required, lease_expires_at
     FROM application_tasks
     WHERE job_application_id = $1
       AND task_type = $2
@@ -30,7 +31,12 @@ async function ensureVerifierEnqueued(
   const current = existing.rows[0];
 
   if (current?.status === "COMPLETED") return null;
-  if (current?.status === "RUNNING") return current.id;
+  if (
+    current?.status === "RUNNING" &&
+    current.lease_expires_at &&
+    current.lease_expires_at > new Date()
+  )
+    return current.id;
   if (current?.status === "FAILED" || current?.human_intervention_required) {
     return null;
   }

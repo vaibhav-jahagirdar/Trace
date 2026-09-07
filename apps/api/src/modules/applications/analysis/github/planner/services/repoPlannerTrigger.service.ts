@@ -5,25 +5,50 @@ import { enqueueRepositoryPlanner } from "../../../../../../queues/producer";
 const TASK_TYPE = "REPOSITORY_PLAN";
 const AUTO_THRESHOLD = Number(process.env.REPOSITORY_AUTO_THRESHOLD ?? 90);
 
-async function enqueueForRow(row: { job_id: string; application_id: string }): Promise<string | null> {
+async function enqueueForRow(row: {
+  job_id: string;
+  application_id: string;
+}): Promise<string | null> {
   const db = getDb();
-  const existing = await db.query<{ id: string; status: string }>(
-    `SELECT id, status FROM application_tasks WHERE job_application_id = $1 AND task_type = $2`,
+  const existing = await db.query<{
+    id: string;
+    status: string;
+    lease_expires_at: Date | null;
+  }>(
+    `SELECT id, status, lease_expires_at FROM application_tasks WHERE job_application_id = $1 AND task_type = $2`,
     [row.application_id, TASK_TYPE],
   );
-  if (existing.rows[0]) return existing.rows[0].status === "COMPLETED" ? null : existing.rows[0].id;
+  if (existing.rows[0]) {
+    const current = existing.rows[0];
+    if (current.status === "COMPLETED") return null;
+    if (
+      current.status !== "RUNNING" ||
+      (current.lease_expires_at && current.lease_expires_at > new Date())
+    )
+      return current.id;
+  }
   const taskId = randomUUID();
   await db.query(
     `INSERT INTO application_tasks (id, job_application_id, task_type)
      VALUES ($1, $2, $3)`,
     [taskId, row.application_id, TASK_TYPE],
   );
-  await enqueueRepositoryPlanner({ taskId, applicationId: row.application_id, jobId: row.job_id });
+  await enqueueRepositoryPlanner({
+    taskId,
+    applicationId: row.application_id,
+    jobId: row.job_id,
+  });
   return taskId;
 }
 
-export async function maybeEnqueueRepositoryPlanner(applicationId: string): Promise<string | null> {
-  const result = await getDb().query<{ job_id: string; application_id: string; score: number }>(
+export async function maybeEnqueueRepositoryPlanner(
+  applicationId: string,
+): Promise<string | null> {
+  const result = await getDb().query<{
+    job_id: string;
+    application_id: string;
+    score: number;
+  }>(
     `SELECT ja.job_id, ja.id AS application_id, ara.final_alignment_score AS score
      FROM job_applications ja
      JOIN application_resume_analyses ara ON ara.job_application_id = ja.id AND ara.is_current = true
@@ -36,8 +61,13 @@ export async function maybeEnqueueRepositoryPlanner(applicationId: string): Prom
   return enqueueForRow(row);
 }
 
-export async function manuallyEnqueueRepositoryPlanner(applicationId: string): Promise<string | null> {
-  const result = await getDb().query<{ job_id: string; application_id: string }>(
+export async function manuallyEnqueueRepositoryPlanner(
+  applicationId: string,
+): Promise<string | null> {
+  const result = await getDb().query<{
+    job_id: string;
+    application_id: string;
+  }>(
     `SELECT job_id, id AS application_id FROM job_applications WHERE id = $1`,
     [applicationId],
   );
@@ -45,8 +75,13 @@ export async function manuallyEnqueueRepositoryPlanner(applicationId: string): P
   return enqueueForRow(result.rows[0]);
 }
 
-export async function enqueueClosedJobTopCandidates(jobId: string): Promise<number> {
-  const result = await getDb().query<{ job_id: string; application_id: string }>(
+export async function enqueueClosedJobTopCandidates(
+  jobId: string,
+): Promise<number> {
+  const result = await getDb().query<{
+    job_id: string;
+    application_id: string;
+  }>(
     `WITH completed AS (
        SELECT ja.job_id, ja.id AS application_id,
               ROW_NUMBER() OVER (ORDER BY ara.final_alignment_score DESC, ara.created_at ASC, ja.id ASC) AS rank,

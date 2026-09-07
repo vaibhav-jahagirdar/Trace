@@ -67,6 +67,7 @@ export const applyJobBodySchema = z
     workAuthorized: z.coerce.boolean(),
 
     currentCountry: z.string().trim().min(1).max(100),
+    currentCountryCode: z.string().length(2).optional(),
 
     currentState: z
       .string()
@@ -74,6 +75,7 @@ export const applyJobBodySchema = z
       .min(1)
       .max(100)
       .optional(),
+    currentStateCode: z.string().max(10).optional(),
 
     currentCity: z
       .string()

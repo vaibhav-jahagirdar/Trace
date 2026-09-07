@@ -110,11 +110,39 @@ if (eligibility.work_authorization_required && !workAuthorized) {
 
  
 
-  const normalizePlace = (value: string | null | undefined) =>
-    (value ?? "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
-  const sameCity = normalizePlace(currentCity) !== "" && normalizePlace(currentCity) === normalizePlace(jobResult.city);
-  const sameState = normalizePlace(currentState) !== "" && normalizePlace(currentState) === normalizePlace(jobResult.state);
-  const sameCountry = normalizePlace(currentCountry) === normalizePlace(country);
+  // Location fields are currently user-entered strings. Keep matching
+  // conservative: normalize accents/punctuation and map only unambiguous,
+  // maintained aliases. Do not use a generic fuzzy-distance match here; it
+  // can silently treat different cities or regions as equivalent.
+  const placeAliases: Record<string, string> = {
+    bangalore: "bengaluru",
+    bombay: "mumbai",
+    calcutta: "kolkata",
+    madras: "chennai",
+    newdelhi: "delhi",
+    bharat: "india",
+  };
+  const normalizePlace = (value: string | null | undefined) => {
+    const compact = (value ?? "")
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+    return placeAliases[compact] ?? compact;
+  };
+  const matchesPlace = (candidate: string | null | undefined, target: string | null | undefined) => {
+    const left = normalizePlace(candidate);
+    const right = normalizePlace(target);
+    return left !== "" && right !== "" && left === right;
+  };
+  const sameCountry = eligibilityData.currentCountryCode && jobResult.country_code
+    ? eligibilityData.currentCountryCode === jobResult.country_code
+    : matchesPlace(currentCountry, country);
+  const sameState = sameCountry && eligibilityData.currentStateCode && jobResult.state_code
+    ? eligibilityData.currentStateCode === jobResult.state_code
+    : matchesPlace(currentState, jobResult.state);
+  const sameCity = sameState && matchesPlace(currentCity, jobResult.city);
   const alreadyLocatedThere = sameCountry && (sameCity || sameState);
 
   if (

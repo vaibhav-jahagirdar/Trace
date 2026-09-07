@@ -6,9 +6,6 @@ const PLANNER_TIMEOUT_MS = Number(
   process.env.ANALYSIS_SERVICE_TIMEOUT_MS ?? 900_000,
 );
 
-// Node's built-in fetch has a shorter Undici headers timeout than the overall
-// AbortSignal timeout. The planner may legitimately wait for the LLM, so both
-// limits must be configured explicitly.
 const plannerDispatcher = new Agent({
   connectTimeout: 30_000,
   headersTimeout: PLANNER_TIMEOUT_MS,

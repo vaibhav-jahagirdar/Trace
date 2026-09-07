@@ -15,7 +15,9 @@ export async function createEligibilityRecord(
     requiresVisaSponsorship,
     workAuthorized,
     currentCountry,
+    currentCountryCode,
     currentState,
+    currentStateCode,
     currentCity
   } = eligibilityData;
   const eligibilityRecordResult = await client.query(
@@ -23,8 +25,8 @@ export async function createEligibilityRecord(
         (job_application_id, years_of_professional_experience,
          highest_education_level, notice_period_days, willing_to_relocate_for_this_job, 
         requires_visa_sponsorship, work_authorized,
-        current_country, current_state, current_city)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        current_country, current_country_code, current_state, current_state_code, current_city)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          RETURNING id`,
     [
       applicationId,
@@ -35,7 +37,9 @@ export async function createEligibilityRecord(
       requiresVisaSponsorship,
       workAuthorized,
       currentCountry,
+      currentCountryCode ?? null,
       currentState,
+      currentStateCode ?? null,
       currentCity
     ],
   );
