@@ -38,7 +38,7 @@ jobs:
       - name: Prepare deployment artifact
         run: |
           rm -rf deploy
-          mkdir -p deploy/apps/api deploy/packages
+          mkdir -p deploy/apps/api deploy/apps/web deploy/packages
           cp -R apps/api/dist deploy/apps/api/dist
           cp apps/api/package.json deploy/apps/api/package.json
           cp apps/web/package.json deploy/apps/web/package.json
