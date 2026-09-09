@@ -29,16 +29,20 @@ jobs:
       - name: Build API
         run: npm run build --workspace=apps/api
 
+      - name: Verify build
+        run: |
+          test -f apps/api/dist/server.js
+          echo "Build successful"
+          ls -la apps/api/dist
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-api
-          path: |
-            apps/api/dist
-            apps/api/package.json
-            package.json
-            package-lock.json
-            packages/shared
+          path: .
+          exclude: |
+            .git/**
+            node_modules/**
 
   deploy:
     runs-on: ubuntu-latest
@@ -57,18 +61,13 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: 4341d6c3-4c9b-4b21-915e-e1af2742d114
-          tenant-id: 6357eaf1-89a4-49d2-8a56-82fdd92f61de
-          subscription-id: 6634d5da-b1c6-413e-a684-721f8cca6ee7
-
-
-
-
-
+          client-id: ${{ secrets.YOUR_EXISTING_NODE_CLIENT_SECRET }}
+          tenant-id: ${{ secrets.YOUR_EXISTING_NODE_TENANT_SECRET }}
+          subscription-id: ${{ secrets.YOUR_EXISTING_NODE_SUBSCRIPTION_SECRET }}
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "trace"
-          slot-name: "Production"
+          app-name: trace
+          slot-name: Production
           package: .
