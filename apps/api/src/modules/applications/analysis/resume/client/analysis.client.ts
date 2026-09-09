@@ -6,7 +6,7 @@ import {
 } from "../../validators/resumeEvaluation";
 
 const ANALYSIS_SERVICE_URL =
-  process.env.ANALYSIS_SERVICE_URL ?? "http://localhost:8000";
+  process.env.ANALYSIS_SERVICE_URL ?? "https://trace-analysis-esgjc2bmg0f8ecfp.westus3-01.azurewebsites.net";
 const ANALYSIS_TIMEOUT_MS = Number(
   process.env.ANALYSIS_SERVICE_TIMEOUT_MS ?? 900_000,
 );

@@ -17,7 +17,7 @@ export const env = {
 
   RESEND_API_KEY: process.env.RESEND_API_KEY ?? "",
   EMAIL_FROM: process.env.EMAIL_FROM ?? "",
-  APP_URL: process.env.APP_URL ?? "http://localhost:3000",
+  APP_URL: process.env.APP_URL ?? "https://trace.azurewebsites.net",
 
   R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID ?? "",
   R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID ?? "",

@@ -130,7 +130,7 @@ if (!apiKey) {
 
 const resend = new Resend(apiKey);
 
-const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
+const APP_URL = process.env.APP_URL ?? "https://trace.azurewebsites.net";
 const EMAIL_FROM = process.env.EMAIL_FROM ?? "onboarding@resend.dev";
 
 export async function sendPlatformInviteEmail(

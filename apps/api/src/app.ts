@@ -16,9 +16,22 @@ const app = express();
 
 app.use(httpLogger);
 
+const allowedOrigins = new Set([
+  "https://trace.azurewebsites.net",
+  "http://localhost:3000",
+  "http://localhost:3001",
+]);
+
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Origin is not allowed by CORS"));
+    },
     credentials: true,
   }),
 );

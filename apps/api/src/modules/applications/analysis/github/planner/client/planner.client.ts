@@ -1,7 +1,7 @@
 import { Agent } from "undici";
 import { getRepositoryPlannerPayload } from "../evaluationContext/repoAnalysisPayload";
 
-const PLANNER_SERVICE_URL = process.env.ANALYSIS_SERVICE_URL ?? "http://localhost:8000";
+const PLANNER_SERVICE_URL = process.env.ANALYSIS_SERVICE_URL ?? "https://trace-analysis-esgjc2bmg0f8ecfp.westus3-01.azurewebsites.net";
 const PLANNER_TIMEOUT_MS = Number(
   process.env.ANALYSIS_SERVICE_TIMEOUT_MS ?? 900_000,
 );

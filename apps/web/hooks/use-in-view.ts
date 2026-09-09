@@ -1,8 +1,8 @@
 // apps/web/hooks/use-in-view.ts
 import { useRef, useState, useEffect } from "react";
 
-export function useInView(threshold: number = 0.25) {
-  const ref = useRef<HTMLElement | null>(null);
+export function useInView<T extends HTMLElement = HTMLElement>(threshold: number = 0.25) {
+  const ref = useRef<T | null>(null);
   const [inView, setInView] = useState(false);
 
   useEffect(() => {

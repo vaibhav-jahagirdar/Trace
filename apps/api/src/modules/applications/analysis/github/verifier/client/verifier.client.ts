@@ -2,7 +2,7 @@ import { Agent } from "undici";
 import { getRepositoryVerifierPayload } from "../evaluationContext/repoVerifierPayload";
 
 const VERIFIER_SERVICE_URL =
-  process.env.ANALYSIS_SERVICE_URL ?? "http://localhost:8000";
+  process.env.ANALYSIS_SERVICE_URL ?? "https://trace-analysis-esgjc2bmg0f8ecfp.westus3-01.azurewebsites.net";
 
 const VERIFIER_ENDPOINT =
   process.env.REPOSITORY_VERIFIER_ENDPOINT ??

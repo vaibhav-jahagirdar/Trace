@@ -175,15 +175,6 @@ export function LoginForm() {
                 </div>
               </Field>
 
-              <div className="flex justify-end">
-                <Link
-                  href="/forgot-password"
-                  className="font-mono text-[10px] uppercase tracking-[0.16em] text-olive transition-colors hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-
               {errorMessage && (
                 <p className="border-l-2 border-destructive bg-destructive/5 px-4 py-3 text-sm leading-relaxed text-destructive" role="alert">
                   {errorMessage}

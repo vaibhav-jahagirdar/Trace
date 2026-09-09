@@ -2,8 +2,16 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "types": ["node"],
-    "verbatimModuleSyntax": false,
     "module": "commonjs",
-    "esModuleInterop": true
-  }
+    "target": "esnext",
+    "verbatimModuleSyntax": false,
+    "esModuleInterop": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

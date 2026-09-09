@@ -185,7 +185,7 @@ function CapabilityRow({
   capability: (typeof CAPABILITIES)[number];
   i: number;
 }) {
-  const { ref, inView } = useInView(0.3);
+  const { ref, inView } = useInView<HTMLDivElement>(0.3);
   const { Diagram } = capability;
   const flip = i % 2 === 1;
 
