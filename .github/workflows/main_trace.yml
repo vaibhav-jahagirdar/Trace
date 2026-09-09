@@ -35,16 +35,20 @@ jobs:
           echo "Build successful"
           ls -la apps/api/dist
 
+      - name: Prepare deployment artifact
+        run: |
+          rm -rf deploy
+          mkdir -p deploy/apps/api deploy/packages
+          cp -R apps/api/dist deploy/apps/api/dist
+          cp apps/api/package.json deploy/apps/api/package.json
+          cp package.json package-lock.json deploy/
+          cp -R packages/shared deploy/packages/shared
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-api
-          path: |
-            apps/api/dist
-            apps/api/package.json
-            package.json
-            package-lock.json
-            packages/shared
+          path: deploy
 
   deploy:
     runs-on: ubuntu-latest
