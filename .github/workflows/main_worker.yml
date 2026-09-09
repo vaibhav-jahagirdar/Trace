@@ -46,6 +46,7 @@ jobs:
           cp apps/web/package.json deploy/apps/web/package.json
           cp package.json package-lock.json deploy/
           cp -R packages/shared deploy/packages/shared
+          npm ci --omit=dev --prefix deploy
 
       - name: Upload worker artifact
         uses: actions/upload-artifact@v4
@@ -79,7 +80,7 @@ jobs:
           az webapp config appsettings set \
             --resource-group trace-app-prod \
             --name worker \
-            --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true
+            --settings SCM_DO_BUILD_DURING_DEPLOYMENT=false
           az webapp config set \
             --resource-group trace-app-prod \
             --name worker \
