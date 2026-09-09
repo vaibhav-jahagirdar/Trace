@@ -7,6 +7,7 @@ botocore==1.43.44
 certifi==2026.6.17
 click==8.4.2
 fastapi==0.139.0
+gunicorn==24.1.1
 h11==0.16.0
 httpcore==1.0.9
 httptools==0.8.0

@@ -63,6 +63,13 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_483BC1B5BFFA4E2D8376D13718E20E5A }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_222C7BFF15994B06ABA24C3286D6BF28 }}
 
+      - name: Enable Python dependency build
+        run: |
+          az webapp config appsettings set \
+            --resource-group trace-app-prod \
+            --name trace-analysis \
+            --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
