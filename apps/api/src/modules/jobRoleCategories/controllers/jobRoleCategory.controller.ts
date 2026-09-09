@@ -1,5 +1,4 @@
 import type { Request, Response } from "express";
-ValidationError
 import {
   listJobRoleCategories,
   getJobRoleCategory,
