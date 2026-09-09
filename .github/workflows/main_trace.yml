@@ -63,9 +63,16 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: 4341d6c3-4c9b-4b21-915e-e1af2742d114
-          tenant-id: 6357eaf1-89a4-49d2-8a56-82fdd92f61de
-          subscription-id: 6634d5da-b1c6-413e-a684-721f8cca6ee7
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_E686901CD7704B339C11FE3F927066FE }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_5CF0511EC92D4DEA90074FD477DC5869 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_57D854DA63F34AB2A10692D51F08F6FB }}
+
+      - name: Enable Azure dependency build
+        run: |
+          az webapp config appsettings set \
+            --resource-group trace-app-prod \
+            --name trace \
+            --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
