@@ -39,10 +39,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-api
-          path: .
-          exclude: |
-            .git/**
-            node_modules/**
+          path: |
+            apps/api/dist
+            apps/api/package.json
+            package.json
+            package-lock.json
+            packages/shared
 
   deploy:
     runs-on: ubuntu-latest
