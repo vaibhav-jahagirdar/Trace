@@ -4,11 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "apps/api/**"
-      - "packages/shared/**"
-      - "package.json"
-      - "package-lock.json"
   workflow_dispatch:
 
 jobs:
@@ -34,7 +29,7 @@ jobs:
       - name: Build API
         run: npm run build --workspace=apps/api
 
-      - name: Upload API artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-api
