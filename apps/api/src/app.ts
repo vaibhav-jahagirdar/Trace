@@ -16,11 +16,19 @@ const app = express();
 
 app.use(httpLogger);
 
-const allowedOrigins = new Set([
+const defaultAllowedOrigins = [
   "https://trace.azurewebsites.net",
   "https://trace-qkj5hxtg3-stakevaibhav35-7455s-projects.vercel.app",
   "http://localhost:3000",
   "http://localhost:3001",
+];
+
+const allowedOrigins = new Set([
+  ...defaultAllowedOrigins,
+  ...(process.env.CORS_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
 ]);
 
 app.use(
