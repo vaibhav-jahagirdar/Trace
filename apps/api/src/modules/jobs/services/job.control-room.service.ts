@@ -7,8 +7,6 @@ export interface JobControlRoomResult {
     title: string;
     slug: string;
     organizationSlug: string;
-    slug: string;
-    organization_slug: string;
     department: string | null;
     role: string | null;
     status: string;
@@ -53,6 +51,8 @@ export async function getJobControlRoom(
   const jobResult = await db.query<{
     id: string;
     title: string;
+    slug: string;
+    organization_slug: string;
     department: string | null;
     role: string | null;
     status: string;
