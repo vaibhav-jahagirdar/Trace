@@ -31,11 +31,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Verify Python application imports
+        working-directory: apps/analysis
+        run: python -c "from app.main import app; print('Python application import successful')"
+
       - name: Upload Python app
         uses: actions/upload-artifact@v4
         with:
           name: python-app
           path: apps/analysis
+          if-no-files-found: error
 
   deploy:
     runs-on: ubuntu-latest
