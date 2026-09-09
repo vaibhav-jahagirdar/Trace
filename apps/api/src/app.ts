@@ -18,6 +18,7 @@ app.use(httpLogger);
 
 const allowedOrigins = new Set([
   "https://trace.azurewebsites.net",
+  "https://trace-qkj5hxtg3-stakevaibhav35-7455s-projects.vercel.app",
   "http://localhost:3000",
   "http://localhost:3001",
 ]);
