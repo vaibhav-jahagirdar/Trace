@@ -3,7 +3,6 @@ import { getDb } from "../../../../../../config/db";
 import { enqueueRepositoryPlanner } from "../../../../../../queues/producer";
 
 const TASK_TYPE = "REPOSITORY_PLAN";
-const AUTO_THRESHOLD = Number(process.env.REPOSITORY_AUTO_THRESHOLD ?? 90);
 
 async function enqueueForRow(row: {
   job_id: string;
@@ -21,11 +20,11 @@ async function enqueueForRow(row: {
   if (existing.rows[0]) {
     const current = existing.rows[0];
     if (current.status === "COMPLETED") return null;
-    if (
-      current.status !== "RUNNING" ||
-      (current.lease_expires_at && current.lease_expires_at > new Date())
-    )
-      return current.id;
+    if (current.status === "RUNNING" && current.lease_expires_at && current.lease_expires_at > new Date()) return current.id;
+    // PENDING tasks and expired RUNNING tasks must be re-enqueued. The
+    // database task is the idempotency key, so this repairs lost messages.
+    await enqueueRepositoryPlanner({ taskId: current.id, applicationId: row.application_id, jobId: row.job_id });
+    return current.id;
   }
   const taskId = randomUUID();
   await db.query(
@@ -57,7 +56,7 @@ export async function maybeEnqueueRepositoryPlanner(
     [applicationId],
   );
   const row = result.rows[0];
-  if (!row || Number(row.score) < AUTO_THRESHOLD) return null;
+  if (!row) return null;
   return enqueueForRow(row);
 }
 

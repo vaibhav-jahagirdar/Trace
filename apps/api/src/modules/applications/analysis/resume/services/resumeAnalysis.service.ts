@@ -165,8 +165,10 @@ export async function resumeAnalysis(
   try {
     await maybeEnqueueRepositoryPlanner(applicationId);
   } catch (error) {
-   
     console.error("[ResumeAnalysis][6] Failed to enqueue repository planner", { applicationId, error });
+    // Stage 1 is checkpointed and persisted, so retrying this task is cheap;
+    // it repairs the Stage 1 → Stage 2 handoff without another LLM call.
+    throw error;
   }
 
   return {
