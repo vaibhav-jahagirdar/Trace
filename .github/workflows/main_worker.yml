@@ -84,7 +84,7 @@ jobs:
           az webapp config set \
             --resource-group trace-app-prod \
             --name worker \
-            --startup-file "cd /home/site/wwwroot/apps/api && npm run start:worker"
+            --startup-file "node /home/site/wwwroot/apps/api/dist/worker.js"
 
       - name: Deploy worker to Azure
         uses: azure/webapps-deploy@v3
