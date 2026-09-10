@@ -1,9 +1,21 @@
+import { createServer, type Server } from "node:http";
+
 import {
   repositoryPlannerWorker,
   repositoryVerifierWorker,
   resumeAnalysisWorker,
 } from "./queues/worker";
 import { processDueOrganizationDeletions, processDueOwnershipTransfers } from "./modules/organizations/services/orgs.manage.service";
+
+const healthPort = Number(process.env.PORT ?? 8080);
+const healthServer: Server = createServer((_request, response) => {
+  response.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+  response.end("worker ok");
+});
+
+healthServer.listen(healthPort, "0.0.0.0", () => {
+  console.log(`[Worker] Health server listening on ${healthPort}`);
+});
 
 console.log("[Worker] Resume Analysis Worker Started");
 const deletionSweep = setInterval(() => {
@@ -16,6 +28,9 @@ async function shutdown(signal: string) {
 
   try {
     clearInterval(deletionSweep);
+    await new Promise<void>((resolve, reject) => {
+      healthServer.close((error) => (error ? reject(error) : resolve()));
+    });
     await Promise.all([
       resumeAnalysisWorker.close(),
       repositoryPlannerWorker.close(),
